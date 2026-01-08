@@ -1,0 +1,77 @@
+{
+  "schedules": [
+    {
+      "id": "SM-2024-001",
+      "title": "Monthly Elevator Inspection",
+      "description": "Routine inspection and maintenance of all elevators",
+      "frequency": "Monthly",
+      "nextDue": "2024-02-01",
+      "lastCompleted": "2024-01-01",
+      "status": "Scheduled",
+      "assignedTo": "John Doe",
+      "location": "All Buildings",
+      "category": "Elevator"
+    },
+    {
+      "id": "SM-2024-002",
+      "title": "HVAC Filter Replacement",
+      "description": "Replace air filters in all HVAC units",
+      "frequency": "Quarterly",
+      "nextDue": "2024-04-01",
+      "lastCompleted": "2024-01-01",
+      "status": "Scheduled",
+      "assignedTo": "Jane Smith",
+      "location": "All Buildings",
+      "category": "HVAC"
+    },
+    {
+      "id": "SM-2024-003",
+      "title": "Fire Safety Equipment Check",
+      "description": "Inspect and test all fire extinguishers and alarms",
+      "frequency": "Monthly",
+      "nextDue": "2024-02-15",
+      "lastCompleted": "2024-01-15",
+      "status": "Scheduled",
+      "assignedTo": "Mike Johnson",
+      "location": "All Buildings",
+      "category": "Safety"
+    },
+    {
+      "id": "SM-2024-004",
+      "title": "Generator Load Test",
+      "description": "Monthly load test of backup generators",
+      "frequency": "Monthly",
+      "nextDue": "2024-01-20",
+      "lastCompleted": "2024-12-20",
+      "status": "Overdue",
+      "assignedTo": "Sarah Williams",
+      "location": "Building A - Basement",
+      "category": "Electrical"
+    },
+    {
+      "id": "SM-2024-005",
+      "title": "Water Tank Cleaning",
+      "description": "Deep cleaning and sanitization of water storage tanks",
+      "frequency": "Semi-Annual",
+      "nextDue": "2024-07-01",
+      "lastCompleted": "2024-01-01",
+      "status": "Scheduled",
+      "assignedTo": "David Brown",
+      "location": "Building A - Rooftop",
+      "category": "Plumbing"
+    },
+    {
+      "id": "SM-2024-006",
+      "title": "Parking Lot Lighting Check",
+      "description": "Inspect and replace faulty parking lot lights",
+      "frequency": "Quarterly",
+      "nextDue": "2024-03-15",
+      "lastCompleted": "2024-12-15",
+      "status": "Scheduled",
+      "assignedTo": "John Doe",
+      "location": "Parking Area",
+      "category": "Electrical"
+    }
+  ]
+}
+

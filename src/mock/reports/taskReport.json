@@ -1,0 +1,60 @@
+{
+  "reports": [
+    {
+      "id": "TASK-001",
+      "taskName": "Elevator Maintenance",
+      "asset": "Elevator E-001",
+      "assignedTo": "John Doe",
+      "status": "Completed",
+      "completionPercent": 100,
+      "startDate": "2024-01-10",
+      "endDate": "2024-01-12",
+      "depot": "Depot A"
+    },
+    {
+      "id": "TASK-002",
+      "taskName": "HVAC System Check",
+      "asset": "HVAC Unit H-005",
+      "assignedTo": "Jane Smith",
+      "status": "In Progress",
+      "completionPercent": 65,
+      "startDate": "2024-01-13",
+      "endDate": null,
+      "depot": "Depot A"
+    },
+    {
+      "id": "TASK-003",
+      "taskName": "Water Pump Inspection",
+      "asset": "Pump P-012",
+      "assignedTo": "Mike Johnson",
+      "status": "Pending",
+      "completionPercent": 0,
+      "startDate": "2024-01-16",
+      "endDate": null,
+      "depot": "Depot B"
+    },
+    {
+      "id": "TASK-004",
+      "taskName": "Fire Safety Audit",
+      "asset": "Building A",
+      "assignedTo": "Sarah Williams",
+      "status": "Completed",
+      "completionPercent": 100,
+      "startDate": "2024-01-08",
+      "endDate": "2024-01-09",
+      "depot": "Depot A"
+    },
+    {
+      "id": "TASK-005",
+      "taskName": "Generator Load Test",
+      "asset": "Generator G-003",
+      "assignedTo": "David Brown",
+      "status": "In Progress",
+      "completionPercent": 40,
+      "startDate": "2024-01-14",
+      "endDate": null,
+      "depot": "Depot B"
+    }
+  ]
+}
+

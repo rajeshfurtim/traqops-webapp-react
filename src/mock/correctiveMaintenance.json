@@ -1,0 +1,77 @@
+{
+  "tickets": [
+    {
+      "id": "CM-2024-001",
+      "title": "Elevator Motor Failure",
+      "description": "Elevator motor not responding to control signals",
+      "priority": "High",
+      "status": "Completed",
+      "assignedTo": "John Doe",
+      "createdAt": "2024-01-10T08:00:00Z",
+      "completedAt": "2024-01-12T16:30:00Z",
+      "location": "Building A - Floor 3",
+      "category": "Electrical"
+    },
+    {
+      "id": "CM-2024-002",
+      "title": "HVAC System Malfunction",
+      "description": "Air conditioning unit not cooling properly",
+      "priority": "Medium",
+      "status": "In Progress",
+      "assignedTo": "Jane Smith",
+      "createdAt": "2024-01-11T10:15:00Z",
+      "completedAt": null,
+      "location": "Building B - Floor 1",
+      "category": "HVAC"
+    },
+    {
+      "id": "CM-2024-003",
+      "title": "Water Leak in Restroom",
+      "description": "Persistent water leak from ceiling",
+      "priority": "High",
+      "status": "Pending",
+      "assignedTo": "Mike Johnson",
+      "createdAt": "2024-01-13T14:20:00Z",
+      "completedAt": null,
+      "location": "Building A - Floor 2",
+      "category": "Plumbing"
+    },
+    {
+      "id": "CM-2024-004",
+      "title": "Broken Door Lock",
+      "description": "Main entrance door lock mechanism broken",
+      "priority": "Medium",
+      "status": "In Progress",
+      "assignedTo": "Sarah Williams",
+      "createdAt": "2024-01-12T09:00:00Z",
+      "completedAt": null,
+      "location": "Building A - Main Entrance",
+      "category": "Hardware"
+    },
+    {
+      "id": "CM-2024-005",
+      "title": "Light Fixture Replacement",
+      "description": "Multiple LED lights flickering in corridor",
+      "priority": "Low",
+      "status": "Pending",
+      "assignedTo": "David Brown",
+      "createdAt": "2024-01-14T11:30:00Z",
+      "completedAt": null,
+      "location": "Building C - Floor 1",
+      "category": "Electrical"
+    },
+    {
+      "id": "CM-2024-006",
+      "title": "Fire Alarm System Check",
+      "description": "False alarm triggered, system needs inspection",
+      "priority": "High",
+      "status": "Completed",
+      "assignedTo": "John Doe",
+      "createdAt": "2024-01-09T07:45:00Z",
+      "completedAt": "2024-01-09T12:00:00Z",
+      "location": "Building A - All Floors",
+      "category": "Safety"
+    }
+  ]
+}
+

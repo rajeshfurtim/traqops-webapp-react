@@ -1,0 +1,60 @@
+{
+  "reports": [
+    {
+      "id": "INV-RPT-001",
+      "itemCode": "INV-001",
+      "itemName": "Motor Bearing 6205",
+      "usedQuantity": 15,
+      "availableStock": 30,
+      "totalQuantity": 45,
+      "unit": "pieces",
+      "depot": "Depot A",
+      "lastUpdated": "2024-01-15"
+    },
+    {
+      "id": "INV-RPT-002",
+      "itemCode": "INV-002",
+      "itemName": "HVAC Filter HEPA",
+      "usedQuantity": 12,
+      "availableStock": 8,
+      "totalQuantity": 20,
+      "unit": "pieces",
+      "depot": "Depot A",
+      "lastUpdated": "2024-01-14"
+    },
+    {
+      "id": "INV-RPT-003",
+      "itemCode": "INV-003",
+      "itemName": "Safety Helmet",
+      "usedQuantity": 5,
+      "availableStock": 0,
+      "totalQuantity": 5,
+      "unit": "pieces",
+      "depot": "Depot B",
+      "lastUpdated": "2024-01-13"
+    },
+    {
+      "id": "INV-RPT-004",
+      "itemCode": "INV-004",
+      "itemName": "Wrench Set (10 pieces)",
+      "usedQuantity": 8,
+      "availableStock": 17,
+      "totalQuantity": 25,
+      "unit": "sets",
+      "depot": "Depot A",
+      "lastUpdated": "2024-01-15"
+    },
+    {
+      "id": "INV-RPT-005",
+      "itemCode": "INV-005",
+      "itemName": "LED Light Bulb 12W",
+      "usedQuantity": 25,
+      "availableStock": 95,
+      "totalQuantity": 120,
+      "unit": "pieces",
+      "depot": "Depot B",
+      "lastUpdated": "2024-01-14"
+    }
+  ]
+}
+

@@ -1,0 +1,60 @@
+{
+  "reports": [
+    {
+      "id": "ATT-001",
+      "employeeId": "EMP-2024-001",
+      "name": "John Doe",
+      "shift": "Morning",
+      "date": "2024-01-15",
+      "status": "Present",
+      "inTime": "08:00",
+      "outTime": "17:00",
+      "depot": "Depot A"
+    },
+    {
+      "id": "ATT-002",
+      "employeeId": "EMP-2024-002",
+      "name": "Jane Smith",
+      "shift": "Morning",
+      "date": "2024-01-15",
+      "status": "Present",
+      "inTime": "08:15",
+      "outTime": "17:10",
+      "depot": "Depot A"
+    },
+    {
+      "id": "ATT-003",
+      "employeeId": "EMP-2024-003",
+      "name": "Mike Johnson",
+      "shift": "Evening",
+      "date": "2024-01-15",
+      "status": "Present",
+      "inTime": "14:00",
+      "outTime": "22:00",
+      "depot": "Depot B"
+    },
+    {
+      "id": "ATT-004",
+      "employeeId": "EMP-2024-004",
+      "name": "Sarah Williams",
+      "shift": "Morning",
+      "date": "2024-01-15",
+      "status": "Absent",
+      "inTime": "-",
+      "outTime": "-",
+      "depot": "Depot A"
+    },
+    {
+      "id": "ATT-005",
+      "employeeId": "EMP-2024-005",
+      "name": "David Brown",
+      "shift": "Evening",
+      "date": "2024-01-15",
+      "status": "Present",
+      "inTime": "14:05",
+      "outTime": "22:15",
+      "depot": "Depot B"
+    }
+  ]
+}
+

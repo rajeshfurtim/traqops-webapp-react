@@ -1,0 +1,24 @@
+{
+  "maintenanceCosts": [
+    { "month": "Jan", "corrective": 45000, "scheduled": 32000 },
+    { "month": "Feb", "corrective": 38000, "scheduled": 32000 },
+    { "month": "Mar", "corrective": 52000, "scheduled": 35000 },
+    { "month": "Apr", "corrective": 41000, "scheduled": 32000 },
+    { "month": "May", "corrective": 48000, "scheduled": 33000 },
+    { "month": "Jun", "corrective": 44000, "scheduled": 32000 }
+  ],
+  "ticketStatus": [
+    { "status": "Completed", "count": 342 },
+    { "status": "In Progress", "count": 89 },
+    { "status": "Pending", "count": 45 },
+    { "status": "Overdue", "count": 12 }
+  ],
+  "categoryBreakdown": [
+    { "category": "Electrical", "count": 125, "cost": 125000 },
+    { "category": "HVAC", "count": 98, "cost": 98000 },
+    { "category": "Plumbing", "count": 76, "cost": 76000 },
+    { "category": "Safety", "count": 54, "cost": 54000 },
+    { "category": "Hardware", "count": 43, "cost": 43000 }
+  ]
+}
+

@@ -1,0 +1,55 @@
+{
+  "reports": [
+    {
+      "id": "CMRL-001",
+      "appModule": "Maintenance Module",
+      "usageCount": 1250,
+      "errorLogs": 12,
+      "lastSyncTime": "2024-01-15T10:30:00Z",
+      "status": "Active",
+      "version": "2.1.0",
+      "depot": "Depot A"
+    },
+    {
+      "id": "CMRL-002",
+      "appModule": "Inventory Module",
+      "usageCount": 980,
+      "errorLogs": 5,
+      "lastSyncTime": "2024-01-15T09:15:00Z",
+      "status": "Active",
+      "version": "2.0.5",
+      "depot": "Depot A"
+    },
+    {
+      "id": "CMRL-003",
+      "appModule": "Attendance Module",
+      "usageCount": 2100,
+      "errorLogs": 8,
+      "lastSyncTime": "2024-01-15T08:00:00Z",
+      "status": "Active",
+      "version": "1.9.2",
+      "depot": "Depot B"
+    },
+    {
+      "id": "CMRL-004",
+      "appModule": "Reports Module",
+      "usageCount": 750,
+      "errorLogs": 3,
+      "lastSyncTime": "2024-01-14T16:45:00Z",
+      "status": "Active",
+      "version": "2.2.1",
+      "depot": "Depot A"
+    },
+    {
+      "id": "CMRL-005",
+      "appModule": "Task Management",
+      "usageCount": 1650,
+      "errorLogs": 15,
+      "lastSyncTime": "2024-01-15T11:20:00Z",
+      "status": "Active",
+      "version": "2.0.0",
+      "depot": "Depot B"
+    }
+  ]
+}
+

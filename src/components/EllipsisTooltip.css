@@ -1,0 +1,27 @@
+.sidebar-menu-label {
+  display: block;
+  max-width: 160px;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  line-height: inherit;
+}
+
+/* Ensure the label container works correctly in flex layout */
+.ant-menu-item .sidebar-menu-label,
+.ant-menu-submenu-title .sidebar-menu-label {
+  flex: 1;
+  min-width: 0; /* Critical for flex truncation */
+  max-width: 160px; /* Explicit max-width for measurement */
+}
+
+/* Fix for AntD Menu item layout */
+.ant-menu-item > .ant-menu-title-content,
+.ant-menu-submenu-title > .ant-menu-title-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+

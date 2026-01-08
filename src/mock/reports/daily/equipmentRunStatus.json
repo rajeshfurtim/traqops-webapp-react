@@ -1,0 +1,55 @@
+{
+  "reports": [
+    {
+      "id": "ERS-001",
+      "equipmentId": "EQ-2024-001",
+      "equipmentName": "Elevator Motor E-001",
+      "runStatus": "Running",
+      "downtime": "0 hours",
+      "location": "Building A",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "ERS-002",
+      "equipmentId": "EQ-2024-002",
+      "equipmentName": "HVAC Unit H-005",
+      "runStatus": "Idle",
+      "downtime": "2.5 hours",
+      "location": "Building A",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "ERS-003",
+      "equipmentId": "EQ-2024-003",
+      "equipmentName": "Generator G-003",
+      "runStatus": "Running",
+      "downtime": "0 hours",
+      "location": "Building B",
+      "depot": "Depot B",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "ERS-004",
+      "equipmentId": "EQ-2024-004",
+      "equipmentName": "Water Pump P-012",
+      "runStatus": "Maintenance",
+      "downtime": "4.0 hours",
+      "location": "Building C",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "ERS-005",
+      "equipmentId": "EQ-2024-005",
+      "equipmentName": "Fire Safety System",
+      "runStatus": "Running",
+      "downtime": "0 hours",
+      "location": "All Buildings",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    }
+  ]
+}
+

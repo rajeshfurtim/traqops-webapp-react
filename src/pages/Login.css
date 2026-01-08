@@ -1,0 +1,954 @@
+/* Vibrant, Animated Login Page - Modern & Premium */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* CSS Variables for Color Palette */
+:root {
+  --color-blue: #3b82f6;
+  --color-purple: #8b5cf6;
+  --color-teal: #14b8a6;
+  --color-cyan: #06b6d4;
+  --color-pink: #ec4899;
+  --color-gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --color-gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --color-gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* ============================================
+   MAIN CONTAINER
+   ============================================ */
+
+.login-vibrant-container {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+  background: #0a0e27;
+}
+
+/* ============================================
+   DYNAMIC ANIMATED BACKGROUND
+   ============================================ */
+
+.login-vibrant-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Gradient Mesh */
+.gradient-mesh {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.6;
+  animation: meshMove 20s ease-in-out infinite;
+}
+
+.gradient-mesh-1 {
+  width: 600px;
+  height: 600px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  top: -200px;
+  left: -200px;
+  animation-delay: 0s;
+}
+
+.gradient-mesh-2 {
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  bottom: -150px;
+  right: -150px;
+  animation-delay: 5s;
+}
+
+.gradient-mesh-3 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 10s;
+}
+
+@keyframes meshMove {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(50px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-50px, 50px) scale(0.9);
+  }
+}
+
+/* Floating Blobs */
+.floating-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.4;
+  animation: blobFloat 15s ease-in-out infinite;
+}
+
+.blob-1 {
+  width: 300px;
+  height: 300px;
+  background: #14b8a6;
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.blob-2 {
+  width: 250px;
+  height: 250px;
+  background: #8b5cf6;
+  bottom: 20%;
+  right: 15%;
+  animation-delay: 3s;
+}
+
+.blob-3 {
+  width: 200px;
+  height: 200px;
+  background: #ec4899;
+  top: 60%;
+  left: 70%;
+  animation-delay: 6s;
+}
+
+@keyframes blobFloat {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(30px, -30px) scale(1.2);
+  }
+}
+
+/* Aurora Layer with Parallax */
+.aurora-layer {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at 30% 50%,
+    rgba(102, 126, 234, 0.3) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    circle at 70% 80%,
+    rgba(20, 184, 166, 0.3) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    circle at 50% 20%,
+    rgba(139, 92, 246, 0.2) 0%,
+    transparent 50%
+  );
+  animation: auroraFlow 25s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes auroraFlow {
+  0%, 100% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.1);
+  }
+}
+
+/* ============================================
+   CONTENT WRAPPER
+   ============================================ */
+
+.login-vibrant-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ============================================
+   GLASSMORPHISM CARD
+   ============================================ */
+
+.login-vibrant-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 48px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-vibrant-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+/* ============================================
+   HEADER - LOGO & TITLE
+   ============================================ */
+
+.login-vibrant-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.login-vibrant-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-bottom: 24px;
+  filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.2));
+}
+
+.login-vibrant-title {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #c7d2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShimmer 3s ease-in-out infinite;
+  background-size: 200% 200%;
+}
+
+@keyframes gradientShimmer {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.login-vibrant-subtitle {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ============================================
+   FORM STYLES
+   ============================================ */
+
+.login-vibrant-form {
+  width: 100%;
+}
+
+.login-vibrant-form-item {
+  margin-bottom: 24px;
+}
+
+.login-vibrant-form-item .ant-form-item-label {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.login-vibrant-form-item .ant-form-item-label > label {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  height: auto;
+}
+
+/* Modern Rounded Inputs */
+.login-vibrant-input {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  min-height: 52px;
+  height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  padding: 12px 16px;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.95);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.95);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+}
+
+/* Force background in ALL states - NO white backgrounds */
+.login-vibrant-input:hover,
+.login-vibrant-input:focus,
+.login-vibrant-input:active,
+.login-vibrant-input.ant-input-focused,
+.login-vibrant-input.ant-input-affix-wrapper-focused {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.login-vibrant-input:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.login-vibrant-input:focus,
+.login-vibrant-input.ant-input-focused {
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.35),
+              0 4px 12px rgba(102, 126, 234, 0.2);
+  outline: none;
+  color: rgba(255, 255, 255, 1);
+  -webkit-text-fill-color: rgba(255, 255, 255, 1);
+}
+
+/* HARD OVERRIDE - Autofill background MUST stay glassmorphism */
+.login-vibrant-input:-webkit-autofill,
+.login-vibrant-input:-webkit-autofill:hover,
+.login-vibrant-input:-webkit-autofill:focus,
+.login-vibrant-input:-webkit-autofill:active,
+.login-vibrant-input:-webkit-autofill-selected {
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.12) inset !important;
+  box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.12) inset !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  transition: background-color 9999s ease-in-out 0s, background 9999s ease-in-out 0s;
+  caret-color: rgba(255, 255, 255, 0.95);
+  -webkit-background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.login-vibrant-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+  font-style: normal;
+  opacity: 1;
+}
+
+.login-vibrant-input-icon {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  margin-right: 12px;
+  transition: color 0.3s ease;
+}
+
+.login-vibrant-input:focus + .ant-input-prefix .login-vibrant-input-icon,
+.login-vibrant-input.ant-input-focused + .ant-input-prefix .login-vibrant-input-icon {
+  color: #667eea;
+}
+
+.ant-input-prefix {
+  margin-right: 0;
+}
+
+/* Password Input Wrapper - Relative Positioning */
+.login-password-wrapper {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Password Input Overrides */
+.ant-input-password.login-vibrant-input {
+  padding-right: 44px; /* Reserve space for eye icon */
+  position: relative;
+  box-sizing: border-box;
+}
+
+.ant-input-password.login-vibrant-input .ant-input {
+  border: none;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: rgba(255, 255, 255, 0.95);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  padding-right: 0;
+  height: 100%;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+/* Force password input wrapper background */
+.ant-input-password.login-vibrant-input {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.ant-input-password.login-vibrant-input:hover,
+.ant-input-password.login-vibrant-input:focus,
+.ant-input-password.login-vibrant-input.ant-input-focused {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* HARD OVERRIDE - Password autofill background */
+.ant-input-password.login-vibrant-input .ant-input:-webkit-autofill,
+.ant-input-password.login-vibrant-input .ant-input:-webkit-autofill:hover,
+.ant-input-password.login-vibrant-input .ant-input:-webkit-autofill:focus,
+.ant-input-password.login-vibrant-input .ant-input:-webkit-autofill:active,
+.ant-input-password.login-vibrant-input .ant-input:-webkit-autofill-selected {
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.12) inset !important;
+  box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.12) inset !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  transition: background-color 9999s ease-in-out 0s, background 9999s ease-in-out 0s;
+  caret-color: rgba(255, 255, 255, 0.95);
+  -webkit-background-color: transparent !important;
+}
+
+.ant-input-password.login-vibrant-input .ant-input:focus {
+  color: rgba(255, 255, 255, 1);
+  -webkit-text-fill-color: rgba(255, 255, 255, 1);
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Eye Icon Positioning - Absolute Centering */
+.ant-input-password.login-vibrant-input .ant-input-suffix {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Eye Icon Button - Accessible Tap Area */
+.ant-input-password.login-vibrant-input .ant-input-suffix::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.ant-input-password.login-vibrant-input .ant-input-suffix:hover {
+  color: rgba(255, 255, 255, 1);
+}
+
+.ant-input-password.login-vibrant-input .ant-input-suffix:hover::before {
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+.ant-input-password.login-vibrant-input .ant-input-suffix:active {
+  color: #667eea;
+  transform: translateY(-50%) scale(0.95);
+}
+
+/* Ensure icon is centered within button */
+.ant-input-password.login-vibrant-input .ant-input-suffix .anticon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* ============================================
+   FORGOT PASSWORD LINK
+   ============================================ */
+
+.login-forgot-password-link {
+  text-align: right;
+  margin-bottom: 24px;
+  margin-top: -8px;
+}
+
+.login-forgot-link-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.login-forgot-link-text:hover {
+  color: #667eea;
+  text-decoration: none;
+  transform: translateX(2px);
+}
+
+/* ============================================
+   FORGOT PASSWORD PAGE STYLES
+   ============================================ */
+
+.forgot-password-success {
+  margin-bottom: 24px;
+}
+
+.forgot-password-back {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.forgot-password-back-button {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.forgot-password-back-button:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.forgot-password-back-button:active {
+  transform: scale(0.98);
+}
+
+.forgot-password-back-icon {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.forgot-password-back-button:hover .forgot-password-back-icon {
+  transform: translateX(-2px);
+}
+
+/* ============================================
+   GRADIENT BUTTON - WOW FACTOR
+   ============================================ */
+
+.login-vibrant-button-item {
+  margin-top: 32px;
+  margin-bottom: 0;
+}
+
+.login-vibrant-button {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: #ffffff;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4),
+              0 0 0 0 rgba(102, 126, 234, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-vibrant-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.login-vibrant-button:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.login-vibrant-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5),
+              0 0 0 4px rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+}
+
+.login-vibrant-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.login-vibrant-button:focus {
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+}
+
+.login-vibrant-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Loading State with Gradient Flow */
+.login-button-loading-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.login-button-gradient-flow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: gradientFlow 1.5s ease-in-out infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.login-button-text {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================
+   ERROR ALERT
+   ============================================ */
+
+.login-vibrant-error {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.login-vibrant-error .ant-alert-message {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: #fca5a5;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+
+.login-vibrant-footer {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.login-vibrant-footer-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .login-vibrant-container {
+    padding: 24px 16px;
+  }
+
+  .login-vibrant-card {
+    padding: 40px 32px;
+    border-radius: 16px;
+  }
+
+  .login-vibrant-title {
+    font-size: 28px;
+  }
+
+  .login-vibrant-subtitle {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-vibrant-card {
+    padding: 32px 24px;
+  }
+
+  .login-vibrant-title {
+    font-size: 24px;
+  }
+
+  .login-vibrant-logo {
+    width: 56px;
+    height: 56px;
+  }
+
+  /* Mobile: Increase input height and icon tap area */
+  .login-vibrant-input {
+    min-height: 54px;
+    height: 54px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .ant-input-password.login-vibrant-input {
+    padding-right: 48px; /* More space for larger tap area */
+  }
+
+  .ant-input-password.login-vibrant-input .ant-input-suffix {
+    right: 12px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .ant-input-password.login-vibrant-input .ant-input-suffix::before {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+.login-vibrant-input:focus-visible,
+.login-vibrant-button:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Ant Design Overrides */
+.ant-form-item-explain-error {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  margin-top: 8px;
+  color: #ff6b6b;
+  font-weight: 500;
+}
+
+/* Error state for inputs */
+.login-vibrant-form-item.ant-form-item-has-error .login-vibrant-input,
+.login-vibrant-form-item.ant-form-item-has-error .ant-input-affix-wrapper {
+  border-color: rgba(255, 80, 80, 0.9);
+}
+
+.login-vibrant-form-item.ant-form-item-has-error .login-vibrant-input:focus,
+.login-vibrant-form-item.ant-form-item-has-error .ant-input-affix-wrapper-focused {
+  border-color: rgba(255, 80, 80, 0.9);
+  box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.2);
+}
+
+/* Success state for inputs */
+.login-vibrant-form-item.ant-form-item-has-success .login-vibrant-input,
+.login-vibrant-form-item.ant-form-item-has-success .ant-input-affix-wrapper {
+  border-color: rgba(80, 200, 120, 0.9);
+}
+
+.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.ant-input-affix-wrapper-focused {
+  border-color: #667eea;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.35),
+              0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+/* Ensure text in affix-wrapper is visible */
+.ant-input-affix-wrapper .ant-input {
+  color: rgba(255, 255, 255, 0.95);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* HARD OVERRIDE - Affix-wrapper autofill */
+.ant-input-affix-wrapper .ant-input:-webkit-autofill,
+.ant-input-affix-wrapper .ant-input:-webkit-autofill:hover,
+.ant-input-affix-wrapper .ant-input:-webkit-autofill:focus,
+.ant-input-affix-wrapper .ant-input:-webkit-autofill:active,
+.ant-input-affix-wrapper .ant-input:-webkit-autofill-selected {
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+  -webkit-box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.12) inset !important;
+  box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.12) inset !important;
+  background-color: transparent !important;
+  background: transparent !important;
+  transition: background-color 9999s ease-in-out 0s, background 9999s ease-in-out 0s;
+  caret-color: rgba(255, 255, 255, 0.95);
+  -webkit-background-color: transparent !important;
+}
+
+.ant-input-affix-wrapper-focused .ant-input {
+  color: rgba(255, 255, 255, 1);
+  -webkit-text-fill-color: rgba(255, 255, 255, 1);
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Ensure consistent height for email and password inputs */
+.login-vibrant-form-item .ant-input-affix-wrapper {
+  min-height: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Force affix-wrapper background in ALL states */
+.login-vibrant-form-item .ant-input-affix-wrapper:hover,
+.login-vibrant-form-item .ant-input-affix-wrapper:focus,
+.login-vibrant-form-item .ant-input-affix-wrapper.ant-input-affix-wrapper-focused {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Prevent layout shift when toggling password visibility */
+.ant-input-password.login-vibrant-input .ant-input-affix-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Ensure prefix icon alignment matches password input */
+.login-vibrant-input .ant-input-prefix {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* ============================================
+   ADDITIONAL OVERRIDES - PREVENT WHITE BACKGROUNDS
+   ============================================ */
+
+/* Override any Ant Design default white backgrounds */
+.ant-input-affix-wrapper,
+.ant-input-affix-wrapper:hover,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper.ant-input-affix-wrapper-focused,
+.ant-input-affix-wrapper.ant-input-affix-wrapper-disabled {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Override Ant Design input backgrounds */
+.ant-input,
+.ant-input:hover,
+.ant-input:focus,
+.ant-input-focused {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Force glassmorphism on all input wrapper states */
+.login-vibrant-form-item .ant-input-affix-wrapper,
+.login-vibrant-form-item .ant-input-affix-wrapper:hover,
+.login-vibrant-form-item .ant-input-affix-wrapper:focus,
+.login-vibrant-form-item .ant-input-affix-wrapper.ant-input-affix-wrapper-focused {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Prevent white background on password input wrapper */
+.ant-input-password,
+.ant-input-password:hover,
+.ant-input-password:focus,
+.ant-input-password.ant-input-affix-wrapper-focused {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Override any MUI/AntD default styles that might cause white backgrounds */
+.login-vibrant-input *,
+.login-vibrant-input *:hover,
+.login-vibrant-input *:focus,
+.login-vibrant-input *:active {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Exception: Keep wrapper background */
+.login-vibrant-input,
+.ant-input-affix-wrapper.login-vibrant-input {
+  background-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}

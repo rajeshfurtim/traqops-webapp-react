@@ -1,0 +1,55 @@
+{
+  "reports": [
+    {
+      "id": "DR-2024-001",
+      "date": "2024-01-15",
+      "shift": "Morning",
+      "totalTasks": 45,
+      "completedTasks": 38,
+      "pendingTasks": 7,
+      "depot": "Depot A",
+      "status": "Completed"
+    },
+    {
+      "id": "DR-2024-002",
+      "date": "2024-01-15",
+      "shift": "Evening",
+      "totalTasks": 42,
+      "completedTasks": 35,
+      "pendingTasks": 7,
+      "depot": "Depot A",
+      "status": "In Progress"
+    },
+    {
+      "id": "DR-2024-003",
+      "date": "2024-01-14",
+      "shift": "Morning",
+      "totalTasks": 48,
+      "completedTasks": 48,
+      "pendingTasks": 0,
+      "depot": "Depot B",
+      "status": "Completed"
+    },
+    {
+      "id": "DR-2024-004",
+      "date": "2024-01-14",
+      "shift": "Evening",
+      "totalTasks": 40,
+      "completedTasks": 40,
+      "pendingTasks": 0,
+      "depot": "Depot B",
+      "status": "Completed"
+    },
+    {
+      "id": "DR-2024-005",
+      "date": "2024-01-13",
+      "shift": "Morning",
+      "totalTasks": 50,
+      "completedTasks": 45,
+      "pendingTasks": 5,
+      "depot": "Depot A",
+      "status": "Completed"
+    }
+  ]
+}
+

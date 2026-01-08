@@ -1,0 +1,65 @@
+{
+  "reports": [
+    {
+      "id": "MCL-001",
+      "checklistId": "CHK-2024-001",
+      "asset": "Elevator E-001",
+      "totalItems": 25,
+      "completedItems": 25,
+      "pendingItems": 0,
+      "completionPercent": 100,
+      "status": "Completed",
+      "date": "2024-01-15",
+      "depot": "Depot A"
+    },
+    {
+      "id": "MCL-002",
+      "checklistId": "CHK-2024-002",
+      "asset": "HVAC Unit H-005",
+      "totalItems": 30,
+      "completedItems": 18,
+      "pendingItems": 12,
+      "completionPercent": 60,
+      "status": "In Progress",
+      "date": "2024-01-15",
+      "depot": "Depot A"
+    },
+    {
+      "id": "MCL-003",
+      "checklistId": "CHK-2024-003",
+      "asset": "Generator G-003",
+      "totalItems": 20,
+      "completedItems": 20,
+      "pendingItems": 0,
+      "completionPercent": 100,
+      "status": "Completed",
+      "date": "2024-01-14",
+      "depot": "Depot B"
+    },
+    {
+      "id": "MCL-004",
+      "checklistId": "CHK-2024-004",
+      "asset": "Water Pump P-012",
+      "totalItems": 15,
+      "completedItems": 10,
+      "pendingItems": 5,
+      "completionPercent": 67,
+      "status": "In Progress",
+      "date": "2024-01-15",
+      "depot": "Depot B"
+    },
+    {
+      "id": "MCL-005",
+      "checklistId": "CHK-2024-005",
+      "asset": "Fire Safety System",
+      "totalItems": 35,
+      "completedItems": 0,
+      "pendingItems": 35,
+      "completionPercent": 0,
+      "status": "Pending",
+      "date": "2024-01-16",
+      "depot": "Depot A"
+    }
+  ]
+}
+

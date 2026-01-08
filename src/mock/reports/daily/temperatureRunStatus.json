@@ -1,0 +1,55 @@
+{
+  "reports": [
+    {
+      "id": "TRS-001",
+      "location": "Building A - Floor 1",
+      "minTemperature": 22.5,
+      "maxTemperature": 24.8,
+      "averageTemperature": 23.6,
+      "status": "Normal",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "TRS-002",
+      "location": "Building A - Floor 2",
+      "minTemperature": 21.8,
+      "maxTemperature": 25.2,
+      "averageTemperature": 23.5,
+      "status": "Normal",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "TRS-003",
+      "location": "Building B - Basement",
+      "minTemperature": 18.5,
+      "maxTemperature": 20.3,
+      "averageTemperature": 19.4,
+      "status": "Low",
+      "depot": "Depot B",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "TRS-004",
+      "location": "Building C - Rooftop",
+      "minTemperature": 26.2,
+      "maxTemperature": 28.5,
+      "averageTemperature": 27.3,
+      "status": "High",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "TRS-005",
+      "location": "Parking Area",
+      "minTemperature": 20.0,
+      "maxTemperature": 22.5,
+      "averageTemperature": 21.2,
+      "status": "Normal",
+      "depot": "Depot B",
+      "date": "2024-01-15"
+    }
+  ]
+}
+

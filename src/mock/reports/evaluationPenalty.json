@@ -1,0 +1,65 @@
+{
+  "reports": [
+    {
+      "id": "EP-001",
+      "employeeId": "EMP-2024-001",
+      "employee": "John Doe",
+      "evaluationPeriod": "January 2024",
+      "score": 85,
+      "penaltyType": "None",
+      "amount": 0,
+      "depot": "Depot A",
+      "evaluatedBy": "Manager A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "EP-002",
+      "employeeId": "EMP-2024-002",
+      "employee": "Jane Smith",
+      "evaluationPeriod": "January 2024",
+      "score": 92,
+      "penaltyType": "None",
+      "amount": 0,
+      "depot": "Depot A",
+      "evaluatedBy": "Manager A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "EP-003",
+      "employeeId": "EMP-2024-003",
+      "employee": "Mike Johnson",
+      "evaluationPeriod": "January 2024",
+      "score": 65,
+      "penaltyType": "Late Attendance",
+      "amount": 500,
+      "depot": "Depot B",
+      "evaluatedBy": "Manager B",
+      "date": "2024-01-14"
+    },
+    {
+      "id": "EP-004",
+      "employeeId": "EMP-2024-004",
+      "employee": "Sarah Williams",
+      "evaluationPeriod": "January 2024",
+      "score": 58,
+      "penaltyType": "Absenteeism",
+      "amount": 1000,
+      "depot": "Depot A",
+      "evaluatedBy": "Manager A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "EP-005",
+      "employeeId": "EMP-2024-005",
+      "employee": "David Brown",
+      "evaluationPeriod": "January 2024",
+      "score": 78,
+      "penaltyType": "Minor Infraction",
+      "amount": 200,
+      "depot": "Depot B",
+      "evaluatedBy": "Manager B",
+      "date": "2024-01-14"
+    }
+  ]
+}
+

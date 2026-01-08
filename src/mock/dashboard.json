@@ -1,0 +1,58 @@
+{
+  "kpis": {
+    "totalTickets": 1247,
+    "openTickets": 89,
+    "completedThisMonth": 342,
+    "inventoryValue": 1250000
+  },
+  "maintenanceStatus": [
+    { "name": "Completed", "value": 65, "color": "#28a745" },
+    { "name": "In Progress", "value": 20, "color": "#ffc107" },
+    { "name": "Pending", "value": 10, "color": "#17a2b8" },
+    { "name": "Overdue", "value": 5, "color": "#dc3545" }
+  ],
+  "inventoryStock": [
+    { "category": "Spare Parts", "stock": 450, "capacity": 500 },
+    { "category": "Tools", "stock": 320, "capacity": 400 },
+    { "category": "Consumables", "stock": 280, "capacity": 350 },
+    { "category": "Safety Equipment", "stock": 150, "capacity": 200 }
+  ],
+  "recentActivity": [
+    {
+      "id": 1,
+      "type": "Maintenance",
+      "description": "Corrective maintenance ticket #CM-2024-001 completed",
+      "timestamp": "2024-01-15T10:30:00Z",
+      "user": "John Doe"
+    },
+    {
+      "id": 2,
+      "type": "Inventory",
+      "description": "New stock added: Spare Parts - 50 units",
+      "timestamp": "2024-01-15T09:15:00Z",
+      "user": "Jane Smith"
+    },
+    {
+      "id": 3,
+      "type": "Invoice",
+      "description": "Invoice #INV-2024-045 approved",
+      "timestamp": "2024-01-15T08:00:00Z",
+      "user": "Mike Johnson"
+    },
+    {
+      "id": 4,
+      "type": "Maintenance",
+      "description": "Scheduled maintenance SM-2024-012 started",
+      "timestamp": "2024-01-14T16:45:00Z",
+      "user": "Sarah Williams"
+    },
+    {
+      "id": 5,
+      "type": "Document",
+      "description": "New document uploaded: Safety Manual v2.0",
+      "timestamp": "2024-01-14T14:20:00Z",
+      "user": "David Brown"
+    }
+  ]
+}
+

@@ -1,0 +1,60 @@
+{
+  "reports": [
+    {
+      "id": "TOOL-001",
+      "toolId": "T-2024-001",
+      "toolName": "Electric Drill",
+      "issuedTo": "John Doe",
+      "issueDate": "2024-01-10",
+      "condition": "Good",
+      "returnStatus": "Not Returned",
+      "expectedReturn": "2024-01-20",
+      "depot": "Depot A"
+    },
+    {
+      "id": "TOOL-002",
+      "toolId": "T-2024-002",
+      "toolName": "Multimeter",
+      "issuedTo": "Jane Smith",
+      "issueDate": "2024-01-12",
+      "condition": "Excellent",
+      "returnStatus": "Returned",
+      "returnDate": "2024-01-14",
+      "depot": "Depot A"
+    },
+    {
+      "id": "TOOL-003",
+      "toolId": "T-2024-003",
+      "toolName": "Pressure Gauge",
+      "issuedTo": "Mike Johnson",
+      "issueDate": "2024-01-08",
+      "condition": "Fair",
+      "returnStatus": "Not Returned",
+      "expectedReturn": "2024-01-18",
+      "depot": "Depot B"
+    },
+    {
+      "id": "TOOL-004",
+      "toolId": "T-2024-004",
+      "toolName": "Wrench Set",
+      "issuedTo": "Sarah Williams",
+      "issueDate": "2024-01-11",
+      "condition": "Good",
+      "returnStatus": "Returned",
+      "returnDate": "2024-01-15",
+      "depot": "Depot A"
+    },
+    {
+      "id": "TOOL-005",
+      "toolId": "T-2024-005",
+      "toolName": "Voltage Tester",
+      "issuedTo": "David Brown",
+      "issueDate": "2024-01-13",
+      "condition": "Excellent",
+      "returnStatus": "Not Returned",
+      "expectedReturn": "2024-01-23",
+      "depot": "Depot B"
+    }
+  ]
+}
+

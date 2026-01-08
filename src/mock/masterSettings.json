@@ -1,0 +1,28 @@
+{
+  "categories": [
+    { "id": 1, "name": "Electrical", "description": "Electrical maintenance category", "active": true },
+    { "id": 2, "name": "HVAC", "description": "Heating, ventilation, and air conditioning", "active": true },
+    { "id": 3, "name": "Plumbing", "description": "Plumbing and water systems", "active": true },
+    { "id": 4, "name": "Safety", "description": "Safety equipment and procedures", "active": true },
+    { "id": 5, "name": "Hardware", "description": "Hardware and fixtures", "active": true }
+  ],
+  "priorities": [
+    { "id": 1, "name": "Low", "color": "#17a2b8", "slaHours": 72 },
+    { "id": 2, "name": "Medium", "color": "#ffc107", "slaHours": 24 },
+    { "id": 3, "name": "High", "color": "#fd7e14", "slaHours": 8 },
+    { "id": 4, "name": "Critical", "color": "#dc3545", "slaHours": 2 }
+  ],
+  "locations": [
+    { "id": 1, "name": "Building A", "address": "123 Main Street", "active": true },
+    { "id": 2, "name": "Building B", "address": "456 Oak Avenue", "active": true },
+    { "id": 3, "name": "Building C", "address": "789 Pine Road", "active": true },
+    { "id": 4, "name": "Parking Area", "address": "Adjacent to Building A", "active": true }
+  ],
+  "suppliers": [
+    { "id": 1, "name": "ABC Bearings Ltd", "contact": "contact@abcbearings.com", "phone": "+1-234-567-8900", "active": true },
+    { "id": 2, "name": "Air Quality Solutions", "contact": "info@airquality.com", "phone": "+1-234-567-8901", "active": true },
+    { "id": 3, "name": "Tool Master Co", "contact": "sales@toolmaster.com", "phone": "+1-234-567-8902", "active": true },
+    { "id": 4, "name": "Fire Safety Corp", "contact": "support@firesafety.com", "phone": "+1-234-567-8903", "active": true }
+  ]
+}
+

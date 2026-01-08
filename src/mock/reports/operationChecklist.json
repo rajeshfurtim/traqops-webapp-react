@@ -1,0 +1,65 @@
+{
+  "reports": [
+    {
+      "id": "OCL-001",
+      "operationId": "OP-2024-001",
+      "location": "Building A - Floor 1",
+      "checklistStatus": "Completed",
+      "totalChecks": 20,
+      "passedChecks": 20,
+      "failedChecks": 0,
+      "date": "2024-01-15",
+      "operator": "John Doe",
+      "depot": "Depot A"
+    },
+    {
+      "id": "OCL-002",
+      "operationId": "OP-2024-002",
+      "location": "Building B - Basement",
+      "checklistStatus": "In Progress",
+      "totalChecks": 25,
+      "passedChecks": 15,
+      "failedChecks": 2,
+      "date": "2024-01-15",
+      "operator": "Jane Smith",
+      "depot": "Depot A"
+    },
+    {
+      "id": "OCL-003",
+      "operationId": "OP-2024-003",
+      "location": "Parking Area",
+      "checklistStatus": "Completed",
+      "totalChecks": 18,
+      "passedChecks": 18,
+      "failedChecks": 0,
+      "date": "2024-01-14",
+      "operator": "Mike Johnson",
+      "depot": "Depot B"
+    },
+    {
+      "id": "OCL-004",
+      "operationId": "OP-2024-004",
+      "location": "Building C - Rooftop",
+      "checklistStatus": "Pending",
+      "totalChecks": 22,
+      "passedChecks": 0,
+      "failedChecks": 0,
+      "date": "2024-01-16",
+      "operator": "Sarah Williams",
+      "depot": "Depot A"
+    },
+    {
+      "id": "OCL-005",
+      "operationId": "OP-2024-005",
+      "location": "Building A - Main Entrance",
+      "checklistStatus": "Completed",
+      "totalChecks": 15,
+      "passedChecks": 15,
+      "failedChecks": 0,
+      "date": "2024-01-13",
+      "operator": "David Brown",
+      "depot": "Depot A"
+    }
+  ]
+}
+

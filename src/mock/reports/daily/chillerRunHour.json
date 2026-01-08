@@ -1,0 +1,45 @@
+{
+  "reports": [
+    {
+      "id": "CRH-001",
+      "chillerId": "CH-001",
+      "chillerName": "Chiller Unit 1",
+      "totalRunHours": 720,
+      "idleHours": 48,
+      "location": "Building A",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "CRH-002",
+      "chillerId": "CH-002",
+      "chillerName": "Chiller Unit 2",
+      "totalRunHours": 680,
+      "idleHours": 88,
+      "location": "Building A",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "CRH-003",
+      "chillerId": "CH-003",
+      "chillerName": "Chiller Unit 3",
+      "totalRunHours": 750,
+      "idleHours": 18,
+      "location": "Building B",
+      "depot": "Depot B",
+      "date": "2024-01-15"
+    },
+    {
+      "id": "CRH-004",
+      "chillerId": "CH-004",
+      "chillerName": "Chiller Unit 4",
+      "totalRunHours": 695,
+      "idleHours": 73,
+      "location": "Building C",
+      "depot": "Depot A",
+      "date": "2024-01-15"
+    }
+  ]
+}
+

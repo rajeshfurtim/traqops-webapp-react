@@ -1,0 +1,94 @@
+{
+  "categories": ["All", "Safety", "Maintenance", "Inventory", "Compliance", "Training"],
+  "documents": [
+    {
+      "id": "DOC-001",
+      "name": "Safety Manual v2.0",
+      "category": "Safety",
+      "type": "PDF",
+      "size": "2.5 MB",
+      "uploadedBy": "David Brown",
+      "uploadedAt": "2024-01-14T14:20:00Z",
+      "version": "2.0",
+      "description": "Comprehensive safety procedures and guidelines"
+    },
+    {
+      "id": "DOC-002",
+      "name": "Maintenance Schedule 2024",
+      "category": "Maintenance",
+      "type": "Excel",
+      "size": "850 KB",
+      "uploadedBy": "John Doe",
+      "uploadedAt": "2024-01-10T08:00:00Z",
+      "version": "1.0",
+      "description": "Annual maintenance schedule for all equipment"
+    },
+    {
+      "id": "DOC-003",
+      "name": "Inventory Management Policy",
+      "category": "Inventory",
+      "type": "PDF",
+      "size": "1.2 MB",
+      "uploadedBy": "Jane Smith",
+      "uploadedAt": "2024-01-08T10:30:00Z",
+      "version": "1.5",
+      "description": "Standard operating procedures for inventory management"
+    },
+    {
+      "id": "DOC-004",
+      "name": "Compliance Certificate 2024",
+      "category": "Compliance",
+      "type": "PDF",
+      "size": "450 KB",
+      "uploadedBy": "Mike Johnson",
+      "uploadedAt": "2024-01-05T12:00:00Z",
+      "version": "1.0",
+      "description": "Annual compliance certification document"
+    },
+    {
+      "id": "DOC-005",
+      "name": "Equipment Training Guide",
+      "category": "Training",
+      "type": "PDF",
+      "size": "3.1 MB",
+      "uploadedBy": "Sarah Williams",
+      "uploadedAt": "2024-01-12T15:45:00Z",
+      "version": "2.1",
+      "description": "Training manual for new equipment operators"
+    },
+    {
+      "id": "DOC-006",
+      "name": "Emergency Response Plan",
+      "category": "Safety",
+      "type": "PDF",
+      "size": "1.8 MB",
+      "uploadedBy": "David Brown",
+      "uploadedAt": "2024-01-03T09:00:00Z",
+      "version": "3.0",
+      "description": "Emergency procedures and response protocols"
+    },
+    {
+      "id": "DOC-007",
+      "name": "Vendor List 2024",
+      "category": "Inventory",
+      "type": "Excel",
+      "size": "620 KB",
+      "uploadedBy": "Jane Smith",
+      "uploadedAt": "2024-01-07T11:20:00Z",
+      "version": "1.0",
+      "description": "Approved vendor list with contact information"
+    },
+    {
+      "id": "DOC-008",
+      "name": "Maintenance Report Q4 2023",
+      "category": "Maintenance",
+      "type": "PDF",
+      "size": "2.3 MB",
+      "uploadedBy": "John Doe",
+      "uploadedAt": "2024-01-01T08:00:00Z",
+      "version": "1.0",
+      "description": "Quarterly maintenance performance report"
+    }
+  ]
+}
+

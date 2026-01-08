@@ -1,0 +1,132 @@
+.traqops-sidebar {
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-logo {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0;
+  transition: all 0.2s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 16px;
+}
+
+.sidebar-logo.collapsed {
+  padding: 0;
+  justify-content: center;
+}
+
+.logo-text {
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: #1890ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* AntD Menu overrides for better UX */
+.traqops-sidebar .ant-menu {
+  background: #001529;
+}
+
+.traqops-sidebar .ant-menu-item {
+  margin: 4px 8px;
+  border-radius: 6px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.traqops-sidebar .ant-menu-item-selected {
+  background-color: #1890ff !important;
+}
+
+.traqops-sidebar .ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.traqops-sidebar .ant-menu-submenu-title {
+  margin: 4px 8px;
+  border-radius: 6px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.traqops-sidebar .ant-menu-submenu-title:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.traqops-sidebar .ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+  right: 16px;
+}
+
+.traqops-sidebar .ant-menu-item-icon,
+.traqops-sidebar .ant-menu-submenu-title .ant-menu-item-icon {
+  font-size: 16px;
+  flex-shrink: 0; /* Prevent icon from shrinking */
+}
+
+/* Ensure menu items and submenu titles support ellipsis with flex layout */
+.traqops-sidebar .ant-menu-item,
+.traqops-sidebar .ant-menu-submenu-title {
+  display: flex;
+  align-items: center;
+  overflow: hidden; /* Important for truncation */
+}
+
+/* AntD Menu title content wrapper */
+.traqops-sidebar .ant-menu-item .ant-menu-title-content,
+.traqops-sidebar .ant-menu-submenu-title .ant-menu-title-content {
+  flex: 1;
+  min-width: 0; /* Critical for flex truncation */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+/* Direct span/div children for backward compatibility */
+.traqops-sidebar .ant-menu-item > span,
+.traqops-sidebar .ant-menu-item > div,
+.traqops-sidebar .ant-menu-submenu-title > span,
+.traqops-sidebar .ant-menu-submenu-title > div {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .traqops-sidebar {
+    position: fixed !important;
+    height: 100vh;
+    z-index: 1000;
+  }
+  
+  .ant-layout {
+    margin-left: 0 !important;
+  }
+}
+
+/* Smooth transitions */
+.traqops-sidebar,
+.traqops-sidebar .ant-menu,
+.traqops-sidebar .ant-menu-item,
+.traqops-sidebar .ant-menu-submenu-title {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+

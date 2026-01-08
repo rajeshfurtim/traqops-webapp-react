@@ -1,0 +1,55 @@
+{
+  "reports": [
+    {
+      "id": "AUD-001",
+      "auditDate": "2024-01-15",
+      "area": "Building A - Floor 3",
+      "findings": "Fire extinguisher expired",
+      "severity": "High",
+      "complianceStatus": "Non-Compliant",
+      "auditor": "John Doe",
+      "depot": "Depot A"
+    },
+    {
+      "id": "AUD-002",
+      "auditDate": "2024-01-14",
+      "area": "Building B - Basement",
+      "findings": "Emergency exit blocked",
+      "severity": "Critical",
+      "complianceStatus": "Non-Compliant",
+      "auditor": "Jane Smith",
+      "depot": "Depot A"
+    },
+    {
+      "id": "AUD-003",
+      "auditDate": "2024-01-13",
+      "area": "Parking Area",
+      "findings": "All safety measures in place",
+      "severity": "Low",
+      "complianceStatus": "Compliant",
+      "auditor": "Mike Johnson",
+      "depot": "Depot B"
+    },
+    {
+      "id": "AUD-004",
+      "auditDate": "2024-01-12",
+      "area": "Building C - Rooftop",
+      "findings": "Water tank cleaning overdue",
+      "severity": "Medium",
+      "complianceStatus": "Non-Compliant",
+      "auditor": "Sarah Williams",
+      "depot": "Depot A"
+    },
+    {
+      "id": "AUD-005",
+      "auditDate": "2024-01-11",
+      "area": "Building A - Main Entrance",
+      "findings": "All systems compliant",
+      "severity": "Low",
+      "complianceStatus": "Compliant",
+      "auditor": "David Brown",
+      "depot": "Depot A"
+    }
+  ]
+}
+

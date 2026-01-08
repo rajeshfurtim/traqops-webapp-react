@@ -1,0 +1,115 @@
+{
+  "summary": {
+    "totalItems": 1250,
+    "totalValue": 1250000,
+    "lowStockItems": 23,
+    "outOfStockItems": 5
+  },
+  "items": [
+    {
+      "id": "INV-001",
+      "name": "Motor Bearing 6205",
+      "category": "Spare Parts",
+      "quantity": 45,
+      "minQuantity": 20,
+      "maxQuantity": 100,
+      "unitPrice": 125.50,
+      "totalValue": 5647.50,
+      "supplier": "ABC Bearings Ltd",
+      "location": "Warehouse A - Shelf 12",
+      "status": "In Stock"
+    },
+    {
+      "id": "INV-002",
+      "name": "HVAC Filter HEPA",
+      "category": "Consumables",
+      "quantity": 8,
+      "minQuantity": 15,
+      "maxQuantity": 50,
+      "unitPrice": 85.00,
+      "totalValue": 680.00,
+      "supplier": "Air Quality Solutions",
+      "location": "Warehouse B - Shelf 5",
+      "status": "Low Stock"
+    },
+    {
+      "id": "INV-003",
+      "name": "Safety Helmet",
+      "category": "Safety Equipment",
+      "quantity": 0,
+      "minQuantity": 10,
+      "maxQuantity": 30,
+      "unitPrice": 45.00,
+      "totalValue": 0,
+      "supplier": "Safety First Inc",
+      "location": "Warehouse A - Shelf 8",
+      "status": "Out of Stock"
+    },
+    {
+      "id": "INV-004",
+      "name": "Wrench Set (10 pieces)",
+      "category": "Tools",
+      "quantity": 25,
+      "minQuantity": 10,
+      "maxQuantity": 40,
+      "unitPrice": 250.00,
+      "totalValue": 6250.00,
+      "supplier": "Tool Master Co",
+      "location": "Warehouse A - Shelf 15",
+      "status": "In Stock"
+    },
+    {
+      "id": "INV-005",
+      "name": "LED Light Bulb 12W",
+      "category": "Consumables",
+      "quantity": 120,
+      "minQuantity": 50,
+      "maxQuantity": 200,
+      "unitPrice": 12.50,
+      "totalValue": 1500.00,
+      "supplier": "Bright Lights Ltd",
+      "location": "Warehouse B - Shelf 20",
+      "status": "In Stock"
+    },
+    {
+      "id": "INV-006",
+      "name": "Fire Extinguisher 5kg",
+      "category": "Safety Equipment",
+      "quantity": 5,
+      "minQuantity": 10,
+      "maxQuantity": 25,
+      "unitPrice": 180.00,
+      "totalValue": 900.00,
+      "supplier": "Fire Safety Corp",
+      "location": "Warehouse A - Shelf 3",
+      "status": "Low Stock"
+    },
+    {
+      "id": "INV-007",
+      "name": "Elevator Cable",
+      "category": "Spare Parts",
+      "quantity": 12,
+      "minQuantity": 5,
+      "maxQuantity": 20,
+      "unitPrice": 450.00,
+      "totalValue": 5400.00,
+      "supplier": "Elevator Parts Inc",
+      "location": "Warehouse A - Shelf 25",
+      "status": "In Stock"
+    },
+    {
+      "id": "INV-008",
+      "name": "Water Pump Seal",
+      "category": "Spare Parts",
+      "quantity": 30,
+      "minQuantity": 15,
+      "maxQuantity": 50,
+      "unitPrice": 35.00,
+      "totalValue": 1050.00,
+      "supplier": "Pump Solutions",
+      "location": "Warehouse B - Shelf 10",
+      "status": "In Stock"
+    }
+  ]
+}
+

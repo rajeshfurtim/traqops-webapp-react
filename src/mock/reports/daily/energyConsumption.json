@@ -1,0 +1,50 @@
+{
+  "reports": [
+    {
+      "id": "EC-001",
+      "date": "2024-01-15",
+      "location": "Building A - Floor 1",
+      "meterReading": 1250.5,
+      "unitsConsumed": 45.2,
+      "cost": 225.50,
+      "depot": "Depot A"
+    },
+    {
+      "id": "EC-002",
+      "date": "2024-01-15",
+      "location": "Building A - Floor 2",
+      "meterReading": 1890.3,
+      "unitsConsumed": 62.8,
+      "cost": 314.00,
+      "depot": "Depot A"
+    },
+    {
+      "id": "EC-003",
+      "date": "2024-01-14",
+      "location": "Building B - Floor 1",
+      "meterReading": 2100.0,
+      "unitsConsumed": 78.5,
+      "cost": 392.50,
+      "depot": "Depot B"
+    },
+    {
+      "id": "EC-004",
+      "date": "2024-01-14",
+      "location": "Building C - Basement",
+      "meterReading": 950.2,
+      "unitsConsumed": 32.1,
+      "cost": 160.50,
+      "depot": "Depot A"
+    },
+    {
+      "id": "EC-005",
+      "date": "2024-01-13",
+      "location": "Parking Area",
+      "meterReading": 450.8,
+      "unitsConsumed": 15.3,
+      "cost": 76.50,
+      "depot": "Depot B"
+    }
+  ]
+}
+
