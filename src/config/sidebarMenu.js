@@ -1,36 +1,43 @@
 // Sidebar menu configuration
 // Icons are referenced by name and resolved in the component to avoid build issues
+// allowedClients: Array of client codes that can access this menu item
+// If not specified, item is accessible to all clients
 
 export const sidebarMenuConfig = [
   {
     key: '/dashboard',
     icon: 'DashboardOutlined',
     label: 'Dashboard',
-    path: '/dashboard'
+    path: '/dashboard',
+    allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
   },
   {
     key: '/corrective-maintenance',
     icon: 'ToolOutlined',
     label: 'Corrective Maintenance',
-    path: '/corrective-maintenance'
+    path: '/corrective-maintenance',
+    allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
   },
   {
     key: '/scheduled-maintenance',
     icon: 'CalendarOutlined',
     label: 'Scheduled Maintenance',
-    path: '/scheduled-maintenance'
+    path: '/scheduled-maintenance',
+    allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
   },
   {
     key: '/inventory',
     icon: 'DatabaseOutlined',
     label: 'Inventory',
-    path: '/inventory'
+    path: '/inventory',
+    allowedClients: ['A1'] // A1 only
   },
   {
     key: '/reports',
     icon: 'FileTextOutlined',
     label: 'Reports',
     path: '/reports',
+    allowedClients: ['CMRL', 'KCIC'], // CMRL and KCIC only
     children: [
       {
         key: '/reports/daily',
@@ -177,6 +184,7 @@ export const sidebarMenuConfig = [
         icon: 'BarChartOutlined',
         label: 'Evaluation & Penalty',
         path: '/reports/evaluation',
+        allowedClients: ['KCIC'], // KCIC only
         children: [
           {
             key: '/reports/evaluation/penalty-summary',
@@ -198,13 +206,15 @@ export const sidebarMenuConfig = [
     key: '/invoices',
     icon: 'DollarOutlined',
     label: 'Invoices',
-    path: '/invoices'
+    path: '/invoices',
+    allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
   },
   {
     key: '/documents',
     icon: 'FolderOpenOutlined',
     label: 'Documents',
-    path: '/documents'
+    path: '/documents',
+    allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
   },
   {
     type: 'divider'
@@ -214,6 +224,7 @@ export const sidebarMenuConfig = [
     icon: 'SettingOutlined',
     label: 'Master Settings',
     path: '/master-settings',
+    allowedClients: ['CMRL'], // CMRL only
     children: [
       {
         key: '/master-settings/user',
@@ -272,6 +283,74 @@ export const sidebarMenuConfig = [
     ]
   }
 ]
+
+// Filter menu items based on selected client
+export const filterMenuByClient = (menuConfig, selectedClient) => {
+  // If "All" is selected, return all menus without filtering
+  if (!selectedClient || selectedClient === 'All') {
+    return menuConfig
+  }
+
+  const filterItems = (items) => {
+    return items
+      .map(item => {
+        // Handle dividers
+        if (item.type === 'divider') {
+          return item
+        }
+
+        // Check if item is allowed for this client
+        const allowedClients = item.allowedClients || ['CMRL', 'KCIC', 'A1'] // Default to all if not specified
+        if (!allowedClients.includes(selectedClient)) {
+          return null // Filter out this item
+        }
+
+        // Create filtered copy
+        const filteredItem = { ...item }
+
+        // Recursively filter children
+        if (item.children && item.children.length > 0) {
+          const filteredChildren = filterItems(item.children)
+          if (filteredChildren.length > 0) {
+            filteredItem.children = filteredChildren
+          } else {
+            // If no children are allowed, remove children property
+            delete filteredItem.children
+          }
+        }
+
+        return filteredItem
+      })
+      .filter(item => item !== null) // Remove null items
+  }
+
+  return filterItems(menuConfig)
+}
+
+// Check if a path is allowed for the selected client
+export const isPathAllowedForClient = (pathname, selectedClient, menuConfig = sidebarMenuConfig) => {
+  // If "All" is selected, all paths are allowed
+  if (!selectedClient || selectedClient === 'All') {
+    return true
+  }
+
+  const findPath = (items, targetPath) => {
+    for (const item of items) {
+      if (item.path === targetPath) {
+        const allowedClients = item.allowedClients || ['CMRL', 'KCIC', 'A1']
+        return allowedClients.includes(selectedClient)
+      }
+      if (item.children) {
+        const found = findPath(item.children, targetPath)
+        if (found !== null) return found
+      }
+    }
+    return null
+  }
+
+  const result = findPath(menuConfig, pathname)
+  return result === true
+}
 
 // Helper function to get breadcrumbs from menu config
 export const getBreadcrumbsFromPath = (pathname, menuConfig = sidebarMenuConfig) => {

@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '../context/AuthContext'
+import { ClientProvider } from '../context/ClientContext'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import PageTitle from '../components/PageTitle'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -75,8 +76,9 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <PageTitle />
-        <Routes>
+        <ClientProvider>
+          <PageTitle />
+          <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
@@ -161,6 +163,7 @@ function App() {
           <Route path="master-settings-old" element={<MasterSettings />} />
         </Route>
       </Routes>
+        </ClientProvider>
       </AuthProvider>
     </ErrorBoundary>
   )

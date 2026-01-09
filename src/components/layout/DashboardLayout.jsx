@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip } from 'antd'
+import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip, Select, Tag, Spin } from 'antd'
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -32,7 +32,8 @@ import {
 } from '@ant-design/icons'
 import { useAuth } from '../../context/AuthContext'
 import { useSidebar } from '../../context/SidebarContext'
-import { sidebarMenuConfig, getBreadcrumbsFromPath } from '../../config/sidebarMenu'
+import { useClient } from '../../context/ClientContext'
+import { sidebarMenuConfig, getBreadcrumbsFromPath, filterMenuByClient, isPathAllowedForClient } from '../../config/sidebarMenu'
 import { APP_CONFIG } from '../../config/constants'
 import EllipsisTooltip from '../EllipsisTooltip'
 import clsx from 'clsx'
@@ -127,13 +128,28 @@ export default function DashboardLayout() {
   const location = useLocation()
   const { user, logout } = useAuth()
   const { collapsed, toggleSidebar } = useSidebar()
+  const { selectedClient, changeClient, isChanging } = useClient()
   const [selectedKeys, setSelectedKeys] = useState([location.pathname])
   const [openKeys, setOpenKeys] = useState(() => getOpenKeysFromPath(location.pathname))
+
+  // Filter menus based on selected client
+  const filteredMenuConfig = filterMenuByClient(sidebarMenuConfig, selectedClient)
 
   useEffect(() => {
     setSelectedKeys([location.pathname])
     setOpenKeys(getOpenKeysFromPath(location.pathname))
   }, [location.pathname])
+
+  // Reset to dashboard when client changes from "All" to specific client
+  useEffect(() => {
+    // Only redirect if switching from "All" to a specific client and current path is not allowed
+    if (selectedClient && selectedClient !== 'All' && location.pathname !== '/dashboard' && location.pathname !== '/') {
+      // Check if current path is allowed for selected client
+      if (!isPathAllowedForClient(location.pathname, selectedClient)) {
+        navigate('/dashboard', { replace: true })
+      }
+    }
+  }, [selectedClient, navigate, location.pathname])
 
   const handleMenuClick = ({ key }) => {
     const findPathByKey = (items, targetKey) => {
@@ -149,9 +165,20 @@ export default function DashboardLayout() {
       return null
     }
 
-    const path = findPathByKey(sidebarMenuConfig, key)
+    const path = findPathByKey(filteredMenuConfig, key)
     if (path) {
       navigate(path)
+    }
+  }
+
+  const handleClientChange = (value) => {
+    const newClient = value || 'All'
+    // Only redirect to dashboard if switching from "All" to specific client
+    if (selectedClient === 'All' && newClient !== 'All') {
+      changeClient(newClient)
+      navigate('/dashboard', { replace: true })
+    } else {
+      changeClient(newClient)
     }
   }
 
@@ -160,7 +187,8 @@ export default function DashboardLayout() {
     navigate('/login')
   }
 
-  const breadcrumbs = getBreadcrumbsFromPath(location.pathname)
+  // Use full menu config for breadcrumbs to ensure accuracy
+  const breadcrumbs = getBreadcrumbsFromPath(location.pathname, sidebarMenuConfig)
 
   const handleUserMenuClick = ({ key }) => {
     if (key === 'profile') {
@@ -194,7 +222,26 @@ export default function DashboardLayout() {
     }
   ]
 
-  const menuItems = convertMenuConfigToItems(sidebarMenuConfig)
+  const menuItems = convertMenuConfigToItems(filteredMenuConfig)
+
+  // Render sidebar menu (always show menu since "All" is default)
+  const renderSidebarContent = () => {
+    return (
+      <Menu
+        mode="inline"
+        theme="dark"
+        selectedKeys={selectedKeys}
+        openKeys={openKeys}
+        onOpenChange={setOpenKeys}
+        items={menuItems}
+        onClick={handleMenuClick}
+        style={{
+          height: 'calc(100vh - 64px)',
+          borderRight: 0
+        }}
+      />
+    )
+  }
 
   // Handle responsive behavior
   useEffect(() => {
@@ -236,19 +283,7 @@ export default function DashboardLayout() {
             </div>
           )}
         </div>
-        <Menu
-          mode="inline"
-          theme="dark"
-          selectedKeys={selectedKeys}
-          openKeys={openKeys}
-          onOpenChange={setOpenKeys}
-          items={menuItems}
-          onClick={handleMenuClick}
-          style={{
-            height: 'calc(100vh - 64px)',
-            borderRight: 0
-          }}
-        />
+        {renderSidebarContent()}
       </Sider>
       <Layout style={{ marginLeft: collapsed ? 80 : 260, transition: 'margin-left 0.2s' }}>
         <Header
@@ -298,6 +333,32 @@ export default function DashboardLayout() {
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Client Selection Dropdown */}
+            <Select
+              placeholder="Select Client"
+              value={selectedClient || 'All'}
+              onChange={handleClientChange}
+              style={{ minWidth: 150 }}
+              options={[
+                { label: 'All', value: 'All' },
+                { label: 'CMRL', value: 'CMRL' },
+                { label: 'KCIC', value: 'KCIC' },
+                { label: 'A1', value: 'A1' }
+              ]}
+            />
+            
+            {/* Client Badge */}
+            {selectedClient && selectedClient !== 'All' && (
+              <Tag color="blue" style={{ margin: 0 }}>
+                {selectedClient}
+              </Tag>
+            )}
+
+            {/* Loading indicator */}
+            {isChanging && (
+              <Spin size="small" />
+            )}
+
             <span style={{ display: window.innerWidth > 600 ? 'block' : 'none' }}>{user?.name}</span>
             <Dropdown menu={{ items: userMenuItems, onClick: handleUserMenuClick }} placement="bottomRight">
               <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -314,10 +375,23 @@ export default function DashboardLayout() {
             padding: '24px',
             background: '#f5f5f5',
             minHeight: 'calc(100vh - 112px)',
-            borderRadius: 8
+            borderRadius: 8,
+            transition: 'opacity 0.3s ease',
+            opacity: isChanging ? 0.6 : 1
           }}
         >
-          <Outlet />
+          {isChanging ? (
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              minHeight: '400px' 
+            }}>
+              <Spin size="large" tip="Switching client..." />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </Content>
       </Layout>
     </Layout>
