@@ -2,7 +2,7 @@
 
 **Asset & Maintenance Management System**
 
-A production-ready React application for enterprise asset, maintenance, inventory, and operations management built with React 18, Vite, Material UI, Ant Design, and Highcharts.
+A production-ready React application for enterprise asset, maintenance, inventory, and operations management built with React 18, Vite, Material UI, Ant Design, and Recharts.
 
 ## Tech Stack
 
@@ -19,8 +19,7 @@ A production-ready React application for enterprise asset, maintenance, inventor
 - MUI Icons
 
 ### Charts & Visualization
-- Highcharts
-- highcharts-react-official
+- Recharts - Responsive charts with smooth animations
 
 ### Utilities
 - dayjs - Date handling
@@ -111,7 +110,7 @@ The application uses mock data stored in JSON files in the `src/mock/` directory
 - **Consistent Spacing & Typography**: MUI theme system
 - **MUI for Structure**: Layout, navigation, cards, dialogs
 - **AntD for Data**: Tables, pagination, filters, date pickers
-- **Highcharts for Visualization**: Charts and graphs only
+- **Recharts for Visualization**: Responsive charts with gradients and animations
 - **No UI Experimentation**: Stable, proven UI patterns
 
 ## Routes
