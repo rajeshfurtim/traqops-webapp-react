@@ -90,6 +90,11 @@ export default function ShiftsMaster() {
     }
   ]
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -164,7 +169,7 @@ export default function ShiftsMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add Shift
               </AntButton>
             </Box>
@@ -189,10 +194,11 @@ export default function ShiftsMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createShift}
           onUpdate={mockApi.updateShift}
           fields={shiftFields}
-          title="Edit Shift"
-          successMessage="Shift updated successfully"
+          title={selectedRecord ? 'Edit Shift' : 'Add Shift'}
+          successMessage={selectedRecord ? 'Shift updated successfully' : 'Shift created successfully'}
         />
       </Box>
     </>

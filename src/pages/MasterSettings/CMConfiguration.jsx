@@ -82,6 +82,11 @@ export default function CMConfiguration() {
     }
   ]
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -154,7 +159,7 @@ export default function CMConfiguration() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add Configuration
               </AntButton>
             </Box>
@@ -179,10 +184,11 @@ export default function CMConfiguration() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createCMConfiguration}
           onUpdate={mockApi.updateCMConfiguration}
           fields={configFields}
-          title="Edit CM Configuration"
-          successMessage="Configuration updated successfully"
+          title={selectedRecord ? 'Edit CM Configuration' : 'Add CM Configuration'}
+          successMessage={selectedRecord ? 'Configuration updated successfully' : 'Configuration created successfully'}
         />
       </Box>
     </>

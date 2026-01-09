@@ -76,6 +76,11 @@ export default function ToolsMaster() {
     }
   ]
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -142,7 +147,7 @@ export default function ToolsMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add Tool
               </AntButton>
             </Box>
@@ -167,10 +172,11 @@ export default function ToolsMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createTool}
           onUpdate={mockApi.updateTool}
           fields={toolFields}
-          title="Edit Tool"
-          successMessage="Tool updated successfully"
+          title={selectedRecord ? 'Edit Tool' : 'Add Tool'}
+          successMessage={selectedRecord ? 'Tool updated successfully' : 'Tool created successfully'}
         />
       </Box>
     </>

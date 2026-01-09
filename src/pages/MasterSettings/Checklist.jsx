@@ -83,6 +83,11 @@ export default function ChecklistMaster() {
     }
   ]
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -149,7 +154,7 @@ export default function ChecklistMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add Checklist
               </AntButton>
             </Box>
@@ -174,10 +179,11 @@ export default function ChecklistMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createChecklist}
           onUpdate={mockApi.updateChecklist}
           fields={checklistFields}
-          title="Edit Checklist"
-          successMessage="Checklist updated successfully"
+          title={selectedRecord ? 'Edit Checklist' : 'Add Checklist'}
+          successMessage={selectedRecord ? 'Checklist updated successfully' : 'Checklist created successfully'}
         />
       </Box>
     </>

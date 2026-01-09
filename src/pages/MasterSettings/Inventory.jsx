@@ -82,6 +82,11 @@ export default function InventoryMaster() {
     }
   ]
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -160,7 +165,7 @@ export default function InventoryMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add Item
               </AntButton>
             </Box>
@@ -185,10 +190,11 @@ export default function InventoryMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createInventoryItem}
           onUpdate={mockApi.updateInventoryItem}
           fields={inventoryFields}
-          title="Edit Inventory Item"
-          successMessage="Inventory item updated successfully"
+          title={selectedRecord ? 'Edit Inventory Item' : 'Add Inventory Item'}
+          successMessage={selectedRecord ? 'Inventory item updated successfully' : 'Inventory item created successfully'}
         />
       </Box>
     </>

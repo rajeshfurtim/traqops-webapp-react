@@ -29,6 +29,11 @@ export default function UserMaster() {
     }
   }
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -175,7 +180,7 @@ export default function UserMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add User
               </AntButton>
             </Box>
@@ -200,10 +205,11 @@ export default function UserMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createUser}
           onUpdate={mockApi.updateUser}
           fields={userFields}
-          title="Edit User"
-          successMessage="User updated successfully"
+          title={selectedRecord ? 'Edit User' : 'Add User'}
+          successMessage={selectedRecord ? 'User updated successfully' : 'User created successfully'}
         />
       </Box>
     </>

@@ -29,6 +29,11 @@ export default function LocationMaster() {
     }
   }
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -148,7 +153,7 @@ export default function LocationMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add Location
               </AntButton>
             </Box>
@@ -173,10 +178,11 @@ export default function LocationMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createLocation}
           onUpdate={mockApi.updateLocation}
           fields={locationFields}
-          title="Edit Location"
-          successMessage="Location updated successfully"
+          title={selectedRecord ? 'Edit Location' : 'Add Location'}
+          successMessage={selectedRecord ? 'Location updated successfully' : 'Location created successfully'}
         />
       </Box>
     </>

@@ -4,16 +4,17 @@ import { Modal, Form, Input, Select, notification } from 'antd'
 const { Option } = Select
 
 /**
- * Reusable Edit Modal Component for Master Settings
+ * Reusable Add/Edit Modal Component for Master Settings
  * 
  * @param {Object} props
  * @param {boolean} props.open - Modal open state
- * @param {Object|null} props.record - Record data to edit (null when closed)
+ * @param {Object|null} props.record - Record data to edit (null for Add mode)
  * @param {Function} props.onClose - Callback when modal closes
- * @param {Function} props.onSuccess - Callback when update succeeds
- * @param {Function} props.onUpdate - API function to call for update (async)
+ * @param {Function} props.onSuccess - Callback when create/update succeeds
+ * @param {Function} props.onUpdate - API function to call for update (async) - required for Edit mode
+ * @param {Function} props.onCreate - API function to call for create (async) - required for Add mode
  * @param {Array} props.fields - Array of field configurations
- * @param {string} props.title - Modal title
+ * @param {string} props.title - Modal title (will show "Add" or "Edit" prefix if not provided)
  * @param {string} props.successMessage - Success notification message
  */
 export default function MasterEditModal({
@@ -22,12 +23,18 @@ export default function MasterEditModal({
   onClose,
   onSuccess,
   onUpdate,
+  onCreate,
   fields = [],
-  title = 'Edit Master Details',
-  successMessage = 'Updated successfully'
+  title,
+  successMessage
 }) {
   const [form] = Form.useForm()
   const [isSaving, setIsSaving] = useState(false)
+
+  const isEditMode = !!record
+  const modalTitle = title || (isEditMode ? 'Edit' : 'Add')
+  const defaultSuccessMessage = isEditMode ? 'Updated successfully' : 'Created successfully'
+  const finalSuccessMessage = successMessage || defaultSuccessMessage
 
   // Pre-fill form when record changes
   useEffect(() => {
@@ -44,13 +51,24 @@ export default function MasterEditModal({
       const values = await form.validateFields()
       setIsSaving(true)
 
-      // Call update API
-      await onUpdate(record.id, values)
+      if (isEditMode) {
+        // Edit mode: call update API
+        if (!onUpdate) {
+          throw new Error('onUpdate function is required for edit mode')
+        }
+        await onUpdate(record.id, values)
+      } else {
+        // Add mode: call create API
+        if (!onCreate) {
+          throw new Error('onCreate function is required for add mode')
+        }
+        await onCreate(values)
+      }
 
       // Show success notification
       notification.success({
         message: 'Success',
-        description: successMessage,
+        description: finalSuccessMessage,
         placement: 'topRight'
       })
 
@@ -67,7 +85,7 @@ export default function MasterEditModal({
       // Handle API errors
       notification.error({
         message: 'Error',
-        description: error.message || 'Failed to update. Please try again.',
+        description: error.message || (isEditMode ? 'Failed to update. Please try again.' : 'Failed to create. Please try again.'),
         placement: 'topRight'
       })
     } finally {
@@ -113,7 +131,7 @@ export default function MasterEditModal({
       destroyOnClose
       maskClosable
       keyboard
-      okText="Save"
+      okText={isEditMode ? 'Save' : 'Create'}
       cancelText="Cancel"
       width={600}
     >

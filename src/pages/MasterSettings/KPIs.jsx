@@ -89,6 +89,11 @@ export default function KPIsMaster() {
     }
   ]
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -173,7 +178,7 @@ export default function KPIsMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add KPI
               </AntButton>
             </Box>
@@ -198,10 +203,11 @@ export default function KPIsMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createKPI}
           onUpdate={mockApi.updateKPI}
           fields={kpiFields}
-          title="Edit KPI"
-          successMessage="KPI updated successfully"
+          title={selectedRecord ? 'Edit KPI' : 'Add KPI'}
+          successMessage={selectedRecord ? 'KPI updated successfully' : 'KPI created successfully'}
         />
       </Box>
     </>

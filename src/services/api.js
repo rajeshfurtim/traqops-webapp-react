@@ -848,6 +848,61 @@ export const mockApi = {
   updateKPI: async (id, data) => {
     await delay(500)
     return { data: { id, ...data, updatedAt: new Date().toISOString() } }
+  },
+
+  // Create APIs for Master Settings
+  createUser: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, userId: `USER${String(newId).slice(-4)}`, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createLocation: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, locationId: `LOC${String(newId).slice(-4)}`, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createShift: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, shiftId: `SHIFT${String(newId).slice(-2)}`, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createAsset: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, assetId: `ASSET${String(newId).slice(-4)}`, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createInventoryItem: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, itemCode: `ITEM${String(newId).slice(-4)}`, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createTool: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, toolId: `TOOL${String(newId).slice(-4)}`, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createChecklist: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, checklistId: `CHK${String(newId).slice(-4)}`, itemsCount: 0, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createCMConfiguration: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, configId: `CFG${String(newId).slice(-4)}`, ...data, createdAt: new Date().toISOString() } }
+  },
+
+  createKPI: async (data) => {
+    await delay(500)
+    const newId = Date.now()
+    return { data: { id: newId, kpiId: `KPI${String(newId).slice(-4)}`, ...data, createdAt: new Date().toISOString() } }
   }
 }
 

@@ -82,6 +82,11 @@ export default function AssetsMaster() {
     }
   ]
 
+  const handleAdd = () => {
+    setSelectedRecord(null)
+    setIsEditModalOpen(true)
+  }
+
   const handleEdit = (record) => {
     setSelectedRecord(record)
     setIsEditModalOpen(true)
@@ -154,7 +159,7 @@ export default function AssetsMaster() {
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />}>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
                 Add Asset
               </AntButton>
             </Box>
@@ -179,10 +184,11 @@ export default function AssetsMaster() {
           record={selectedRecord}
           onClose={handleCloseModal}
           onSuccess={handleUpdateSuccess}
+          onCreate={mockApi.createAsset}
           onUpdate={mockApi.updateAsset}
           fields={assetFields}
-          title="Edit Asset"
-          successMessage="Asset updated successfully"
+          title={selectedRecord ? 'Edit Asset' : 'Add Asset'}
+          successMessage={selectedRecord ? 'Asset updated successfully' : 'Asset created successfully'}
         />
       </Box>
     </>
