@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useClient } from '../context/ClientContext'
 import { isPathAllowedForClient } from '../config/sidebarMenu'
@@ -9,6 +9,7 @@ export const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth()
   const { selectedClient, isChanging } = useClient()
   const location = useLocation()
+  const navigate = useNavigate()
 
   if (loading || isChanging) {
     return (
@@ -48,7 +49,7 @@ export const ProtectedRoute = ({ children }) => {
                 title="403"
                 subTitle="Sorry, you are not authorized to access this page for the selected client."
                 extra={
-                  <Button type="primary" onClick={() => window.location.href = '/dashboard'}>
+                  <Button type="primary" onClick={() => navigate('/dashboard')}>
                     Go to Dashboard
                   </Button>
                 }

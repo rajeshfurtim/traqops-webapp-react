@@ -1,5 +1,6 @@
 import axios from 'axios'
 import dayjs from 'dayjs'
+import { apiBaseUrl, domainName, getApiUrl } from '../config/apiConfig'
 
 // Mock data imports
 import dashboardData from '../mock/dashboard.json'
@@ -32,14 +33,52 @@ import temperatureRunStatusData from '../mock/reports/daily/temperatureRunStatus
 // Simulate API delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
-// Create axios instance (for future real API integration)
+// Create axios instance with dynamic base URL
 const api = axios.create({
-  baseURL: '/api',
-  timeout: 10000,
+  baseURL: apiBaseUrl,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json'
   }
 })
+
+api.interceptors.request.use(
+  (config) => config,
+  (error) => Promise.reject(error)
+)
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      console.error('API Error:', error.response.status, error.response.data)
+    } else if (error.request) {
+      console.error('Network Error:', error.request)
+    } else {
+      console.error('Error:', error.message)
+    }
+    return Promise.reject(error)
+  }
+)
+
+// Real API service functions
+export const apiService = {
+  /**
+   * Login API
+   * POST {apiBaseUrl}/unsecure/domainlogin
+   * Payload: { email, password, domainName, emailLogin: true }
+   */
+  login: async (credentials) => {
+    const payload = {
+      email: credentials.email,
+      password: credentials.password,
+      domainName: domainName,
+      emailLogin: true
+    }
+    const response = await api.post('/unsecure/domainlogin', payload)
+    return response.data
+  }
+}
 
 // Mock API service
 export const mockApi = {
