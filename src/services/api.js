@@ -9,6 +9,7 @@ import inventoryData from '../mock/inventory.json'
 import reportsData from '../mock/reports.json'
 import invoicesData from '../mock/invoices.json'
 import documentsData from '../mock/documents.json'
+import documentsFoldersData from '../mock/documentsFolders.json'
 import masterSettingsData from '../mock/masterSettings.json'
 // Report data imports
 import dailyReportsData from '../mock/reports/dailyReports.json'
@@ -112,6 +113,38 @@ export const mockApi = {
       documents = documents.filter(d => d.category === category)
     }
     return { data: { documents, categories: documentsData.categories } }
+  },
+
+  // Document Folders (new folder-based structure)
+  getDocumentFolders: async () => {
+    await delay(300)
+    return { data: documentsFoldersData.folders }
+  },
+
+  getDocumentsByFolder: async (folderId) => {
+    await delay(300)
+    const files = documentsFoldersData.files[folderId] || []
+    return { data: files }
+  },
+
+  uploadDocument: async (folderId, file) => {
+    await delay(500)
+    // Mock: create a new file entry
+    const newFile = {
+      id: `file-${Date.now()}`,
+      name: file.name,
+      type: file.type || 'PDF',
+      size: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      uploadedAt: new Date().toISOString()
+    }
+    // In real implementation, this would add to the files object
+    return { data: newFile }
+  },
+
+  deleteDocument: async (folderId, fileId) => {
+    await delay(500)
+    // Mock: file deletion
+    return { data: { id: fileId, deleted: true } }
   },
 
   // Master Settings

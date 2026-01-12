@@ -1,0 +1,541 @@
+{
+  "folders": [
+    {
+      "id": "dec-2023",
+      "name": "Dec 2023",
+      "count": 0,
+      "children": [
+        {
+          "id": "dec-2023-sti",
+          "name": "STI",
+          "count": 22,
+          "folderId": "dec-2023-sti"
+        },
+        {
+          "id": "dec-2023-sat",
+          "name": "SAT",
+          "count": 22,
+          "folderId": "dec-2023-sat"
+        },
+        {
+          "id": "dec-2023-sae",
+          "name": "SAE",
+          "count": 21,
+          "folderId": "dec-2023-sae"
+        },
+        {
+          "id": "dec-2023-ssn",
+          "name": "SSN",
+          "count": 22,
+          "folderId": "dec-2023-ssn"
+        },
+        {
+          "id": "dec-2023-spc",
+          "name": "SPC",
+          "count": 22,
+          "folderId": "dec-2023-spc"
+        },
+        {
+          "id": "dec-2023-skm",
+          "name": "SKM",
+          "count": 21,
+          "folderId": "dec-2023-skm"
+        },
+        {
+          "id": "dec-2023-snp",
+          "name": "SNP",
+          "count": 21,
+          "folderId": "dec-2023-snp"
+        },
+        {
+          "id": "dec-2023-seg",
+          "name": "SEG",
+          "count": 21,
+          "folderId": "dec-2023-seg"
+        },
+        {
+          "id": "dec-2023-scc",
+          "name": "SCC",
+          "count": 22,
+          "folderId": "dec-2023-scc"
+        }
+      ]
+    },
+    {
+      "id": "jan-2024",
+      "name": "Jan 2024",
+      "count": 0,
+      "children": []
+    },
+    {
+      "id": "feb-2024",
+      "name": "FEB 2024",
+      "count": 0,
+      "children": []
+    }
+  ],
+  "files": {
+    "dec-2023-sti": [
+      {
+        "id": "file-001",
+        "name": "ACB pm_13027888.pdf",
+        "type": "PDF",
+        "size": "2.5 MB",
+        "uploadedAt": "2023-12-15T10:30:00Z"
+      },
+      {
+        "id": "file-002",
+        "name": "AHU PM_13027890.pdf",
+        "type": "PDF",
+        "size": "1.8 MB",
+        "uploadedAt": "2023-12-15T11:00:00Z"
+      },
+      {
+        "id": "file-003",
+        "name": "Chiller PM_13027898.pdf",
+        "type": "PDF",
+        "size": "3.2 MB",
+        "uploadedAt": "2023-12-15T11:30:00Z"
+      },
+      {
+        "id": "file-004",
+        "name": "HVAC Scada system_13027914.pdf",
+        "type": "PDF",
+        "size": "4.1 MB",
+        "uploadedAt": "2023-12-15T12:00:00Z"
+      },
+      {
+        "id": "file-005",
+        "name": "Fire Safety PM_13027920.pdf",
+        "type": "PDF",
+        "size": "2.9 MB",
+        "uploadedAt": "2023-12-15T12:30:00Z"
+      },
+      {
+        "id": "file-006",
+        "name": "Elevator PM_13027925.pdf",
+        "type": "PDF",
+        "size": "1.5 MB",
+        "uploadedAt": "2023-12-15T13:00:00Z"
+      },
+      {
+        "id": "file-007",
+        "name": "Escalator PM_13027930.pdf",
+        "type": "PDF",
+        "size": "2.1 MB",
+        "uploadedAt": "2023-12-15T13:30:00Z"
+      },
+      {
+        "id": "file-008",
+        "name": "Plumbing PM_13027935.pdf",
+        "type": "PDF",
+        "size": "1.7 MB",
+        "uploadedAt": "2023-12-15T14:00:00Z"
+      },
+      {
+        "id": "file-009",
+        "name": "Electrical PM_13027940.pdf",
+        "type": "PDF",
+        "size": "3.5 MB",
+        "uploadedAt": "2023-12-15T14:30:00Z"
+      },
+      {
+        "id": "file-010",
+        "name": "Lighting PM_13027945.pdf",
+        "type": "PDF",
+        "size": "1.2 MB",
+        "uploadedAt": "2023-12-15T15:00:00Z"
+      },
+      {
+        "id": "file-011",
+        "name": "Security PM_13027950.pdf",
+        "type": "PDF",
+        "size": "2.3 MB",
+        "uploadedAt": "2023-12-15T15:30:00Z"
+      },
+      {
+        "id": "file-012",
+        "name": "CCTV PM_13027955.pdf",
+        "type": "PDF",
+        "size": "1.9 MB",
+        "uploadedAt": "2023-12-15T16:00:00Z"
+      },
+      {
+        "id": "file-013",
+        "name": "Access Control PM_13027960.pdf",
+        "type": "PDF",
+        "size": "2.7 MB",
+        "uploadedAt": "2023-12-15T16:30:00Z"
+      },
+      {
+        "id": "file-014",
+        "name": "BMS PM_13027965.pdf",
+        "type": "PDF",
+        "size": "3.8 MB",
+        "uploadedAt": "2023-12-15T17:00:00Z"
+      },
+      {
+        "id": "file-015",
+        "name": "Water Treatment PM_13027970.pdf",
+        "type": "PDF",
+        "size": "2.4 MB",
+        "uploadedAt": "2023-12-15T17:30:00Z"
+      },
+      {
+        "id": "file-016",
+        "name": "Waste Management PM_13027975.pdf",
+        "type": "PDF",
+        "size": "1.6 MB",
+        "uploadedAt": "2023-12-15T18:00:00Z"
+      },
+      {
+        "id": "file-017",
+        "name": "Landscaping PM_13027980.pdf",
+        "type": "PDF",
+        "size": "1.4 MB",
+        "uploadedAt": "2023-12-15T18:30:00Z"
+      },
+      {
+        "id": "file-018",
+        "name": "Parking PM_13027985.pdf",
+        "type": "PDF",
+        "size": "1.8 MB",
+        "uploadedAt": "2023-12-15T19:00:00Z"
+      },
+      {
+        "id": "file-019",
+        "name": "Signage PM_13027990.pdf",
+        "type": "PDF",
+        "size": "1.1 MB",
+        "uploadedAt": "2023-12-15T19:30:00Z"
+      },
+      {
+        "id": "file-020",
+        "name": "Cleaning PM_13027995.pdf",
+        "type": "PDF",
+        "size": "2.0 MB",
+        "uploadedAt": "2023-12-15T20:00:00Z"
+      },
+      {
+        "id": "file-021",
+        "name": "Pest Control PM_13028000.pdf",
+        "type": "PDF",
+        "size": "1.3 MB",
+        "uploadedAt": "2023-12-15T20:30:00Z"
+      },
+      {
+        "id": "file-022",
+        "name": "General Maintenance PM_13028005.pdf",
+        "type": "PDF",
+        "size": "2.6 MB",
+        "uploadedAt": "2023-12-15T21:00:00Z"
+      }
+    ],
+    "dec-2023-sat": [
+      {
+        "id": "file-023",
+        "name": "ACB pm_13027888.pdf",
+        "type": "PDF",
+        "size": "2.5 MB",
+        "uploadedAt": "2023-12-16T10:30:00Z"
+      },
+      {
+        "id": "file-024",
+        "name": "AHU PM_13027890.pdf",
+        "type": "PDF",
+        "size": "1.8 MB",
+        "uploadedAt": "2023-12-16T11:00:00Z"
+      },
+      {
+        "id": "file-025",
+        "name": "Chiller PM_13027898.pdf",
+        "type": "PDF",
+        "size": "3.2 MB",
+        "uploadedAt": "2023-12-16T11:30:00Z"
+      },
+      {
+        "id": "file-026",
+        "name": "HVAC Scada system_13027914.pdf",
+        "type": "PDF",
+        "size": "4.1 MB",
+        "uploadedAt": "2023-12-16T12:00:00Z"
+      },
+      {
+        "id": "file-027",
+        "name": "Fire Safety PM_13027920.pdf",
+        "type": "PDF",
+        "size": "2.9 MB",
+        "uploadedAt": "2023-12-16T12:30:00Z"
+      },
+      {
+        "id": "file-028",
+        "name": "Elevator PM_13027925.pdf",
+        "type": "PDF",
+        "size": "1.5 MB",
+        "uploadedAt": "2023-12-16T13:00:00Z"
+      },
+      {
+        "id": "file-029",
+        "name": "Escalator PM_13027930.pdf",
+        "type": "PDF",
+        "size": "2.1 MB",
+        "uploadedAt": "2023-12-16T13:30:00Z"
+      },
+      {
+        "id": "file-030",
+        "name": "Plumbing PM_13027935.pdf",
+        "type": "PDF",
+        "size": "1.7 MB",
+        "uploadedAt": "2023-12-16T14:00:00Z"
+      },
+      {
+        "id": "file-031",
+        "name": "Electrical PM_13027940.pdf",
+        "type": "PDF",
+        "size": "3.5 MB",
+        "uploadedAt": "2023-12-16T14:30:00Z"
+      },
+      {
+        "id": "file-032",
+        "name": "Lighting PM_13027945.pdf",
+        "type": "PDF",
+        "size": "1.2 MB",
+        "uploadedAt": "2023-12-16T15:00:00Z"
+      },
+      {
+        "id": "file-033",
+        "name": "Security PM_13027950.pdf",
+        "type": "PDF",
+        "size": "2.3 MB",
+        "uploadedAt": "2023-12-16T15:30:00Z"
+      },
+      {
+        "id": "file-034",
+        "name": "CCTV PM_13027955.pdf",
+        "type": "PDF",
+        "size": "1.9 MB",
+        "uploadedAt": "2023-12-16T16:00:00Z"
+      },
+      {
+        "id": "file-035",
+        "name": "Access Control PM_13027960.pdf",
+        "type": "PDF",
+        "size": "2.7 MB",
+        "uploadedAt": "2023-12-16T16:30:00Z"
+      },
+      {
+        "id": "file-036",
+        "name": "BMS PM_13027965.pdf",
+        "type": "PDF",
+        "size": "3.8 MB",
+        "uploadedAt": "2023-12-16T17:00:00Z"
+      },
+      {
+        "id": "file-037",
+        "name": "Water Treatment PM_13027970.pdf",
+        "type": "PDF",
+        "size": "2.4 MB",
+        "uploadedAt": "2023-12-16T17:30:00Z"
+      },
+      {
+        "id": "file-038",
+        "name": "Waste Management PM_13027975.pdf",
+        "type": "PDF",
+        "size": "1.6 MB",
+        "uploadedAt": "2023-12-16T18:00:00Z"
+      },
+      {
+        "id": "file-039",
+        "name": "Landscaping PM_13027980.pdf",
+        "type": "PDF",
+        "size": "1.4 MB",
+        "uploadedAt": "2023-12-16T18:30:00Z"
+      },
+      {
+        "id": "file-040",
+        "name": "Parking PM_13027985.pdf",
+        "type": "PDF",
+        "size": "1.8 MB",
+        "uploadedAt": "2023-12-16T19:00:00Z"
+      },
+      {
+        "id": "file-041",
+        "name": "Signage PM_13027990.pdf",
+        "type": "PDF",
+        "size": "1.1 MB",
+        "uploadedAt": "2023-12-16T19:30:00Z"
+      },
+      {
+        "id": "file-042",
+        "name": "Cleaning PM_13027995.pdf",
+        "type": "PDF",
+        "size": "2.0 MB",
+        "uploadedAt": "2023-12-16T20:00:00Z"
+      },
+      {
+        "id": "file-043",
+        "name": "Pest Control PM_13028000.pdf",
+        "type": "PDF",
+        "size": "1.3 MB",
+        "uploadedAt": "2023-12-16T20:30:00Z"
+      },
+      {
+        "id": "file-044",
+        "name": "General Maintenance PM_13028005.pdf",
+        "type": "PDF",
+        "size": "2.6 MB",
+        "uploadedAt": "2023-12-16T21:00:00Z"
+      }
+    ],
+    "dec-2023-sae": [
+      {
+        "id": "file-045",
+        "name": "ACB pm_13027888.pdf",
+        "type": "PDF",
+        "size": "2.5 MB",
+        "uploadedAt": "2023-12-17T10:30:00Z"
+      },
+      {
+        "id": "file-046",
+        "name": "AHU PM_13027890.pdf",
+        "type": "PDF",
+        "size": "1.8 MB",
+        "uploadedAt": "2023-12-17T11:00:00Z"
+      },
+      {
+        "id": "file-047",
+        "name": "Chiller PM_13027898.pdf",
+        "type": "PDF",
+        "size": "3.2 MB",
+        "uploadedAt": "2023-12-17T11:30:00Z"
+      },
+      {
+        "id": "file-048",
+        "name": "HVAC Scada system_13027914.pdf",
+        "type": "PDF",
+        "size": "4.1 MB",
+        "uploadedAt": "2023-12-17T12:00:00Z"
+      },
+      {
+        "id": "file-049",
+        "name": "Fire Safety PM_13027920.pdf",
+        "type": "PDF",
+        "size": "2.9 MB",
+        "uploadedAt": "2023-12-17T12:30:00Z"
+      },
+      {
+        "id": "file-050",
+        "name": "Elevator PM_13027925.pdf",
+        "type": "PDF",
+        "size": "1.5 MB",
+        "uploadedAt": "2023-12-17T13:00:00Z"
+      },
+      {
+        "id": "file-051",
+        "name": "Escalator PM_13027930.pdf",
+        "type": "PDF",
+        "size": "2.1 MB",
+        "uploadedAt": "2023-12-17T13:30:00Z"
+      },
+      {
+        "id": "file-052",
+        "name": "Plumbing PM_13027935.pdf",
+        "type": "PDF",
+        "size": "1.7 MB",
+        "uploadedAt": "2023-12-17T14:00:00Z"
+      },
+      {
+        "id": "file-053",
+        "name": "Electrical PM_13027940.pdf",
+        "type": "PDF",
+        "size": "3.5 MB",
+        "uploadedAt": "2023-12-17T14:30:00Z"
+      },
+      {
+        "id": "file-054",
+        "name": "Lighting PM_13027945.pdf",
+        "type": "PDF",
+        "size": "1.2 MB",
+        "uploadedAt": "2023-12-17T15:00:00Z"
+      },
+      {
+        "id": "file-055",
+        "name": "Security PM_13027950.pdf",
+        "type": "PDF",
+        "size": "2.3 MB",
+        "uploadedAt": "2023-12-17T15:30:00Z"
+      },
+      {
+        "id": "file-056",
+        "name": "CCTV PM_13027955.pdf",
+        "type": "PDF",
+        "size": "1.9 MB",
+        "uploadedAt": "2023-12-17T16:00:00Z"
+      },
+      {
+        "id": "file-057",
+        "name": "Access Control PM_13027960.pdf",
+        "type": "PDF",
+        "size": "2.7 MB",
+        "uploadedAt": "2023-12-17T16:30:00Z"
+      },
+      {
+        "id": "file-058",
+        "name": "BMS PM_13027965.pdf",
+        "type": "PDF",
+        "size": "3.8 MB",
+        "uploadedAt": "2023-12-17T17:00:00Z"
+      },
+      {
+        "id": "file-059",
+        "name": "Water Treatment PM_13027970.pdf",
+        "type": "PDF",
+        "size": "2.4 MB",
+        "uploadedAt": "2023-12-17T17:30:00Z"
+      },
+      {
+        "id": "file-060",
+        "name": "Waste Management PM_13027975.pdf",
+        "type": "PDF",
+        "size": "1.6 MB",
+        "uploadedAt": "2023-12-17T18:00:00Z"
+      },
+      {
+        "id": "file-061",
+        "name": "Landscaping PM_13027980.pdf",
+        "type": "PDF",
+        "size": "1.4 MB",
+        "uploadedAt": "2023-12-17T18:30:00Z"
+      },
+      {
+        "id": "file-062",
+        "name": "Parking PM_13027985.pdf",
+        "type": "PDF",
+        "size": "1.8 MB",
+        "uploadedAt": "2023-12-17T19:00:00Z"
+      },
+      {
+        "id": "file-063",
+        "name": "Signage PM_13027990.pdf",
+        "type": "PDF",
+        "size": "1.1 MB",
+        "uploadedAt": "2023-12-17T19:30:00Z"
+      },
+      {
+        "id": "file-064",
+        "name": "Cleaning PM_13027995.pdf",
+        "type": "PDF",
+        "size": "2.0 MB",
+        "uploadedAt": "2023-12-17T20:00:00Z"
+      },
+      {
+        "id": "file-065",
+        "name": "Pest Control PM_13028000.pdf",
+        "type": "PDF",
+        "size": "1.3 MB",
+        "uploadedAt": "2023-12-17T20:30:00Z"
+      }
+    ]
+  }
+}
+

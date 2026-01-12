@@ -1,121 +1,92 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Tabs, Upload, Button as AntButton, Tag, message } from 'antd'
-import { UploadOutlined, FileTextOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
+import { Box, Typography } from '@mui/material'
+import { Layout } from 'antd'
+import FolderTree from '../components/documents/FolderTree'
+import FileList from '../components/documents/FileList'
 import { mockApi } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
+import './Documents.css'
+
+const { Content } = Layout
 
 export default function Documents() {
   const [loading, setLoading] = useState(true)
-  const [documents, setDocuments] = useState([])
-  const [categories, setCategories] = useState([])
-  const [activeCategory, setActiveCategory] = useState('All')
+  const [folders, setFolders] = useState([])
+  const [files, setFiles] = useState([])
+  const [selectedFolder, setSelectedFolder] = useState(null)
+  const [selectedFolderName, setSelectedFolderName] = useState(null)
 
   useEffect(() => {
-    loadDocuments()
-  }, [activeCategory])
+    loadFolders()
+  }, [])
 
-  const loadDocuments = async () => {
+  useEffect(() => {
+    if (selectedFolder) {
+      loadFiles(selectedFolder)
+    }
+  }, [selectedFolder])
+
+  const loadFolders = async () => {
     try {
       setLoading(true)
-      const response = await mockApi.getDocuments(activeCategory)
-      setDocuments(response.data.documents)
-      setCategories(response.data.categories)
+      const response = await mockApi.getDocumentFolders()
+      setFolders(response.data)
     } catch (error) {
-      console.error('Error loading documents:', error)
+      console.error('Error loading folders:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleUpload = (file) => {
-    // Mock upload functionality
-    message.success(`File ${file.name} uploaded successfully (mock)`)
-    return false // Prevent actual upload
+  const loadFiles = async (folderId) => {
+    try {
+      setLoading(true)
+      const response = await mockApi.getDocumentsByFolder(folderId)
+      setFiles(response.data)
+    } catch (error) {
+      console.error('Error loading files:', error)
+      setFiles([])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDownload = (document) => {
+  const handleFolderSelect = (folderId, folderName) => {
+    setSelectedFolder(folderId)
+    setSelectedFolderName(folderName)
+  }
+
+  const handleUpload = async (file) => {
+    if (!selectedFolder) {
+      return Promise.reject(new Error('Please select a folder first'))
+    }
+    try {
+      await mockApi.uploadDocument(selectedFolder, file)
+      // Reload files after upload
+      await loadFiles(selectedFolder)
+      return Promise.resolve()
+    } catch (error) {
+      return Promise.reject(error)
+    }
+  }
+
+  const handleDownload = (file) => {
     // Mock download functionality
-    message.info(`Downloading ${document.name}...`)
+    console.log('Downloading file:', file)
+    // In real implementation, this would trigger a file download
   }
 
-  const getCategoryColor = (category) => {
-    const colors = {
-      'Safety': 'red',
-      'Maintenance': 'blue',
-      'Inventory': 'green',
-      'Compliance': 'orange',
-      'Training': 'purple'
+  const handleDelete = async (file) => {
+    if (!selectedFolder) return
+    try {
+      await mockApi.deleteDocument(selectedFolder, file.id)
+      // Reload files after delete
+      await loadFiles(selectedFolder)
+    } catch (error) {
+      console.error('Error deleting file:', error)
     }
-    return colors[category] || 'default'
   }
-
-  const columns = [
-    {
-      title: 'Document Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text, record) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <FileTextOutlined />
-          <span>{text}</span>
-        </Box>
-      )
-    },
-    {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-      width: 120,
-      render: (category) => <Tag color={getCategoryColor(category)}>{category}</Tag>
-    },
-    {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-      width: 100
-    },
-    {
-      title: 'Size',
-      dataIndex: 'size',
-      key: 'size',
-      width: 100
-    },
-    {
-      title: 'Version',
-      dataIndex: 'version',
-      key: 'version',
-      width: 100
-    },
-    {
-      title: 'Uploaded By',
-      dataIndex: 'uploadedBy',
-      key: 'uploadedBy',
-      width: 150
-    },
-    {
-      title: 'Uploaded At',
-      dataIndex: 'uploadedAt',
-      key: 'uploadedAt',
-      width: 180,
-      render: (text) => dayjs(text).format('MMM DD, YYYY HH:mm')
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: 120,
-      render: (_, record) => (
-        <AntButton
-          type="link"
-          onClick={() => handleDownload(record)}
-        >
-          Download
-        </AntButton>
-      )
-    }
-  ]
 
   return (
     <>
@@ -123,54 +94,45 @@ export default function Documents() {
         <title>{getPageTitle('documents')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Document Management System`} />
       </Helmet>
-      <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+      <Box className="documents-page">
+        <Typography variant="h4" gutterBottom fontWeight="bold" className="documents-title">
           Document Management
         </Typography>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">Upload Document</Typography>
-            <Upload
-              beforeUpload={handleUpload}
-              showUploadList={false}
-            >
-              <AntButton icon={<UploadOutlined />}>Upload Document</AntButton>
-            </Upload>
-          </Box>
-        </CardContent>
-      </Card>
+        <Layout className="documents-layout">
+          <Content className="documents-content">
+            <div className="documents-panels">
+              {/* Left Panel - Folder Tree (30%) */}
+              <div className="documents-panel-left">
+                {loading && folders.length === 0 ? (
+                  <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <p>Loading folders...</p>
+                  </div>
+                ) : (
+                  <FolderTree
+                    folders={folders}
+                    selectedFolder={selectedFolder}
+                    onFolderSelect={handleFolderSelect}
+                  />
+                )}
+              </div>
 
-      <Card>
-        <CardContent>
-          <Tabs
-            activeKey={activeCategory}
-            onChange={setActiveCategory}
-            items={categories.map(category => ({
-              key: category,
-              label: category
-            }))}
-            style={{ marginBottom: 16 }}
-          />
-
-          {loading ? (
-            <Box display="flex" justifyContent="center" p={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Table
-              dataSource={documents}
-              columns={columns}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
-              size="middle"
-            />
-          )}
-        </CardContent>
-      </Card>
+              {/* Right Panel - File List (70%) */}
+              <div className="documents-panel-right">
+                <FileList
+                  files={files}
+                  selectedFolderName={selectedFolderName}
+                  onUpload={handleUpload}
+                  onDownload={handleDownload}
+                  onDelete={handleDelete}
+                  loading={loading}
+                />
+              </div>
+            </div>
+          </Content>
+        </Layout>
       </Box>
     </>
   )
 }
-
