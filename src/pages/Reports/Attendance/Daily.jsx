@@ -1,23 +1,34 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton } from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message } from 'antd'
+import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { mockApi } from '../../../services/api'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
-
-const { RangePicker } = DatePicker
+import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
+import './Daily.css'
 
 export default function DailyAttendanceReport() {
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
   const [reports, setReports] = useState([])
-  const [filters, setFilters] = useState({})
+  const [filters, setFilters] = useState({
+    date: dayjs(), // Default to today
+    location: undefined,
+    type: 'All'
+  })
   const [form] = Form.useForm()
 
+  // Available locations (from mock data)
+  const locations = ['STI', 'SAT', 'SAE', 'SSN', 'SPC', 'SKM', 'SNP', 'SEG', 'SCC', 'Depot A', 'Depot B', 'Station Central']
+  const statusTypes = ['All', 'Present', 'Absent', 'Late']
+
+  // Load initial data on mount
   useEffect(() => {
     loadReports()
-  }, [filters])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const loadReports = async () => {
     try {
@@ -26,52 +37,118 @@ export default function DailyAttendanceReport() {
       setReports(response.data.reports || [])
     } catch (error) {
       console.error('Error loading daily attendance report:', error)
+      message.error('Failed to load attendance report')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleFilterChange = (values) => {
-    const newFilters = {}
-    if (values.dateRange && values.dateRange.length === 2) {
-      newFilters.dateFrom = values.dateRange[0].format('YYYY-MM-DD')
-      newFilters.dateTo = values.dateRange[1].format('YYYY-MM-DD')
+  const handleFilterChange = (field, value) => {
+    const newFilters = { ...filters }
+    if (field === 'date') {
+      newFilters.date = value
+    } else if (field === 'location') {
+      newFilters.location = value || undefined
+    } else if (field === 'type') {
+      newFilters.type = value
     }
-    if (values.department) newFilters.department = values.department
-    if (values.shift) newFilters.shift = values.shift
     setFilters(newFilters)
   }
 
-  const handleResetFilters = () => {
-    form.resetFields()
-    setFilters({})
+  const handleSearch = async () => {
+    // Get current form values
+    const formValues = form.getFieldsValue()
+    const searchFilters = {
+      date: formValues.date || dayjs(),
+      location: formValues.location || undefined,
+      type: formValues.type || 'All'
+    }
+    setFilters(searchFilters)
+    
+    // Load reports with new filters
+    try {
+      setLoading(true)
+      const response = await mockApi.getDailyAttendanceReport(searchFilters)
+      setReports(response.data.reports || [])
+    } catch (error) {
+      console.error('Error loading daily attendance report:', error)
+      message.error('Failed to load attendance report')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetFilters = async () => {
+    const defaultFilters = {
+      date: dayjs(),
+      location: undefined,
+      type: 'All'
+    }
+    form.setFieldsValue({
+      date: defaultFilters.date,
+      location: undefined,
+      type: 'All'
+    })
+    setFilters(defaultFilters)
+    
+    // Load reports with default filters
+    try {
+      setLoading(true)
+      const response = await mockApi.getDailyAttendanceReport(defaultFilters)
+      setReports(response.data.reports || [])
+    } catch (error) {
+      console.error('Error loading daily attendance report:', error)
+      message.error('Failed to load attendance report')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(prev => ({ ...prev, excel: true }))
+      await exportToExcel(reports, `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`)
+      message.success('Excel file exported successfully')
+    } catch (error) {
+      console.error('Error exporting Excel:', error)
+      message.error('Failed to export Excel file')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
+    }
+  }
+
+  const handleExportPDF = async () => {
+    try {
+      setExporting(prev => ({ ...prev, pdf: true }))
+      await exportToPDF(reports, `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`)
+      message.success('PDF file exported successfully')
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      message.error('Failed to export PDF file')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
+    }
   }
 
   const columns = [
     {
-      title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
-      width: 120,
-      render: (text) => dayjs(text).format('MMM DD, YYYY')
-    },
-    {
       title: 'Employee ID',
       dataIndex: 'employeeId',
       key: 'employeeId',
-      width: 120
+      width: 130,
+      fixed: 'left'
     },
     {
       title: 'Employee Name',
       dataIndex: 'employeeName',
       key: 'employeeName',
-      width: 200
+      width: 180
     },
     {
-      title: 'Department',
-      dataIndex: 'department',
-      key: 'department',
-      width: 150
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+      width: 120
     },
     {
       title: 'Shift',
@@ -80,24 +157,40 @@ export default function DailyAttendanceReport() {
       width: 100
     },
     {
-      title: 'Check In',
-      dataIndex: 'checkIn',
-      key: 'checkIn',
-      width: 120,
-      render: (text) => text ? dayjs(text).format('HH:mm') : '-'
+      title: 'In Time',
+      dataIndex: 'inTime',
+      key: 'inTime',
+      width: 100,
+      render: (text) => text && text !== '-' ? text : '-'
     },
     {
-      title: 'Check Out',
-      dataIndex: 'checkOut',
-      key: 'checkOut',
-      width: 120,
-      render: (text) => text ? dayjs(text).format('HH:mm') : '-'
+      title: 'Out Time',
+      dataIndex: 'outTime',
+      key: 'outTime',
+      width: 100,
+      render: (text) => text && text !== '-' ? text : '-'
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 100
+      width: 100,
+      render: (status) => {
+        const colorMap = {
+          'Present': 'green',
+          'Absent': 'red',
+          'Late': 'orange',
+          'On Leave': 'blue'
+        }
+        return (
+          <span style={{ 
+            color: colorMap[status] || '#666',
+            fontWeight: 500
+          }}>
+            {status}
+          </span>
+        )
+      }
     }
   ]
 
@@ -107,43 +200,97 @@ export default function DailyAttendanceReport() {
         <title>{getPageTitle('reports/attendance/daily')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Daily Attendance Report`} />
       </Helmet>
-      <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+      <Box className="daily-attendance-page">
+        <Typography variant="h4" gutterBottom fontWeight="bold" className="page-title">
           Daily Attendance Report
         </Typography>
 
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
+        {/* Filter Section */}
+        <Card className="filter-card" sx={{ mb: 3 }}>
+          <CardContent className="filter-content">
             <Form
               form={form}
               layout="inline"
-              onFinish={handleFilterChange}
-              style={{ marginBottom: 16 }}
+              initialValues={{
+                date: dayjs(),
+                location: undefined,
+                type: 'All'
+              }}
+              className="filter-form"
             >
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
+              <Form.Item name="date" label="Date" className="filter-item">
+                <DatePicker
+                  format="MMM DD, YYYY"
+                  style={{ width: 180 }}
+                  onChange={(date) => handleFilterChange('date', date)}
+                  allowClear={false}
+                />
               </Form.Item>
-              <Form.Item name="department" label="Department">
-                <Select placeholder="All Departments" style={{ width: 150 }} allowClear>
-                  <Select.Option value="Operations">Operations</Select.Option>
-                  <Select.Option value="Maintenance">Maintenance</Select.Option>
-                  <Select.Option value="Administration">Administration</Select.Option>
+
+              <Form.Item name="location" label="Location" className="filter-item">
+                <Select
+                  placeholder="All Locations"
+                  style={{ width: 180 }}
+                  allowClear
+                  onChange={(value) => handleFilterChange('location', value)}
+                >
+                  {locations.map(location => (
+                    <Select.Option key={location} value={location}>
+                      {location}
+                    </Select.Option>
+                  ))}
                 </Select>
               </Form.Item>
-              <Form.Item name="shift" label="Shift">
-                <Select placeholder="All Shifts" style={{ width: 120 }} allowClear>
-                  <Select.Option value="Morning">Morning</Select.Option>
-                  <Select.Option value="Afternoon">Afternoon</Select.Option>
-                  <Select.Option value="Night">Night</Select.Option>
+
+              <Form.Item name="type" label="Type" className="filter-item">
+                <Select
+                  style={{ width: 150 }}
+                  onChange={(value) => handleFilterChange('type', value)}
+                >
+                  {statusTypes.map(type => (
+                    <Select.Option key={type} value={type}>
+                      {type}
+                    </Select.Option>
+                  ))}
                 </Select>
               </Form.Item>
-              <Form.Item>
+
+              <Form.Item className="filter-item">
                 <Space>
-                  <AntButton type="primary" htmlType="submit">
-                    Apply Filters
+                  <AntButton 
+                    type="primary" 
+                    icon={<SearchOutlined />}
+                    onClick={handleSearch}
+                    loading={loading}
+                  >
+                    Search
                   </AntButton>
                   <AntButton onClick={handleResetFilters}>
                     Reset
+                  </AntButton>
+                </Space>
+              </Form.Item>
+
+              {/* Export Buttons */}
+              <Form.Item className="export-buttons">
+                <Space>
+                  <AntButton
+                    type="default"
+                    icon={<FileExcelOutlined />}
+                    onClick={handleExportExcel}
+                    loading={exporting.excel}
+                    disabled={reports.length === 0}
+                  >
+                    Excel
+                  </AntButton>
+                  <AntButton
+                    type="default"
+                    icon={<FilePdfOutlined />}
+                    onClick={handleExportPDF}
+                    loading={exporting.pdf}
+                    disabled={reports.length === 0}
+                  >
+                    PDF
                   </AntButton>
                 </Space>
               </Form.Item>
@@ -151,25 +298,31 @@ export default function DailyAttendanceReport() {
           </CardContent>
         </Card>
 
+        {/* Table Section */}
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Space>
-                <AntButton icon={<FileExcelOutlined />}>Export Excel</AntButton>
-                <AntButton icon={<FilePdfOutlined />}>Export PDF</AntButton>
-              </Space>
-            </Box>
             {loading ? (
               <Box display="flex" justifyContent="center" p={4}>
                 <CircularProgress />
               </Box>
+            ) : reports.length === 0 ? (
+              <Empty
+                description="No attendance records found for the selected filters"
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+              />
             ) : (
               <Table
                 dataSource={reports}
                 columns={columns}
                 rowKey="id"
-                pagination={{ pageSize: 20 }}
+                pagination={{
+                  pageSize: 20,
+                  showSizeChanger: true,
+                  showTotal: (total) => `Total ${total} records`
+                }}
                 size="middle"
+                scroll={{ x: 800 }}
+                className="attendance-table"
               />
             )}
           </CardContent>
@@ -178,4 +331,3 @@ export default function DailyAttendanceReport() {
     </>
   )
 }
-

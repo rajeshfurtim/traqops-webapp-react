@@ -345,23 +345,55 @@ export const mockApi = {
   // Attendance Reports
   getDailyAttendanceReport: async (filters = {}) => {
     await delay(400)
-    const mockReports = Array.from({ length: 50 }, (_, i) => ({
-      id: i + 1,
-      date: dayjs().subtract(i, 'days').format('YYYY-MM-DD'),
-      employeeId: `EMP${String(i + 1).padStart(4, '0')}`,
-      employeeName: `Employee ${i + 1}`,
-      department: ['Operations', 'Maintenance', 'Administration'][i % 3],
-      shift: ['Morning', 'Afternoon', 'Night'][i % 3],
-      checkIn: dayjs().subtract(i, 'days').hour(8).minute(Math.floor(Math.random() * 30)).format('YYYY-MM-DD HH:mm'),
-      checkOut: dayjs().subtract(i, 'days').hour(17).minute(Math.floor(Math.random() * 30)).format('YYYY-MM-DD HH:mm'),
-      status: ['Present', 'Absent', 'On Leave'][i % 3]
-    }))
+    const locations = ['STI', 'SAT', 'SAE', 'SSN', 'SPC', 'SKM', 'SNP', 'SEG', 'SCC', 'Depot A', 'Depot B', 'Station Central']
+    const statuses = ['Present', 'Absent', 'Late', 'On Leave']
+    
+    const mockReports = Array.from({ length: 50 }, (_, i) => {
+      const date = filters.date ? dayjs(filters.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
+      const status = statuses[i % statuses.length]
+      const isPresent = status === 'Present' || status === 'Late'
+      const checkInTime = isPresent 
+        ? dayjs(date).hour(8 + Math.floor(Math.random() * 2)).minute(Math.floor(Math.random() * 60))
+        : null
+      const checkOutTime = isPresent
+        ? dayjs(date).hour(17 + Math.floor(Math.random() * 2)).minute(Math.floor(Math.random() * 60))
+        : null
+      
+      return {
+        id: i + 1,
+        date: date,
+        employeeId: `EMP${String(i + 1).padStart(4, '0')}`,
+        employeeName: `Employee ${i + 1}`,
+        location: locations[i % locations.length],
+        shift: ['Morning', 'Afternoon', 'Night'][i % 3],
+        inTime: checkInTime ? checkInTime.format('HH:mm') : '-',
+        outTime: checkOutTime ? checkOutTime.format('HH:mm') : '-',
+        status: status
+      }
+    })
+    
     let reports = [...mockReports]
-    if (filters.dateFrom && filters.dateTo) {
-      reports = reports.filter(r => r.date >= filters.dateFrom && r.date <= filters.dateTo)
+    
+    // Filter by date (single date)
+    if (filters.date) {
+      const filterDate = dayjs(filters.date).format('YYYY-MM-DD')
+      reports = reports.filter(r => r.date === filterDate)
+    } else {
+      // Default to today if no date filter
+      const today = dayjs().format('YYYY-MM-DD')
+      reports = reports.filter(r => r.date === today)
     }
-    if (filters.department) reports = reports.filter(r => r.department === filters.department)
-    if (filters.shift) reports = reports.filter(r => r.shift === filters.shift)
+    
+    // Filter by location
+    if (filters.location) {
+      reports = reports.filter(r => r.location === filters.location)
+    }
+    
+    // Filter by type (status)
+    if (filters.type && filters.type !== 'All') {
+      reports = reports.filter(r => r.status === filters.type)
+    }
+    
     return { data: { reports } }
   },
 
