@@ -50,7 +50,6 @@
   border-radius: 50%;
   filter: blur(80px);
   opacity: 0.6;
-  animation: meshMove 20s ease-in-out infinite;
 }
 
 .gradient-mesh-1 {
@@ -59,7 +58,6 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   top: -200px;
   left: -200px;
-  animation-delay: 0s;
 }
 
 .gradient-mesh-2 {
@@ -68,7 +66,6 @@
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   bottom: -150px;
   right: -150px;
-  animation-delay: 5s;
 }
 
 .gradient-mesh-3 {
@@ -78,19 +75,6 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation-delay: 10s;
-}
-
-@keyframes meshMove {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(50px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-50px, 50px) scale(0.9);
-  }
 }
 
 /* Floating Blobs */
@@ -99,7 +83,6 @@
   border-radius: 50%;
   filter: blur(60px);
   opacity: 0.4;
-  animation: blobFloat 15s ease-in-out infinite;
 }
 
 .blob-1 {
@@ -108,7 +91,6 @@
   background: #14b8a6;
   top: 20%;
   left: 10%;
-  animation-delay: 0s;
 }
 
 .blob-2 {
@@ -117,7 +99,6 @@
   background: #8b5cf6;
   bottom: 20%;
   right: 15%;
-  animation-delay: 3s;
 }
 
 .blob-3 {
@@ -126,19 +107,9 @@
   background: #ec4899;
   top: 60%;
   left: 70%;
-  animation-delay: 6s;
 }
 
-@keyframes blobFloat {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(30px, -30px) scale(1.2);
-  }
-}
-
-/* Aurora Layer with Parallax */
+/* Aurora Layer */
 .aurora-layer {
   position: absolute;
   top: -50%;
@@ -160,17 +131,7 @@
     rgba(139, 92, 246, 0.2) 0%,
     transparent 50%
   );
-  animation: auroraFlow 25s ease-in-out infinite;
   pointer-events: none;
-}
-
-@keyframes auroraFlow {
-  0%, 100% {
-    transform: rotate(0deg) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.1);
-  }
 }
 
 /* ============================================
@@ -209,16 +170,6 @@
   right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: shimmer 3s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-  0%, 100% {
-    transform: translateX(-100%);
-  }
-  50% {
-    transform: translateX(100%);
-  }
 }
 
 /* ============================================
@@ -251,17 +202,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradientShimmer 3s ease-in-out infinite;
-  background-size: 200% 200%;
-}
-
-@keyframes gradientShimmer {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
 }
 
 .login-vibrant-subtitle {
@@ -499,7 +439,6 @@
 
 .ant-input-password.login-vibrant-input .ant-input-suffix:active {
   color: #667eea;
-  transform: translateY(-50%) scale(0.95);
 }
 
 /* Ensure icon is centered within button */
@@ -537,7 +476,6 @@
 .login-forgot-link-text:hover {
   color: #667eea;
   text-decoration: none;
-  transform: translateX(2px);
 }
 
 /* ============================================
@@ -574,17 +512,8 @@
   background: rgba(102, 126, 234, 0.1);
 }
 
-.forgot-password-back-button:active {
-  transform: scale(0.98);
-}
-
 .forgot-password-back-icon {
   font-size: 14px;
-  transition: transform 0.2s ease;
-}
-
-.forgot-password-back-button:hover .forgot-password-back-icon {
-  transform: translateX(-2px);
 }
 
 /* ============================================
@@ -648,40 +577,6 @@
   cursor: not-allowed;
 }
 
-/* Loading State with Gradient Flow */
-.login-button-loading-content {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-.login-button-gradient-flow {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: gradientFlow 1.5s ease-in-out infinite;
-}
-
-@keyframes gradientFlow {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
-.login-button-text {
-  position: relative;
-  z-index: 1;
-}
 
 /* ============================================
    ERROR ALERT
