@@ -24,47 +24,50 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = async (credentials) => {
-    try {
-      // Call real API with domainName automatically included
-      const response = await apiService.login(credentials)
-      
-      // Extract user data from API response
-      // Adjust these fields based on your actual API response structure
-      const userData = {
-        id: response.data?.id || response.data?.userId || 1,
-        userId: response.data?.userId || 'USER0001',
-        name: response.data?.name || response.data?.userName || 'User',
-        email: credentials.email,
-        role: response.data?.role || 'User',
-        department: response.data?.department || 'General',
-        status: response.data?.status || 'Active',
-        ...response.data // Include any additional fields from API
-      }
-      
-      setUser(userData)
-      localStorage.setItem('user', JSON.stringify(userData))
-      return Promise.resolve(userData)
-    } catch (error) {
-      // If API call fails, fall back to mock login for development
-      // Remove this fallback in production
-      if (import.meta.env.DEV) {
-        console.warn('API login failed, using mock login:', error)
-        const mockUser = {
-          id: 1,
-          userId: 'USER0001',
-          name: 'Admin User',
-          email: credentials.email || 'admin@traqops.com',
-          role: 'Admin',
-          department: 'Administration',
-          status: 'Active'
-        }
-        setUser(mockUser)
-        localStorage.setItem('user', JSON.stringify(mockUser))
-        return Promise.resolve(mockUser)
-      }
-      // In production, re-throw the error
-      throw error
+    // Call real API with domainName automatically included
+    const response = await apiService.login(credentials)
+    
+    // Check if login was successful - this is the critical check
+    if (!response.success) {
+      const errorMessage = response.message || 'Login failed'
+      throw new Error(errorMessage)
     }
+    
+    // Extract user data from API response structure
+    const userInfo = response.data?.userInfo || {}
+    const jwt = response.data?.jwt
+    const domainModules = response.data?.domainModules || []
+    
+    // Store JWT token
+    if (jwt) {
+      localStorage.setItem('jwt', jwt)
+    }
+    
+    // Build user data object
+    const userData = {
+      id: userInfo.id || response.data?.id || 1,
+      userId: userInfo.userCode || userInfo.userName || 'USER0001',
+      name: `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.userName || 'User',
+      email: userInfo.email || credentials.email,
+      userName: userInfo.userName,
+      firstName: userInfo.firstName,
+      lastName: userInfo.lastName,
+      role: userInfo.userRole?.name || 'User',
+      userRole: userInfo.userRole,
+      department: userInfo.department,
+      location: userInfo.location,
+      domain: userInfo.domain,
+      client: userInfo.client,
+      userMappedLocations: userInfo.userMappedLocations || [],
+      domainModules: domainModules,
+      jwt: jwt,
+      ...userInfo, // Include all userInfo fields
+      ...response.data // Include any additional fields from API response
+    }
+    
+    setUser(userData)
+    localStorage.setItem('user', JSON.stringify(userData))
+    return Promise.resolve(userData)
   }
 
   const logout = () => {

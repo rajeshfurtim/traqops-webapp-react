@@ -20,11 +20,12 @@ export default function Login() {
 
     try {
       await login({ email: values.email, password: values.password })
-      setTimeout(() => {
-        navigate('/dashboard')
-      }, 800)
+      
+      // Only navigate if login was successful (no error thrown)
+      navigate('/dashboard')
     } catch (err) {
-      setError('Invalid credentials. Please try again.')
+      // Show error message and stop loading
+      setError(err.message || 'Invalid credentials. Please try again.')
       setLoading(false)
     }
   }

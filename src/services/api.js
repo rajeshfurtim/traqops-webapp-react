@@ -43,7 +43,14 @@ const api = axios.create({
 })
 
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    // Add JWT token to requests if available
+    const jwt = localStorage.getItem('jwt')
+    if (jwt) {
+      config.headers.Authorization = `Bearer ${jwt}`
+    }
+    return config
+  },
   (error) => Promise.reject(error)
 )
 
