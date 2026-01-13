@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import { mockApi } from '../../../services/api'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
+import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import './Daily.css'
 
 export default function DailyAttendanceReport() {
@@ -20,8 +21,8 @@ export default function DailyAttendanceReport() {
   })
   const [form] = Form.useForm()
 
-  // Available locations (from mock data)
-  const locations = ['STI', 'SAT', 'SAE', 'SSN', 'SPC', 'SKM', 'SNP', 'SEG', 'SCC', 'Depot A', 'Depot B', 'Station Central']
+  // Fetch locations from API using custom hook
+  const { locations, loading: locationsLoading } = useGetLocationList()
   const statusTypes = ['All', 'Present', 'Absent', 'Late']
 
   // Load initial data on mount
@@ -232,6 +233,7 @@ export default function DailyAttendanceReport() {
                   placeholder="All Locations"
                   style={{ width: 180 }}
                   allowClear
+                  loading={locationsLoading}
                   onChange={(value) => handleFilterChange('location', value)}
                 >
                   {locations.map(location => (

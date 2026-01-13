@@ -84,6 +84,33 @@ export const apiService = {
     }
     const response = await api.post('/unsecure/domainlogin', payload)
     return response.data
+  },
+
+  /**
+   * Get Location List API
+   * GET {apiBaseUrl}/secure/location/getlocationlist?domainName={domainName}&clientId={clientId}&pn={pageNumber}&ps={pageSize}
+   */
+  getLocationList: async (params = {}) => {
+    const {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    if (!clientId) {
+      throw new Error('ClientId is required for getLocationList')
+    }
+
+    const queryParams = new URLSearchParams({
+      domainName: domainNameParam || domainName,
+      clientId: clientId.toString(),
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/location/getlocationlist?${queryParams.toString()}`)
+    return response.data
   }
 }
 
