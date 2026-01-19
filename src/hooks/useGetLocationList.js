@@ -10,17 +10,24 @@ export const useGetLocationList = () => {
   const { user } = useAuth()
 
   useEffect(() => {
+    let isMounted = true
+    let abortController = new AbortController()
+
     const fetchLocations = async () => {
       try {
-        setLoading(true)
-        setError(null)
+        if (isMounted) {
+          setLoading(true)
+          setError(null)
+        }
+        
         const clientId = user?.client?.id || user?.clientId
         const domainNameParam = user?.domain?.name || domainName
 
         if (!clientId) {
-          console.warn('ClientId not found in user context')
-          setLocations([])
-          setLoading(false)
+          if (isMounted) {
+            setLocations([])
+            setLoading(false)
+          }
           return
         }
 
@@ -31,28 +38,38 @@ export const useGetLocationList = () => {
           pageSize: 1000
         })
 
-        if (response.success && response.data?.content) {
-          // Store full location objects with id and name
-          setLocations(response.data.content)
-        } else {
-          setError(response.message || 'Failed to fetch locations')
-          setLocations([])
+        if (isMounted && !abortController.signal.aborted) {
+          if (response.success && response.data?.content) {
+            // Store full location objects with id and name
+            setLocations(response.data.content)
+          } else {
+            setError(response.message || 'Failed to fetch locations')
+            setLocations([])
+          }
+          setLoading(false)
         }
       } catch (err) {
-        console.error('Error fetching locations:', err)
-        setError(err.message || 'Failed to fetch locations')
-        setLocations([])
-      } finally {
+        if (isMounted && !abortController.signal.aborted) {
+          setError(err.message || 'Failed to fetch locations')
+          setLocations([])
+          setLoading(false)
+        }
+      }
+    }
+
+    if (user?.client?.id || user?.clientId) {
+      fetchLocations()
+    } else {
+      if (isMounted) {
         setLoading(false)
       }
     }
 
-    if (user) {
-      fetchLocations()
-    } else {
-      setLoading(false)
+    return () => {
+      isMounted = false
+      abortController.abort()
     }
-  }, [user])
+  }, [user?.client?.id, user?.clientId, user?.domain?.name])
 
   return { locations, loading, error }
 }

@@ -10,10 +10,15 @@ export const useGetAllUserType = () => {
   const { user } = useAuth()
 
   useEffect(() => {
+    let isMounted = true
+    let abortController = new AbortController()
+
     const fetchUserTypes = async () => {
       try {
-        setLoading(true)
-        setError(null)
+        if (isMounted) {
+          setLoading(true)
+          setError(null)
+        }
 
         // Get clientId from user context
         const clientId = user?.client?.id || user?.clientId
@@ -22,9 +27,10 @@ export const useGetAllUserType = () => {
         const domainNameParam = user?.domain?.name || domainName
 
         if (!clientId) {
-          console.warn('ClientId not found in user context')
-          setUserTypes([])
-          setLoading(false)
+          if (isMounted) {
+            setUserTypes([])
+            setLoading(false)
+          }
           return
         }
 
@@ -35,28 +41,38 @@ export const useGetAllUserType = () => {
           pageSize: 1000
         })
 
-        if (response.success && response.data?.content) {
-          // Store full user type objects with id and name
-          setUserTypes(response.data.content)
-        } else {
-          setError(response.message || 'Failed to fetch user types')
-          setUserTypes([])
+        if (isMounted && !abortController.signal.aborted) {
+          if (response.success && response.data?.content) {
+            // Store full user type objects with id and name
+            setUserTypes(response.data.content)
+          } else {
+            setError(response.message || 'Failed to fetch user types')
+            setUserTypes([])
+          }
+          setLoading(false)
         }
       } catch (err) {
-        console.error('Error fetching user types:', err)
-        setError(err.message || 'Failed to fetch user types')
-        setUserTypes([])
-      } finally {
+        if (isMounted && !abortController.signal.aborted) {
+          setError(err.message || 'Failed to fetch user types')
+          setUserTypes([])
+          setLoading(false)
+        }
+      }
+    }
+
+    if (user?.client?.id || user?.clientId) {
+      fetchUserTypes()
+    } else {
+      if (isMounted) {
         setLoading(false)
       }
     }
 
-    if (user) {
-      fetchUserTypes()
-    } else {
-      setLoading(false)
+    return () => {
+      isMounted = false
+      abortController.abort()
     }
-  }, [user])
+  }, [user?.client?.id, user?.clientId, user?.domain?.name])
 
   return { userTypes, loading, error }
 }

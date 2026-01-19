@@ -33,8 +33,10 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import { useSidebar } from '../../context/SidebarContext'
 import { useClient } from '../../context/ClientContext'
-import { sidebarMenuConfig, getBreadcrumbsFromPath, filterMenuByClient, isPathAllowedForClient } from '../../config/sidebarMenu'
+import { sidebarMenuConfig, getBreadcrumbsFromPath } from '../../config/sidebarMenu'
 import { APP_CONFIG } from '../../config/constants'
+import { apiService } from '../../services/api'
+import { domainName } from '../../config/apiConfig'
 import EllipsisTooltip from '../EllipsisTooltip'
 import clsx from 'clsx'
 import './DashboardLayout.css'
@@ -131,25 +133,49 @@ export default function DashboardLayout() {
   const { selectedClient, changeClient, isChanging } = useClient()
   const [selectedKeys, setSelectedKeys] = useState([location.pathname])
   const [openKeys, setOpenKeys] = useState(() => getOpenKeysFromPath(location.pathname))
+  const [clients, setClients] = useState([])
+  const [clientsLoading, setClientsLoading] = useState(true)
 
-  // Filter menus based on selected client
-  const filteredMenuConfig = filterMenuByClient(sidebarMenuConfig, selectedClient)
+  // Use menu config directly without client filtering
+  const filteredMenuConfig = sidebarMenuConfig
 
   useEffect(() => {
     setSelectedKeys([location.pathname])
     setOpenKeys(getOpenKeysFromPath(location.pathname))
   }, [location.pathname])
 
-  // Reset to dashboard when client changes from "All" to specific client
+  // Fetch clients from API
   useEffect(() => {
-    // Only redirect if switching from "All" to a specific client and current path is not allowed
-    if (selectedClient && selectedClient !== 'All' && location.pathname !== '/dashboard' && location.pathname !== '/') {
-      // Check if current path is allowed for selected client
-      if (!isPathAllowedForClient(location.pathname, selectedClient)) {
-        navigate('/dashboard', { replace: true })
+    const fetchClients = async () => {
+      try {
+        setClientsLoading(true)
+        const domainNameParam = user?.domain?.name || domainName
+        
+        const response = await apiService.getAllClientList({
+          domainName: domainNameParam,
+          pageNumber: 1,
+          pageSize: 1000
+        })
+
+        if (response.success && response.data?.content) {
+          setClients(response.data.content)
+        } else {
+          console.error('Failed to fetch clients:', response.message)
+          setClients([])
+        }
+      } catch (error) {
+        console.error('Error fetching clients:', error)
+        setClients([])
+      } finally {
+        setClientsLoading(false)
       }
     }
-  }, [selectedClient, navigate, location.pathname])
+
+    if (user) {
+      fetchClients()
+    }
+  }, [user])
+
 
   const handleMenuClick = ({ key }) => {
     const findPathByKey = (items, targetKey) => {
@@ -172,13 +198,8 @@ export default function DashboardLayout() {
   }
 
   const handleClientChange = (value) => {
-    const newClient = value || 'All'
-    // Only redirect to dashboard if switching from "All" to specific client
-    if (selectedClient === 'All' && newClient !== 'All') {
-      changeClient(newClient)
-      navigate('/dashboard', { replace: true })
-    } else {
-      changeClient(newClient)
+    if (value) {
+      changeClient(value)
     }
   }
 
@@ -336,19 +357,18 @@ export default function DashboardLayout() {
             {/* Client Selection Dropdown */}
             <Select
               placeholder="Select Client"
-              value={selectedClient || 'All'}
+              value={selectedClient}
               onChange={handleClientChange}
               style={{ minWidth: 150 }}
-              options={[
-                { label: 'All', value: 'All' },
-                { label: 'CMRL', value: 'CMRL' },
-                { label: 'KCIC', value: 'KCIC' },
-                { label: 'A1', value: 'A1' }
-              ]}
+              loading={clientsLoading}
+              options={clients.map(client => ({
+                label: client.name,
+                value: client.name
+              }))}
             />
             
             {/* Client Badge */}
-            {selectedClient && selectedClient !== 'All' && (
+            {selectedClient && (
               <Tag color="blue" style={{ margin: 0 }}>
                 {selectedClient}
               </Tag>

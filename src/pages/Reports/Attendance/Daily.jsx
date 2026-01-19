@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
 import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message } from 'antd'
@@ -28,11 +28,24 @@ export default function DailyAttendanceReport() {
   const { locations, loading: locationsLoading } = useGetLocationList()
   // Fetch user types from API using custom hook
   const { userTypes, loading: userTypesLoading } = useGetAllUserType()
-  
+
   // Create location options with name for display, add 'All Locations' option
-  const locationOptions = [{ id: -1, name: 'All Locations' }, ...locations.map(loc => ({ id: loc.id, name: loc.name }))]
+  const locationOptions = [
+    { id: -1, name: 'All Locations' }, 
+    ...(Array.isArray(locations) && locations.length > 0 ? locations.map(loc => ({ 
+      id: loc?.id, 
+      name: loc?.name || 'Unknown' 
+    })) : [])
+  ]
+  
   // Create user type options with name for display, add 'All' option
-  const userTypeOptions = [{ id: -1, name: 'All' }, ...userTypes.map(ut => ({ id: ut.id, name: ut.name }))]
+  const userTypeOptions = [
+    { id: -1, name: 'All' }, 
+    ...(Array.isArray(userTypes) && userTypes.length > 0 ? userTypes.map(ut => ({ 
+      id: ut?.id, 
+      name: ut?.name || 'Unknown' 
+    })) : [])
+  ]
 
 
   const handleFilterChange = (field, value) => {
@@ -123,7 +136,6 @@ export default function DailyAttendanceReport() {
         setReports([])
       }
     } catch (error) {
-      console.error('Error loading daily location report:', error)
       message.error(error.message || 'Failed to load daily location report')
       setReports([])
     } finally {
@@ -189,7 +201,6 @@ export default function DailyAttendanceReport() {
         setReports([])
       }
     } catch (error) {
-      console.error('Error loading daily location report:', error)
       message.error(error.message || 'Failed to load daily location report')
       setReports([])
     } finally {
@@ -203,7 +214,6 @@ export default function DailyAttendanceReport() {
       await exportToExcel(reports, `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`)
       message.success('Excel file exported successfully')
     } catch (error) {
-      console.error('Error exporting Excel:', error)
       message.error('Failed to export Excel file')
     } finally {
       setExporting(prev => ({ ...prev, excel: false }))
@@ -216,7 +226,6 @@ export default function DailyAttendanceReport() {
       await exportToPDF(reports, `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`)
       message.success('PDF file exported successfully')
     } catch (error) {
-      console.error('Error exporting PDF:', error)
       message.error('Failed to export PDF file')
     } finally {
       setExporting(prev => ({ ...prev, pdf: false }))

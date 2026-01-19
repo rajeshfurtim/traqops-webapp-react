@@ -177,6 +177,27 @@ export const apiService = {
 
     const response = await api.get(`/secure/report/dailylocationreport?${queryParams.toString()}`)
     return response.data
+  },
+
+  /**
+   * Get All Client List API
+   * GET {apiBaseUrl}/secure/client/getallclientlist?domainName={domainName}&pn={pageNumber}&ps={pageSize}
+   */
+  getAllClientList: async (params = {}) => {
+    const {
+      domainName: domainNameParam,
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    const queryParams = new URLSearchParams({
+      domainName: domainNameParam || domainName,
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/client/getallclientlist?${queryParams.toString()}`)
+    return response.data
   }
 }
 
