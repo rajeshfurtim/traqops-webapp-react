@@ -111,6 +111,72 @@ export const apiService = {
 
     const response = await api.get(`/secure/location/getlocationlist?${queryParams.toString()}`)
     return response.data
+  },
+
+  /**
+   * Get All User Type API
+   * GET {apiBaseUrl}/secure/usertype/getallusertype?domainName={domainName}&clientId={clientId}&pn={pageNumber}&ps={pageSize}
+   */
+  getAllUserType: async (params = {}) => {
+    const {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    if (!clientId) {
+      throw new Error('ClientId is required for getAllUserType')
+    }
+
+    const queryParams = new URLSearchParams({
+      domainName: domainNameParam || domainName,
+      clientId: clientId.toString(),
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/usertype/getallusertype?${queryParams.toString()}`)
+    return response.data
+  },
+
+  /**
+   * Get Daily Location Report API
+   * GET {apiBaseUrl}/secure/report/dailylocationreport?date={date}&locationId={locationId}&userTypeId={userTypeId}&clientId={clientId}
+   */
+  getDailyLocationReport: async (params = {}) => {
+    const {
+      date,
+      locationId,
+      userTypeId,
+      clientId
+    } = params
+
+    if (!clientId) {
+      throw new Error('ClientId is required for getDailyLocationReport')
+    }
+
+    if (!date) {
+      throw new Error('Date is required for getDailyLocationReport')
+    }
+
+    const queryParams = new URLSearchParams({
+      date: date,
+      clientId: clientId.toString()
+    })
+
+    // Always include locationId if provided (including -1)
+    if (locationId !== undefined && locationId !== null) {
+      queryParams.append('locationId', locationId.toString())
+    }
+
+    // Always include userTypeId if provided (including -1)
+    if (userTypeId !== undefined && userTypeId !== null) {
+      queryParams.append('userTypeId', userTypeId.toString())
+    }
+
+    const response = await api.get(`/secure/report/dailylocationreport?${queryParams.toString()}`)
+    return response.data
   }
 }
 

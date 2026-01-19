@@ -4,14 +4,16 @@ import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/mater
 import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { mockApi } from '../../../services/api'
+import { apiService } from '../../../services/api'
+import { useAuth } from '../../../context/AuthContext'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
+import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import './Daily.css'
 
 export default function DailyAttendanceReport() {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [exporting, setExporting] = useState({ excel: false, pdf: false })
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState({
@@ -20,29 +22,18 @@ export default function DailyAttendanceReport() {
     type: 'All'
   })
   const [form] = Form.useForm()
+  const { user } = useAuth()
 
   // Fetch locations from API using custom hook
   const { locations, loading: locationsLoading } = useGetLocationList()
-  const statusTypes = ['All', 'Present', 'Absent', 'Late']
+  // Fetch user types from API using custom hook
+  const { userTypes, loading: userTypesLoading } = useGetAllUserType()
+  
+  // Create location options with name for display, add 'All Locations' option
+  const locationOptions = [{ id: -1, name: 'All Locations' }, ...locations.map(loc => ({ id: loc.id, name: loc.name }))]
+  // Create user type options with name for display, add 'All' option
+  const userTypeOptions = [{ id: -1, name: 'All' }, ...userTypes.map(ut => ({ id: ut.id, name: ut.name }))]
 
-  // Load initial data on mount
-  useEffect(() => {
-    loadReports()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const loadReports = async () => {
-    try {
-      setLoading(true)
-      const response = await mockApi.getDailyAttendanceReport(filters)
-      setReports(response.data.reports || [])
-    } catch (error) {
-      console.error('Error loading daily attendance report:', error)
-      message.error('Failed to load attendance report')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleFilterChange = (field, value) => {
     const newFilters = { ...filters }
@@ -57,49 +48,150 @@ export default function DailyAttendanceReport() {
   }
 
   const handleSearch = async () => {
-    // Get current form values
-    const formValues = form.getFieldsValue()
-    const searchFilters = {
-      date: formValues.date || dayjs(),
-      location: formValues.location || undefined,
-      type: formValues.type || 'All'
-    }
-    setFilters(searchFilters)
-    
-    // Load reports with new filters
     try {
       setLoading(true)
-      const response = await mockApi.getDailyAttendanceReport(searchFilters)
-      setReports(response.data.reports || [])
+      
+      // Get current form values
+      const formValues = form.getFieldsValue()
+      const selectedDate = formValues.date || dayjs()
+      const selectedLocationName = formValues.location
+      const selectedUserTypeName = formValues.type || 'All'
+      
+      // Get clientId from user context
+      const clientId = user?.client?.id || user?.clientId
+      
+      if (!clientId) {
+        message.error('Client ID not found. Please login again.')
+        setLoading(false)
+        return
+      }
+      
+      // Find locationId from selected location name
+      // If "All Locations" is selected or nothing selected, pass -1
+      let locationId = -1 // Default to -1 for "All Locations"
+      if (selectedLocationName && selectedLocationName !== 'All Locations') {
+        const selectedLocation = locationOptions.find(loc => loc.name === selectedLocationName)
+        if (selectedLocation) {
+          locationId = selectedLocation.id
+        }
+      }
+      
+      // Find userTypeId from selected user type name
+      // If "All" is selected, pass -1, otherwise find the ID
+      let userTypeId = -1 // Default to -1 for "All"
+      if (selectedUserTypeName && selectedUserTypeName !== 'All') {
+        const selectedUserType = userTypeOptions.find(ut => ut.name === selectedUserTypeName)
+        if (selectedUserType) {
+          userTypeId = selectedUserType.id
+        }
+      }
+      
+      // Format date as YYYY-MM-DD
+      const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
+      
+      // Call the API
+      const response = await apiService.getDailyLocationReport({
+        date: formattedDate,
+        locationId: locationId,
+        userTypeId: userTypeId,
+        clientId: clientId
+      })
+      
+      if (response.success && response.data) {
+        // Map API response to table format
+        const mappedReports = response.data.map((item, index) => ({
+          id: item.id || index,
+          serialNo: index + 1,
+          date: item.createAt || formattedDate,
+          employeeName: item.userName || '-',
+          employeeId: item.employeeCode || '-',
+          location: item.locationName || '-',
+          userType: item.userTypeName || '-',
+          shift: item.shiftName || '-',
+          punchIn: item.inTime || '-',
+          punchOut: item.outTime || '-'
+        }))
+        
+        setReports(mappedReports)
+        setFilters({
+          date: selectedDate,
+          location: selectedLocationName,
+          type: selectedUserTypeName
+        })
+      } else {
+        message.error(response.message || 'Failed to load daily location report')
+        setReports([])
+      }
     } catch (error) {
-      console.error('Error loading daily attendance report:', error)
-      message.error('Failed to load attendance report')
+      console.error('Error loading daily location report:', error)
+      message.error(error.message || 'Failed to load daily location report')
+      setReports([])
     } finally {
       setLoading(false)
     }
   }
 
   const handleResetFilters = async () => {
-    const defaultFilters = {
-      date: dayjs(),
-      location: undefined,
-      type: 'All'
-    }
-    form.setFieldsValue({
-      date: defaultFilters.date,
-      location: undefined,
-      type: 'All'
-    })
-    setFilters(defaultFilters)
-    
-    // Load reports with default filters
     try {
       setLoading(true)
-      const response = await mockApi.getDailyAttendanceReport(defaultFilters)
-      setReports(response.data.reports || [])
+      
+      // Reset form values
+      const currentDate = dayjs()
+      form.setFieldsValue({
+        date: currentDate,
+        location: 'All Locations',
+        type: 'All'
+      })
+      
+      // Get clientId from user context
+      const clientId = user?.client?.id || user?.clientId
+      
+      if (!clientId) {
+        message.error('Client ID not found. Please login again.')
+        setLoading(false)
+        return
+      }
+      
+      // Format date as YYYY-MM-DD
+      const formattedDate = currentDate.format('YYYY-MM-DD')
+      
+      // Call the API with reset parameters: locationId = -1, userTypeId = -1
+      const response = await apiService.getDailyLocationReport({
+        date: formattedDate,
+        locationId: -1,
+        userTypeId: -1,
+        clientId: clientId
+      })
+      
+      if (response.success && response.data) {
+        // Map API response to table format
+        const mappedReports = response.data.map((item, index) => ({
+          id: item.id || index,
+          serialNo: index + 1,
+          date: item.createAt || formattedDate,
+          employeeName: item.userName || '-',
+          employeeId: item.employeeCode || '-',
+          location: item.locationName || '-',
+          userType: item.userTypeName || '-',
+          shift: item.shiftName || '-',
+          punchIn: item.inTime || '-',
+          punchOut: item.outTime || '-'
+        }))
+        
+        setReports(mappedReports)
+        setFilters({
+          date: currentDate,
+          location: undefined,
+          type: 'All'
+        })
+      } else {
+        message.error(response.message || 'Failed to load daily location report')
+        setReports([])
+      }
     } catch (error) {
-      console.error('Error loading daily attendance report:', error)
-      message.error('Failed to load attendance report')
+      console.error('Error loading daily location report:', error)
+      message.error(error.message || 'Failed to load daily location report')
+      setReports([])
     } finally {
       setLoading(false)
     }
@@ -133,11 +225,18 @@ export default function DailyAttendanceReport() {
 
   const columns = [
     {
-      title: 'Employee ID',
-      dataIndex: 'employeeId',
-      key: 'employeeId',
-      width: 130,
-      fixed: 'left'
+      title: 'S.No',
+      dataIndex: 'serialNo',
+      key: 'serialNo',
+      width: 80,
+      fixed: 'left',
+      align: 'center'
+    },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      width: 120
     },
     {
       title: 'Employee Name',
@@ -146,52 +245,42 @@ export default function DailyAttendanceReport() {
       width: 180
     },
     {
+      title: 'Employee Id',
+      dataIndex: 'employeeId',
+      key: 'employeeId',
+      width: 130
+    },
+    {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
-      width: 120
+      width: 150
+    },
+    {
+      title: 'UserType',
+      dataIndex: 'userType',
+      key: 'userType',
+      width: 150
     },
     {
       title: 'Shift',
       dataIndex: 'shift',
       key: 'shift',
-      width: 100
+      width: 120
     },
     {
-      title: 'In Time',
-      dataIndex: 'inTime',
-      key: 'inTime',
-      width: 100,
+      title: 'Punch In',
+      dataIndex: 'punchIn',
+      key: 'punchIn',
+      width: 120,
       render: (text) => text && text !== '-' ? text : '-'
     },
     {
-      title: 'Out Time',
-      dataIndex: 'outTime',
-      key: 'outTime',
-      width: 100,
+      title: 'Punch Out',
+      dataIndex: 'punchOut',
+      key: 'punchOut',
+      width: 120,
       render: (text) => text && text !== '-' ? text : '-'
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status) => {
-        const colorMap = {
-          'Present': 'green',
-          'Absent': 'red',
-          'Late': 'orange',
-          'On Leave': 'blue'
-        }
-        return (
-          <span style={{ 
-            color: colorMap[status] || '#666',
-            fontWeight: 500
-          }}>
-            {status}
-          </span>
-        )
-      }
     }
   ]
 
@@ -214,7 +303,7 @@ export default function DailyAttendanceReport() {
               layout="inline"
               initialValues={{
                 date: dayjs(),
-                location: undefined,
+                location: 'All Locations',
                 type: 'All'
               }}
               className="filter-form"
@@ -232,13 +321,12 @@ export default function DailyAttendanceReport() {
                 <Select
                   placeholder="All Locations"
                   style={{ width: 180 }}
-                  allowClear
                   loading={locationsLoading}
                   onChange={(value) => handleFilterChange('location', value)}
                 >
-                  {locations.map(location => (
-                    <Select.Option key={location} value={location}>
-                      {location}
+                  {locationOptions.map(location => (
+                    <Select.Option key={location.id} value={location.name}>
+                      {location.name}
                     </Select.Option>
                   ))}
                 </Select>
@@ -247,11 +335,12 @@ export default function DailyAttendanceReport() {
               <Form.Item name="type" label="Type" className="filter-item">
                 <Select
                   style={{ width: 150 }}
+                  loading={userTypesLoading}
                   onChange={(value) => handleFilterChange('type', value)}
                 >
-                  {statusTypes.map(type => (
-                    <Select.Option key={type} value={type}>
-                      {type}
+                  {userTypeOptions.map(type => (
+                    <Select.Option key={type.id || 'all'} value={type.name}>
+                      {type.name}
                     </Select.Option>
                   ))}
                 </Select>
