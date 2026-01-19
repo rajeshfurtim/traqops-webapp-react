@@ -141,6 +141,88 @@ export const apiService = {
   },
 
   /**
+   * Get All Category List API
+   * GET {apiBaseUrl}/secure/category/getallcategorylist?clientId={clientId}&domainName={domainName}&pn={pageNumber}&ps={pageSize}
+   */
+  getAllCategoryList: async (params = {}) => {
+    const {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    if (!clientId) {
+      throw new Error('ClientId is required for getAllCategoryList')
+    }
+
+    const queryParams = new URLSearchParams({
+      domainName: domainNameParam || domainName,
+      clientId: clientId.toString(),
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/category/getallcategorylist?${queryParams.toString()}`)
+    return response.data
+  },
+
+  /**
+   * Get Checklist by Asset Category API
+   * GET {apiBaseUrl}/secure/assets/getchecklist/byassetcategory?assetsCategoryId={assetsCategoryId}
+   */
+  getChecklistByAssetCategory: async (params = {}) => {
+    const { assetsCategoryId } = params
+
+    if (!assetsCategoryId) {
+      throw new Error('assetsCategoryId is required for getChecklistByAssetCategory')
+    }
+
+    const queryParams = new URLSearchParams({
+      assetsCategoryId: assetsCategoryId.toString()
+    })
+
+    const response = await api.get(`/secure/assets/getchecklist/byassetcategory?${queryParams.toString()}`)
+    return response.data
+  },
+
+  /**
+   * Get All Frequency API
+   * GET {apiBaseUrl}/unsecure/frequency/getallfrequency
+   */
+  getAllFrequency: async () => {
+    const response = await api.get('/unsecure/frequency/getallfrequency')
+    return response.data
+  },
+
+  /**
+   * Get User Role List API
+   * GET {apiBaseUrl}/secure/userrole/getuserrolelist?domainName={domainName}&clientId={clientId}&pn={pageNumber}&ps={pageSize}
+   */
+  getUserRoleList: async (params = {}) => {
+    const {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    if (!clientId) {
+      throw new Error('ClientId is required for getUserRoleList')
+    }
+
+    const queryParams = new URLSearchParams({
+      domainName: domainNameParam || domainName,
+      clientId: clientId.toString(),
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/userrole/getuserrolelist?${queryParams.toString()}`)
+    return response.data
+  },
+
+  /**
    * Get Daily Location Report API
    * GET {apiBaseUrl}/secure/report/dailylocationreport?date={date}&locationId={locationId}&userTypeId={userTypeId}&clientId={clientId}
    */
