@@ -223,6 +223,33 @@ export const apiService = {
   },
 
   /**
+   * Get All Schedule Maintenance Tasks API
+   * GET {apiBaseUrl}/secure/schedulemaintenance/getalltask?domainName={domainName}&clientId={clientId}&pn={pageNumber}&ps={pageSize}
+   */
+  getAllScheduleMaintenanceTasks: async (params = {}) => {
+    const {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    if (!clientId) {
+      throw new Error('ClientId is required for getAllScheduleMaintenanceTasks')
+    }
+
+    const queryParams = new URLSearchParams({
+      domainName: domainNameParam || domainName,
+      clientId: clientId.toString(),
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/schedulemaintenance/getalltask?${queryParams.toString()}`)
+    return response.data
+  },
+
+  /**
    * Get Daily Location Report API
    * GET {apiBaseUrl}/secure/report/dailylocationreport?date={date}&locationId={locationId}&userTypeId={userTypeId}&clientId={clientId}
    */

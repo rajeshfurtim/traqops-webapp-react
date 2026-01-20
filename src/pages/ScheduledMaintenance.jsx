@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress, Chip } from '@mui/material'
-import { Table, Tag, Button, Modal, Form, Input, Select, Checkbox, Switch, Space } from 'antd'
+import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
+import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
-import { mockApi, apiService } from '../services/api'
+import { apiService } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
 import { useGetLocationList } from '../hooks/useGetLocationList'
 import { useAuth } from '../context/AuthContext'
@@ -14,10 +13,19 @@ export default function ScheduledMaintenance() {
   const [loading, setLoading] = useState(true)
   const [schedules, setSchedules] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingRecord, setEditingRecord] = useState(null)
+  const [modalLoading, setModalLoading] = useState(false)
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  })
   const [assetCategories, setAssetCategories] = useState([])
   const [assetCategoriesLoading, setAssetCategoriesLoading] = useState(false)
   const [checklists, setChecklists] = useState([])
   const [checklistsLoading, setChecklistsLoading] = useState(false)
+  const [scheduleChecklistData, setScheduleChecklistData] = useState([])
+  const [editingCategory, setEditingCategory] = useState(null)
   const [frequencies, setFrequencies] = useState([])
   const [frequenciesLoading, setFrequenciesLoading] = useState(false)
   const [userRoles, setUserRoles] = useState([])
@@ -29,9 +37,23 @@ export default function ScheduledMaintenance() {
   const { locations, loading: locationsLoading } = useGetLocationList()
 
   useEffect(() => {
-    loadSchedules()
     loadFrequencies()
   }, [])
+
+  // Load schedules when user context or pagination changes
+  useEffect(() => {
+    if (user?.client?.id || user?.clientId) {
+      loadSchedules(pagination.current, pagination.pageSize)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.client?.id, user?.clientId, user?.domain?.name, pagination.current, pagination.pageSize])
+
+  // Reset to page 1 when user context changes
+  useEffect(() => {
+    if (user?.client?.id || user?.clientId) {
+      setPagination(prev => ({ ...prev, current: 1 }))
+    }
+  }, [user?.client?.id, user?.clientId, user?.domain?.name])
 
   useEffect(() => {
     if (user?.client?.id || user?.clientId) {
@@ -60,11 +82,13 @@ export default function ScheduledMaintenance() {
       })
 
       if (response.success && response.data?.content) {
-        setAssetCategories(response.data.content)
+        const categories = Array.isArray(response.data.content) ? response.data.content : []
+        setAssetCategories(categories)
       } else {
         setAssetCategories([])
       }
     } catch (error) {
+      console.error('Error loading asset categories:', error)
       setAssetCategories([])
     } finally {
       setAssetCategoriesLoading(false)
@@ -119,55 +143,155 @@ export default function ScheduledMaintenance() {
     }
   }
 
-  const loadSchedules = async () => {
+  const loadSchedules = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true)
-      const response = await mockApi.getScheduledMaintenance()
-      setSchedules(response.data.schedules)
+      const clientId = user?.client?.id || user?.clientId
+      const domainNameParam = user?.domain?.name || domainName
+
+      if (!clientId) {
+        setSchedules([])
+        setLoading(false)
+        return
+      }
+
+      const response = await apiService.getAllScheduleMaintenanceTasks({
+        domainName: domainNameParam,
+        clientId: clientId,
+        pageNumber: page,
+        pageSize: pageSize
+      })
+
+      if (response.success && response.data?.content) {
+        // Transform the data for table display
+        const transformedData = response.data.content.map((item, index) => {
+          // Extract locations - comma-separated if multiple
+          const locations = (item.scheduleLocationMapping || [])
+            .map(mapping => mapping?.location?.name)
+            .filter(Boolean)
+          const locationDisplay = locations.length > 0 ? locations.join(', ') : '-'
+
+          // Extract checklists from scheduleChecklistMapping - comma-separated if multiple
+          const checklists = (item.scheduleChecklistMapping || [])
+            .map(mapping => mapping?.checkList?.name)
+            .filter(Boolean)
+          const checklistDisplay = checklists.length > 0 ? checklists.join(', ') : '-'
+
+          // Extract user roles - comma-separated if multiple
+          const userRoles = (item.scheduleUserRoleMapping || [])
+            .map(mapping => mapping?.userRole?.name)
+            .filter(Boolean)
+          const userRoleDisplay = userRoles.length > 0 ? userRoles.join(', ') : '-'
+
+          // Calculate serial number based on current page
+          const serialNumber = (page - 1) * pageSize + index + 1
+
+          return {
+            key: item.id || `${page}-${index}`,
+            id: item.id,
+            serialNumber: serialNumber,
+            location: locationDisplay,
+            task: item.name || '-',
+            frequency: item.frequency?.name || '-',
+            category: item.category?.name || '-',
+            checklist: checklistDisplay,
+            userRole: userRoleDisplay,
+            // Store full item data for editing
+            rawData: item
+          }
+        })
+
+        setSchedules(transformedData)
+        
+        // Update pagination info
+        setPagination(prev => ({
+          ...prev,
+          current: page,
+          pageSize: pageSize,
+          total: response.data?.totalElements || 0
+        }))
+      } else {
+        setSchedules([])
+        setPagination(prev => ({
+          ...prev,
+          total: 0
+        }))
+      }
     } catch (error) {
       console.error('Error loading schedules:', error)
+      setSchedules([])
+      setPagination(prev => ({
+        ...prev,
+        total: 0
+      }))
     } finally {
       setLoading(false)
     }
   }
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'Scheduled': 'success',
-      'Overdue': 'error',
-      'In Progress': 'info',
-      'Completed': 'default'
-    }
-    return colors[status] || 'default'
-  }
-
-  const getFrequencyColor = (frequency) => {
-    const colors = {
-      'Monthly': '#1976d2',
-      'Quarterly': '#2e7d32',
-      'Semi-Annual': '#ed6c02',
-      'Annual': '#9c27b0'
-    }
-    return colors[frequency] || '#000'
-  }
 
   // Asset Category options from API - filter by isCategory === "Y" and map name to label
-  const assetCategoryOptions = Array.isArray(assetCategories) && assetCategories.length > 0
-    ? assetCategories
-        .filter(category => category?.isCategory === 'Y')
-        .map(category => ({ 
-          label: category?.name || 'Unknown', 
-          value: category?.id 
-        }))
-    : []
+  // Also include editing category if it exists (for editing mode)
+  const assetCategoryOptions = (() => {
+    const apiOptions = Array.isArray(assetCategories) && assetCategories.length > 0
+      ? assetCategories
+          .filter(category => category?.isCategory === 'Y')
+          .map(category => {
+            const categoryName = category?.name || 'Unknown'
+            const categoryId = category?.id
+            return {
+              label: categoryName,
+              value: categoryId
+            }
+          })
+      : []
+    
+    // Add editing category if it's not already in the options
+    if (editingCategory && editingCategory.id && editingCategory.name) {
+      const exists = apiOptions.find(opt => 
+        opt.value === editingCategory.id ||
+        String(opt.value) === String(editingCategory.id)
+      )
+      if (!exists) {
+        apiOptions.push({
+          label: editingCategory.name,
+          value: editingCategory.id
+        })
+      }
+    }
+    
+    return apiOptions
+  })()
 
   // Checklist options from API - map checklistName to label
-  const checklistOptions = Array.isArray(checklists) && checklists.length > 0
-    ? checklists.map(checklist => ({ 
-        label: checklist?.checklistName || 'Unknown', 
-        value: checklist?.checklistId 
-      }))
-    : []
+  // Also include schedule checklists if they exist (for editing mode)
+  const checklistOptions = (() => {
+    const apiOptions = Array.isArray(checklists) && checklists.length > 0
+      ? checklists.map(checklist => ({ 
+          label: checklist?.checklistName || 'Unknown', 
+          value: checklist?.checklistId 
+        }))
+      : []
+    
+    // Add schedule checklists if they're not already in the options
+    // This ensures the names from scheduleChecklistMapping are available
+    if (scheduleChecklistData.length > 0) {
+      scheduleChecklistData.forEach(scheduleChecklist => {
+        const exists = apiOptions.find(opt => 
+          opt.value === scheduleChecklist.id ||
+          String(opt.value) === String(scheduleChecklist.id)
+        )
+        if (!exists && scheduleChecklist.id && scheduleChecklist.name) {
+          apiOptions.push({
+            label: scheduleChecklist.name,
+            value: scheduleChecklist.id
+          })
+        }
+      })
+    }
+    
+    return apiOptions
+  })()
 
   // Load checklists when asset category changes
   const loadChecklistsByCategory = async (assetsCategoryId) => {
@@ -185,6 +309,57 @@ export default function ScheduledMaintenance() {
 
       if (response.success && Array.isArray(response.data)) {
         setChecklists(response.data)
+        // If there are pending checklist IDs, map them correctly
+        if (pendingChecklistIds.length > 0) {
+          setTimeout(() => {
+            // Map checkList.id from scheduleChecklistMapping to checklistId from API
+            const mappedIds = []
+            
+            pendingChecklistIds.forEach(scheduleId => {
+              // Try to find exact match first
+              let found = response.data.find(cl => 
+                cl.checklistId === scheduleId || 
+                cl.id === scheduleId
+              )
+              
+              // If not found, try string comparison
+              if (!found) {
+                found = response.data.find(cl => 
+                  String(cl.checklistId) === String(scheduleId) ||
+                  String(cl.id) === String(scheduleId)
+                )
+              }
+              
+              // Use the checklistId from API if found, otherwise use scheduleId directly
+              if (found) {
+                mappedIds.push(found.checklistId || found.id)
+              } else {
+                // If not found in API response, use scheduleId directly
+                // The scheduleChecklistData should have this ID in options
+                mappedIds.push(scheduleId)
+              }
+            })
+            
+            // Set the form field with mapped IDs
+            if (mappedIds.length > 0) {
+              form.setFieldsValue({ checklist: mappedIds })
+            } else if (pendingChecklistIds.length > 0) {
+              // If mapping failed, use scheduleChecklistIds directly
+              // They should work since scheduleChecklistData has them in options
+              form.setFieldsValue({ checklist: pendingChecklistIds })
+            }
+            setPendingChecklistIds([])
+          }, 600)
+        } else {
+          // Even if no pending IDs, ensure form is updated after checklists load
+          // This helps if checklist was set before checklists loaded
+          setTimeout(() => {
+            const currentChecklist = form.getFieldValue('checklist')
+            if (currentChecklist && Array.isArray(currentChecklist)) {
+              form.setFieldsValue({ checklist: currentChecklist })
+            }
+          }, 100)
+        }
       } else {
         setChecklists([])
       }
@@ -223,12 +398,112 @@ export default function ScheduledMaintenance() {
     : []
 
   const handleAdd = () => {
+    setEditingRecord(null)
     setIsModalOpen(true)
-    form.setFieldsValue({ status: true, checklist: [] })
+    setScheduleChecklistData([]) // Clear schedule checklist data for new entry
+    setEditingCategory(null) // Clear editing category for new entry
+    form.resetFields()
+    form.setFieldsValue({ status: true })
+  }
+
+  const handleRowClick = async (record) => {
+    try {
+      setModalLoading(true)
+      setIsModalOpen(true)
+      setEditingRecord(record.rawData)
+
+      const item = record.rawData
+
+      // Store category data for options (similar to how table shows category name)
+      if (item.category) {
+        setEditingCategory({
+          id: item.category.id,
+          name: item.category.name
+        })
+      }
+
+      // Ensure asset categories are loaded before setting form values
+      if (assetCategories.length === 0 && (user?.client?.id || user?.clientId)) {
+        await loadAssetCategories()
+      }
+
+      // Extract location IDs
+      const locationIds = (item.scheduleLocationMapping || [])
+        .map(mapping => mapping?.location?.id)
+        .filter(Boolean)
+
+      // Extract checklist data from scheduleChecklistMapping
+      // Store both ID and name for reference
+      const scheduleChecklists = (item.scheduleChecklistMapping || [])
+        .map(mapping => ({
+          id: mapping?.checkList?.id,
+          name: mapping?.checkList?.name
+        }))
+        .filter(cl => cl.id)
+      
+      const scheduleChecklistIds = scheduleChecklists.map(cl => cl.id)
+
+      // Extract completed by user role IDs
+      const completedByIds = (item.scheduleUserRoleMapping || [])
+        .filter(mapping => mapping?.isVerified === 'N')
+        .map(mapping => mapping?.userRole?.id)
+        .filter(Boolean)
+
+      // Extract verified by user role IDs
+      const verifiedByIds = (item.scheduleUserRoleMapping || [])
+        .filter(mapping => mapping?.isVerified === 'Y')
+        .map(mapping => mapping?.userRole?.id)
+        .filter(Boolean)
+
+      // Store schedule checklist data FIRST so options are available immediately
+      setScheduleChecklistData(scheduleChecklists)
+      
+      // Set form values - ensure asset category ID is set correctly
+      const assetCategoryId = item.category?.id
+      
+      // Set form values - checklist will be set after checklists load
+      form.setFieldsValue({
+        location: locationIds,
+        assetCategory: assetCategoryId,
+        task: item.name || '',
+        frequency: item.frequency?.id,
+        completedBy: completedByIds,
+        verifiedBy: verifiedByIds,
+        description: item.description || '',
+        status: item.action === 'Y'
+      })
+      
+      // Set checklist value after a short delay to ensure options are rendered
+      // Use scheduleChecklistIds directly since they're in scheduleChecklistData options
+      setTimeout(() => {
+        if (scheduleChecklistIds.length > 0) {
+          form.setFieldsValue({ checklist: scheduleChecklistIds })
+        }
+      }, 300)
+      
+      // Load checklists if asset category exists
+      if (item.category?.id) {
+        // Store checklist IDs to set after checklists are loaded
+        setPendingChecklistIds(scheduleChecklistIds)
+        await loadChecklistsByCategory(item.category.id)
+      } else {
+        // If no category, set checklist directly using scheduleChecklistIds
+        // These IDs should match the values in scheduleChecklistData
+        setTimeout(() => {
+          form.setFieldsValue({ checklist: scheduleChecklistIds })
+        }, 100)
+      }
+    } catch (error) {
+      console.error('Error loading record data:', error)
+    } finally {
+      setModalLoading(false)
+    }
   }
 
   const handleCancel = () => {
     setIsModalOpen(false)
+    setEditingRecord(null)
+    setEditingCategory(null)
     form.resetFields()
   }
 
@@ -247,15 +522,23 @@ export default function ScheduledMaintenance() {
 
   const columns = [
     {
-      title: 'Schedule ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 150
+      title: 'S.No',
+      dataIndex: 'serialNumber',
+      key: 'serialNumber',
+      width: 80,
+      align: 'center'
     },
     {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+      width: 200,
+      ellipsis: true
+    },
+    {
+      title: 'Task',
+      dataIndex: 'task',
+      key: 'task',
       ellipsis: true
     },
     {
@@ -264,55 +547,30 @@ export default function ScheduledMaintenance() {
       key: 'frequency',
       width: 120,
       render: (frequency) => (
-        <Chip
-          label={frequency}
-          size="small"
-          sx={{ bgcolor: getFrequencyColor(frequency), color: 'white', fontWeight: 'bold' }}
-        />
+        <Tag color="blue">{frequency}</Tag>
       )
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (status) => (
-        <Chip label={status} color={getStatusColor(status)} size="small" />
-      )
-    },
-    {
-      title: 'Next Due',
-      dataIndex: 'nextDue',
-      key: 'nextDue',
-      width: 150,
-      render: (text) => dayjs(text).format('MMM DD, YYYY'),
-      sorter: (a, b) => dayjs(a.nextDue).unix() - dayjs(b.nextDue).unix()
-    },
-    {
-      title: 'Last Completed',
-      dataIndex: 'lastCompleted',
-      key: 'lastCompleted',
-      width: 150,
-      render: (text) => dayjs(text).format('MMM DD, YYYY')
-    },
-    {
-      title: 'Assigned To',
-      dataIndex: 'assignedTo',
-      key: 'assignedTo',
-      width: 150
-    },
-    {
-      title: 'Location',
-      dataIndex: 'location',
-      key: 'location',
-      width: 200
     },
     {
       title: 'Category',
       dataIndex: 'category',
       key: 'category',
-      width: 120,
-      render: (category) => <Tag color="blue">{category}</Tag>
+      width: 150,
+      ellipsis: true,
+      render: (category) => <Tag color="green">{category}</Tag>
+    },
+    {
+      title: 'Checklist',
+      dataIndex: 'checklist',
+      key: 'checklist',
+      width: 200,
+      ellipsis: true
+    },
+    {
+      title: 'User Role',
+      dataIndex: 'userRole',
+      key: 'userRole',
+      width: 150,
+      ellipsis: true
     }
   ]
 
@@ -347,8 +605,27 @@ export default function ScheduledMaintenance() {
             <Table
               dataSource={schedules}
               columns={columns}
-              rowKey="id"
-              pagination={{ pageSize: 10 }}
+              rowKey="key"
+              loading={loading}
+              onRow={(record) => ({
+                onClick: () => handleRowClick(record),
+                style: { cursor: 'pointer' }
+              })}
+              pagination={{
+                current: pagination.current,
+                pageSize: pagination.pageSize,
+                total: pagination.total,
+                showSizeChanger: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} items`,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                onChange: (page, pageSize) => {
+                  setPagination(prev => ({
+                    ...prev,
+                    current: page,
+                    pageSize: pageSize
+                  }))
+                }
+              }}
               size="middle"
             />
           )}
@@ -356,22 +633,24 @@ export default function ScheduledMaintenance() {
       </Card>
 
       <Modal
-        title="Add Scheduled Maintenance"
+        title={editingRecord ? "Edit Scheduled Maintenance" : "Add Scheduled Maintenance"}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
         width={700}
         centered
         maskClosable={false}
+        confirmLoading={modalLoading}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{
-            status: true
-          }}
-        >
+        <Spin spinning={modalLoading}>
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            initialValues={{
+              status: true
+            }}
+          >
           <Form.Item
             label="Location"
             name="location"
@@ -519,6 +798,7 @@ export default function ScheduledMaintenance() {
             </Space>
           </Form.Item>
         </Form>
+        </Spin>
       </Modal>
       </Box>
     </>
