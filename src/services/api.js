@@ -232,6 +232,25 @@ export const apiService = {
   },
 
   /**
+   * Get All Custom Frequency List API
+   * GET {apiBaseUrl}/secure/customfrequency/getalllist?pn={pageNumber}&ps={pageSize}
+   */
+  getAllCustomFrequencyList: async (params = {}) => {
+    const {
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    const queryParams = new URLSearchParams({
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/customfrequency/getalllist?${queryParams.toString()}`)
+    return response.data
+  },
+
+  /**
    * Get User Role List API
    * GET {apiBaseUrl}/secure/userrole/getuserrolelist?domainName={domainName}&clientId={clientId}&pn={pageNumber}&ps={pageSize}
    */

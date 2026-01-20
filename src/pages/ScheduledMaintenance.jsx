@@ -36,6 +36,8 @@ export default function ScheduledMaintenance() {
   const [monthsLoading, setMonthsLoading] = useState(false)
   const [shiftFrequencies, setShiftFrequencies] = useState([])
   const [shiftFrequenciesLoading, setShiftFrequenciesLoading] = useState(false)
+  const [customFrequencies, setCustomFrequencies] = useState([])
+  const [customFrequenciesLoading, setCustomFrequenciesLoading] = useState(false)
   const [form] = Form.useForm()
   const { user } = useAuth()
   
@@ -48,6 +50,7 @@ export default function ScheduledMaintenance() {
     if (user?.client?.id || user?.clientId) {
       loadShiftFrequencies()
     }
+    loadCustomFrequencies()
   }, [])
 
   // Load schedules when user context or pagination changes
@@ -168,6 +171,28 @@ export default function ScheduledMaintenance() {
       setShiftFrequencies([])
     } finally {
       setShiftFrequenciesLoading(false)
+    }
+  }
+
+  const loadCustomFrequencies = async () => {
+    try {
+      setCustomFrequenciesLoading(true)
+
+      const response = await apiService.getAllCustomFrequencyList({
+        pageNumber: 1,
+        pageSize: 1000
+      })
+
+      if (response.success && response.data?.content) {
+        const items = Array.isArray(response.data.content) ? response.data.content : []
+        setCustomFrequencies(items)
+      } else {
+        setCustomFrequencies([])
+      }
+    } catch (error) {
+      setCustomFrequencies([])
+    } finally {
+      setCustomFrequenciesLoading(false)
     }
   }
 
@@ -427,6 +452,14 @@ export default function ScheduledMaintenance() {
     ? shiftFrequencies.map(shift => ({
         label: shift?.name || 'Unknown',
         value: shift?.id
+      }))
+    : []
+
+  // Daily Custom Hours options from API - map hours to label
+  const dailyCustomHourOptions = Array.isArray(customFrequencies) && customFrequencies.length > 0
+    ? customFrequencies.map(item => ({
+        label: item?.hours || 'Unknown',
+        value: item?.id
       }))
     : []
 
@@ -824,6 +857,7 @@ export default function ScheduledMaintenance() {
                 const frequencyName = selectedFrequency?.name?.toUpperCase()
                 const showMonthField = ['MONTHLY', 'QUARTERLY', 'HALFYEARLY', 'YEARLY'].includes(frequencyName)
                 const showShiftFrequencyField = frequencyName === 'SHIFT'
+                const showDailyCustomField = frequencyName === 'CUSTOM'
 
                 // Clear dependent fields when not applicable
                 if (!showMonthField) {
@@ -831,6 +865,9 @@ export default function ScheduledMaintenance() {
                 }
                 if (!showShiftFrequencyField) {
                   form.setFieldsValue({ shiftFrequency: undefined })
+                }
+                 if (!showDailyCustomField) {
+                  form.setFieldsValue({ dailyCustomHours: undefined })
                 }
 
                 return (
@@ -847,6 +884,27 @@ export default function ScheduledMaintenance() {
                             placeholder="Select Month(s)"
                             options={monthOptions}
                             loading={monthsLoading}
+                            showSearch
+                            filterOption={(input, option) =>
+                              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                          />
+                        </Form.Item>
+                      </Col>
+                    )}
+
+                    {showDailyCustomField && (
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label="Daily Custom Hours"
+                          name="dailyCustomHours"
+                          rules={[{ required: true, message: 'Please select custom hours' }]}
+                        >
+                          <Select
+                            mode="multiple"
+                            placeholder="Select Daily Custom Hours"
+                            options={dailyCustomHourOptions}
+                            loading={customFrequenciesLoading}
                             showSearch
                             filterOption={(input, option) =>
                               (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
