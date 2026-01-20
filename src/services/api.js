@@ -305,6 +305,21 @@ export const apiService = {
   },
 
   /**
+   * Create or Update Schedule Maintenance API
+   * POST {apiBaseUrl}/secure/schedulemaintenance/create
+   * POST {apiBaseUrl}/secure/schedulemaintenance/update
+   */
+  createOrUpdateScheduleMaintenance: async (payload) => {
+    const isUpdate = !!payload.id
+    const endpoint = isUpdate 
+      ? '/secure/schedulemaintenance/update'
+      : '/secure/schedulemaintenance/create'
+    
+    const response = await api.post(endpoint, payload)
+    return response.data
+  },
+
+  /**
    * Get Daily Location Report API
    * GET {apiBaseUrl}/secure/report/dailylocationreport?date={date}&locationId={locationId}&userTypeId={userTypeId}&clientId={clientId}
    */

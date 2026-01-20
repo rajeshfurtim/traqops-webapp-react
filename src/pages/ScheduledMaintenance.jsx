@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin, Row, Col } from 'antd'
+import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin, Row, Col, notification } from 'antd'
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { apiService } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
@@ -533,6 +533,21 @@ export default function ScheduledMaintenance() {
       // Set form values - ensure asset category ID is set correctly
       const assetCategoryId = item.category?.id
       
+      // Extract month IDs from scheduleMonthMapping
+      const monthIds = (item.scheduleMonthMapping || [])
+        .map(mapping => mapping?.id)
+        .filter(Boolean)
+
+      // Extract shift frequency IDs from scheduleShiftMapping
+      const shiftFrequencyIds = (item.scheduleShiftMapping || [])
+        .map(mapping => mapping?.shiftId)
+        .filter(Boolean)
+
+      // Extract custom frequency IDs from scheduleCustomMapping
+      const dailyCustomHourIds = (item.scheduleCustomMapping || [])
+        .map(mapping => mapping?.customFrequency?.id || mapping?.customMappingId)
+        .filter(Boolean)
+
       // Set form values - checklist will be set after checklists load
       form.setFieldsValue({
         location: locationIds,
@@ -542,7 +557,10 @@ export default function ScheduledMaintenance() {
         completedBy: completedByIds,
         verifiedBy: verifiedByIds,
         description: item.description || '',
-        status: item.action === 'Y'
+        status: item.action === 'Y',
+        month: monthIds.length > 0 ? monthIds : undefined,
+        shiftFrequency: shiftFrequencyIds.length > 0 ? shiftFrequencyIds : undefined,
+        dailyCustomHours: dailyCustomHourIds.length > 0 ? dailyCustomHourIds : undefined
       })
       
       // Set checklist value after a short delay to ensure options are rendered
@@ -555,8 +573,6 @@ export default function ScheduledMaintenance() {
       
       // Load checklists if asset category exists
       if (item.category?.id) {
-        // Store checklist IDs to set after checklists are loaded
-        setPendingChecklistIds(scheduleChecklistIds)
         await loadChecklistsByCategory(item.category.id)
       } else {
         // If no category, set checklist directly using scheduleChecklistIds
@@ -579,17 +595,175 @@ export default function ScheduledMaintenance() {
     form.resetFields()
   }
 
-  const handleSubmit = (values) => {
-    const payload = {
-      ...values,
-      status: values.status ? 'Active' : 'Inactive'
+  const handleSubmit = async (values) => {
+    try {
+      setModalLoading(true)
+      
+      const clientId = user?.client?.id || user?.clientId
+      const domainNameParam = user?.domain?.name || domainName
+      
+      if (!clientId) {
+        notification.error({
+          message: 'Error',
+          description: 'Client ID is required',
+          placement: 'topRight'
+        })
+        return
+      }
+
+      // Get selected frequency to determine payload structure
+      const selectedFrequencyId = values.frequency
+      const selectedFrequency = frequencies.find(f => f.id === selectedFrequencyId)
+      const frequencyName = selectedFrequency?.name?.toUpperCase()
+
+      // Build location data
+      const locationIds = Array.isArray(values.location) ? values.location : []
+      const locationData = locationIds.map(locId => {
+        const location = locations.find(l => l.id === locId)
+        return {
+          id: locId,
+          name: location?.name || ''
+        }
+      })
+      const scheduleLocationMappingDtos = locationIds.map(locId => ({ locationId: locId }))
+
+      // Build checklist data
+      const checklistIds = Array.isArray(values.checklist) ? values.checklist : []
+      const checklistData = checklistIds.map(checklistId => {
+        const checklist = checklists.find(c => c.checklistId === checklistId)
+        return {
+          id: checklistId,
+          name: checklist?.checklistName || ''
+        }
+      })
+      const scheduleChecklistMappingDtos = checklistIds.map(checklistId => ({ checklistId: checklistId }))
+
+      // Build user role data
+      const completedByIds = Array.isArray(values.completedBy) ? values.completedBy : []
+      const verifiedByIds = Array.isArray(values.verifiedBy) ? values.verifiedBy : []
+      
+      const userCompletId = completedByIds.map(roleId => {
+        const role = userRoles.find(r => r.id === roleId)
+        return {
+          id: roleId,
+          name: role?.name || ''
+        }
+      })
+      
+      const userVerifiedId = verifiedByIds.map(roleId => {
+        const role = userRoles.find(r => r.id === roleId)
+        return {
+          id: roleId,
+          name: role?.name || ''
+        }
+      })
+
+      const scheduleUserRoleMappingDtos = [
+        ...completedByIds.map(roleId => ({ userRoleId: roleId, isVerified: 'N' })),
+        ...verifiedByIds.map(roleId => ({ userRoleId: roleId, isVerified: 'Y' }))
+      ]
+
+      // Build base payload
+      const payload = {
+        locationIds: locationData,
+        name: values.task || '',
+        frequencyId: String(selectedFrequencyId),
+        userCompletId: userCompletId,
+        userVerifiedId: userVerifiedId,
+        description: values.description || '',
+        categoryId: String(values.assetCategory),
+        checkListIds: checklistData,
+        domainName: domainNameParam,
+        clientId: String(clientId),
+        scheduleLocationMappingDtos: scheduleLocationMappingDtos,
+        scheduleChecklistMappingDtos: scheduleChecklistMappingDtos,
+        scheduleUserRoleMappingDtos: scheduleUserRoleMappingDtos,
+        action: values.status ? 'Y' : 'N',
+        frequencyGenerated: 'N'
+      }
+
+      // Add frequency-specific fields
+      const showMonthField = ['MONTHLY', 'QUARTERLY', 'HALFYEARLY', 'YEARLY'].includes(frequencyName)
+      const showShiftFrequencyField = frequencyName === 'SHIFT'
+      const showDailyCustomField = frequencyName === 'CUSTOM'
+
+      if (showMonthField) {
+        const monthIds = Array.isArray(values.month) ? values.month : []
+        const monthData = monthIds.map(monthId => {
+          const month = months.find(m => m.id === monthId)
+          return {
+            idField: monthId,
+            textField: month?.name || ''
+          }
+        })
+        payload.month = monthData
+        payload.scheduleMonthMappingDtos = monthIds.map(monthId => ({ id: monthId }))
+      } else {
+        payload.scheduleMonthMappingDtos = []
+      }
+
+      if (showShiftFrequencyField) {
+        const shiftFrequencyIds = Array.isArray(values.shiftFrequency) ? values.shiftFrequency : []
+        const shiftFrequencyData = shiftFrequencyIds.map(shiftId => {
+          const shift = shiftFrequencies.find(s => s.id === shiftId)
+          return {
+            id: shiftId,
+            name: shift?.name || ''
+          }
+        })
+        payload.shiftFrequencyIds = shiftFrequencyData
+        payload.scheduleShiftMappingDtos = shiftFrequencyIds.map(shiftId => ({ shiftId: shiftId }))
+      }
+
+      if (showDailyCustomField) {
+        const customFrequencyIds = Array.isArray(values.dailyCustomHours) ? values.dailyCustomHours : []
+        const customFrequencyData = customFrequencyIds.map(customId => {
+          const custom = customFrequencies.find(c => c.id === customId)
+          return {
+            id: customId,
+            hours: custom?.hours || ''
+          }
+        })
+        payload.customFrequencyIds = customFrequencyData
+        payload.scheduleCustomMappingDtos = customFrequencyIds.map(customId => ({ customMappingId: customId }))
+      }
+
+      // Add id for update mode
+      if (editingRecord?.id) {
+        payload.id = editingRecord.id
+      }
+
+      // Call API
+      const response = await apiService.createOrUpdateScheduleMaintenance(payload)
+
+      if (response.success) {
+        notification.success({
+          message: 'Success',
+          description: response.message || (editingRecord ? 'Schedule maintenance updated successfully' : 'Schedule maintenance created successfully'),
+          placement: 'topRight'
+        })
+
+        // Close modal and reload data
+        setIsModalOpen(false)
+        setEditingRecord(null)
+        setEditingCategory(null)
+        form.resetFields()
+        
+        // Reload schedules
+        await loadSchedules(pagination.current, pagination.pageSize)
+      } else {
+        throw new Error(response.message || 'Failed to save schedule maintenance')
+      }
+    } catch (error) {
+      console.error('Error submitting schedule maintenance:', error)
+      notification.error({
+        message: 'Error',
+        description: error.message || 'Failed to save schedule maintenance. Please try again.',
+        placement: 'topRight'
+      })
+    } finally {
+      setModalLoading(false)
     }
-    console.log('Form payload:', payload)
-    // TODO: Call API to create scheduled maintenance
-    setIsModalOpen(false)
-    form.resetFields()
-    // Optionally reload schedules after successful creation
-    // loadSchedules()
   }
 
   const handleView = (record) => {
@@ -683,8 +857,8 @@ export default function ScheduledMaintenance() {
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" fontWeight="bold">
-            Scheduled Maintenance
-          </Typography>
+          Scheduled Maintenance
+        </Typography>
           <Button
             type="primary"
             icon={<PlusOutlined />}

@@ -24,9 +24,9 @@ export const AuthProvider = ({ children }) => {
   }, [])
 
   const login = async (credentials) => {
-    // Call real API with domainName automatically included
-    const response = await apiService.login(credentials)
-    
+      // Call real API with domainName automatically included
+      const response = await apiService.login(credentials)
+      
     // Check if login was successful - this is the critical check
     if (!response.success) {
       const errorMessage = response.message || 'Login failed'
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     }
     
     // Build user data object
-    const userData = {
+      const userData = {
       id: userInfo.id || response.data?.id || 1,
       userId: userInfo.userCode || userInfo.userName || 'USER0001',
       name: `${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || userInfo.userName || 'User',
@@ -63,11 +63,11 @@ export const AuthProvider = ({ children }) => {
       jwt: jwt,
       ...userInfo, // Include all userInfo fields
       ...response.data // Include any additional fields from API response
-    }
-    
-    setUser(userData)
-    localStorage.setItem('user', JSON.stringify(userData))
-    return Promise.resolve(userData)
+      }
+      
+      setUser(userData)
+      localStorage.setItem('user', JSON.stringify(userData))
+      return Promise.resolve(userData)
   }
 
   const logout = () => {

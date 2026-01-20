@@ -22,7 +22,7 @@ export default function Login() {
       await login({ email: values.email, password: values.password })
       
       // Only navigate if login was successful (no error thrown)
-      navigate('/dashboard')
+        navigate('/dashboard')
     } catch (err) {
       // Show error message and stop loading
       setError(err.message || 'Invalid credentials. Please try again.')
@@ -97,13 +97,13 @@ export default function Login() {
                   { type: 'email', message: 'Please enter a valid email' }
                 ]}
                 className="login-vibrant-form-item"
-              >
-                <Input
-                  prefix={<UserOutlined className="login-vibrant-input-icon" />}
-                  placeholder="Email address"
-                  className="login-vibrant-input"
-                  autoFocus
-                />
+                >
+                  <Input
+                    prefix={<UserOutlined className="login-vibrant-input-icon" />}
+                    placeholder="Email address"
+                    className="login-vibrant-input"
+                    autoFocus
+                  />
               </Form.Item>
 
               <Form.Item
@@ -132,15 +132,15 @@ export default function Login() {
               </div>
 
               <Form.Item className="login-vibrant-button-item">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  block
-                  loading={loading}
-                  className="login-vibrant-button"
-                >
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    block
+                    loading={loading}
+                    className="login-vibrant-button"
+                  >
                   {loading ? 'Signing in...' : 'Sign in to TraqOps'}
-                </Button>
+                  </Button>
               </Form.Item>
             </Form>
 
@@ -151,7 +151,7 @@ export default function Login() {
               </p>
             </div> */}
           </div>
-        </div>
+            </div>
       </div>
     </>
   )
