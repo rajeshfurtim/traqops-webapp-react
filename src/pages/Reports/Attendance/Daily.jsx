@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
 import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { apiService } from '../../../services/api'
+import { useGetDailyLocationReportQuery } from '../../../store/api/reports.api'
 import { useAuth } from '../../../context/AuthContext'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
@@ -14,6 +14,7 @@ import './Daily.css'
 
 export default function DailyAttendanceReport() {
   const [loading, setLoading] = useState(false)
+  const [searchTriggered, setSearchTriggered] = useState(false)
   const [exporting, setExporting] = useState({ excel: false, pdf: false })
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState({
@@ -60,152 +61,93 @@ export default function DailyAttendanceReport() {
     setFilters(newFilters)
   }
 
-  const handleSearch = async () => {
-    try {
-      setLoading(true)
-      
-      // Get current form values
-      const formValues = form.getFieldsValue()
-      const selectedDate = formValues.date || dayjs()
-      const selectedLocationName = formValues.location
-      const selectedUserTypeName = formValues.type || 'All'
-      
-      // Get clientId from user context
-      const clientId = user?.client?.id || user?.clientId
-      
-      if (!clientId) {
-        message.error('Client ID not found. Please login again.')
-        setLoading(false)
-        return
-      }
-      
-      // Find locationId from selected location name
-      // If "All Locations" is selected or nothing selected, pass -1
-      let locationId = -1 // Default to -1 for "All Locations"
-      if (selectedLocationName && selectedLocationName !== 'All Locations') {
-        const selectedLocation = locationOptions.find(loc => loc.name === selectedLocationName)
-        if (selectedLocation) {
-          locationId = selectedLocation.id
-        }
-      }
-      
-      // Find userTypeId from selected user type name
-      // If "All" is selected, pass -1, otherwise find the ID
-      let userTypeId = -1 // Default to -1 for "All"
-      if (selectedUserTypeName && selectedUserTypeName !== 'All') {
-        const selectedUserType = userTypeOptions.find(ut => ut.name === selectedUserTypeName)
-        if (selectedUserType) {
-          userTypeId = selectedUserType.id
-        }
-      }
-      
-      // Format date as YYYY-MM-DD
-      const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
-      
-      // Call the API
-      const response = await apiService.getDailyLocationReport({
-        date: formattedDate,
-        locationId: locationId,
-        userTypeId: userTypeId,
-        clientId: clientId
-      })
-      
-      if (response.success && response.data) {
-        // Map API response to table format
-        const mappedReports = response.data.map((item, index) => ({
-          id: item.id || index,
-          serialNo: index + 1,
-          date: item.createAt || formattedDate,
-          employeeName: item.userName || '-',
-          employeeId: item.employeeCode || '-',
-          location: item.locationName || '-',
-          userType: item.userTypeName || '-',
-          shift: item.shiftName || '-',
-          punchIn: item.inTime || '-',
-          punchOut: item.outTime || '-'
-        }))
-        
-        setReports(mappedReports)
-        setFilters({
-          date: selectedDate,
-          location: selectedLocationName,
-          type: selectedUserTypeName
-        })
-      } else {
-        message.error(response.message || 'Failed to load daily location report')
-        setReports([])
-      }
-    } catch (error) {
-      message.error(error.message || 'Failed to load daily location report')
-      setReports([])
-    } finally {
-      setLoading(false)
+  // Get current form values for RTK Query
+  const formValues = Form.useWatch([], form)
+  const selectedDate = formValues?.date || filters.date || dayjs()
+  const selectedLocationName = formValues?.location || filters.location
+  const selectedUserTypeName = formValues?.type || filters.type || 'All'
+  
+  // Get clientId from user context
+  const clientId = user?.client?.id || user?.clientId
+  
+  // Find locationId from selected location name
+  let locationId = -1
+  if (selectedLocationName && selectedLocationName !== 'All Locations') {
+    const selectedLocation = locationOptions.find(loc => loc.name === selectedLocationName)
+    if (selectedLocation) {
+      locationId = selectedLocation.id
     }
   }
-
-  const handleResetFilters = async () => {
-    try {
-      setLoading(true)
-      
-      // Reset form values
-      const currentDate = dayjs()
-      form.setFieldsValue({
-        date: currentDate,
-        location: 'All Locations',
-        type: 'All'
-      })
-      
-      // Get clientId from user context
-      const clientId = user?.client?.id || user?.clientId
-      
-      if (!clientId) {
-        message.error('Client ID not found. Please login again.')
-        setLoading(false)
-        return
-      }
-      
-      // Format date as YYYY-MM-DD
-      const formattedDate = currentDate.format('YYYY-MM-DD')
-      
-      // Call the API with reset parameters: locationId = -1, userTypeId = -1
-      const response = await apiService.getDailyLocationReport({
-        date: formattedDate,
-        locationId: -1,
-        userTypeId: -1,
-        clientId: clientId
-      })
-      
-      if (response.success && response.data) {
-        // Map API response to table format
-        const mappedReports = response.data.map((item, index) => ({
-          id: item.id || index,
-          serialNo: index + 1,
-          date: item.createAt || formattedDate,
-          employeeName: item.userName || '-',
-          employeeId: item.employeeCode || '-',
-          location: item.locationName || '-',
-          userType: item.userTypeName || '-',
-          shift: item.shiftName || '-',
-          punchIn: item.inTime || '-',
-          punchOut: item.outTime || '-'
-        }))
-        
-        setReports(mappedReports)
-        setFilters({
-          date: currentDate,
-          location: undefined,
-          type: 'All'
-        })
-      } else {
-        message.error(response.message || 'Failed to load daily location report')
-        setReports([])
-      }
-    } catch (error) {
-      message.error(error.message || 'Failed to load daily location report')
-      setReports([])
-    } finally {
-      setLoading(false)
+  
+  // Find userTypeId from selected user type name
+  let userTypeId = -1
+  if (selectedUserTypeName && selectedUserTypeName !== 'All') {
+    const selectedUserType = userTypeOptions.find(ut => ut.name === selectedUserTypeName)
+    if (selectedUserType) {
+      userTypeId = selectedUserType.id
     }
+  }
+  
+  // Format date as YYYY-MM-DD
+  const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
+  
+  // RTK Query hook
+  const { data: response, isLoading: queryLoading, refetch } = useGetDailyLocationReportQuery(
+    {
+      date: formattedDate,
+      locationId: locationId,
+      userTypeId: userTypeId,
+      clientId: clientId,
+    },
+    { skip: !clientId || !formattedDate }
+  )
+
+  // Process response data
+  useEffect(() => {
+    if (response?.success && response.data) {
+      const mappedReports = response.data.map((item, index) => ({
+        id: item.id || index,
+        serialNo: index + 1,
+        date: item.createAt || formattedDate,
+        employeeName: item.userName || '-',
+        employeeId: item.employeeCode || '-',
+        location: item.locationName || '-',
+        userType: item.userTypeName || '-',
+        shift: item.shiftName || '-',
+        punchIn: item.inTime || '-',
+        punchOut: item.outTime || '-'
+      }))
+      
+      setReports(mappedReports)
+      setFilters({
+        date: selectedDate,
+        location: selectedLocationName,
+        type: selectedUserTypeName
+      })
+    } else if (response && !response.success) {
+      message.error(response.message || 'Failed to load daily location report')
+      setReports([])
+    }
+  }, [response, formattedDate, selectedDate, selectedLocationName, selectedUserTypeName])
+
+  const handleSearch = () => {
+    if (!clientId) {
+      message.error('Client ID not found. Please login again.')
+      return
+    }
+    refetch()
+  }
+
+  const handleResetFilters = () => {
+    // Reset form values
+    const currentDate = dayjs()
+    form.setFieldsValue({
+      date: currentDate,
+      location: 'All Locations',
+      type: 'All'
+    })
+    
+    // RTK Query will automatically refetch with new params via useWatch
   }
 
   const handleExportExcel = async () => {

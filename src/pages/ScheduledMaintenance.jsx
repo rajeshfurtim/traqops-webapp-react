@@ -3,14 +3,24 @@ import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
 import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin, Row, Col, notification } from 'antd'
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
-import { apiService } from '../services/api'
+import {
+  useGetAllCategoryListQuery,
+  useGetChecklistByAssetCategoryQuery,
+  useGetAllFrequencyQuery,
+  useGetScheduleMonthListQuery,
+  useGetAllShiftListQuery,
+  useGetAllCustomFrequencyListQuery,
+  useGetAllScheduleMaintenanceTasksQuery,
+  useCreateOrUpdateScheduleMaintenanceMutation,
+} from '../store/api/maintenance.api'
+import { useGetUserRoleListQuery } from '../store/api/userRole.api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
 import { useGetLocationList } from '../hooks/useGetLocationList'
 import { useAuth } from '../context/AuthContext'
 import { domainName } from '../config/apiConfig'
 
 export default function ScheduledMaintenance() {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [schedules, setSchedules] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
@@ -22,296 +32,132 @@ export default function ScheduledMaintenance() {
     pageSize: 10,
     total: 0
   })
-  const [assetCategories, setAssetCategories] = useState([])
-  const [assetCategoriesLoading, setAssetCategoriesLoading] = useState(false)
   const [checklists, setChecklists] = useState([])
-  const [checklistsLoading, setChecklistsLoading] = useState(false)
   const [scheduleChecklistData, setScheduleChecklistData] = useState([])
   const [editingCategory, setEditingCategory] = useState(null)
-  const [frequencies, setFrequencies] = useState([])
-  const [frequenciesLoading, setFrequenciesLoading] = useState(false)
-  const [userRoles, setUserRoles] = useState([])
-  const [userRolesLoading, setUserRolesLoading] = useState(false)
-  const [months, setMonths] = useState([])
-  const [monthsLoading, setMonthsLoading] = useState(false)
-  const [shiftFrequencies, setShiftFrequencies] = useState([])
-  const [shiftFrequenciesLoading, setShiftFrequenciesLoading] = useState(false)
-  const [customFrequencies, setCustomFrequencies] = useState([])
-  const [customFrequenciesLoading, setCustomFrequenciesLoading] = useState(false)
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null)
   const [form] = Form.useForm()
   const { user } = useAuth()
+  const clientId = user?.client?.id || user?.clientId
+  const domainNameParam = user?.domain?.name || domainName
   
   // Fetch locations from API using custom hook
   const { locations, loading: locationsLoading } = useGetLocationList()
 
-  useEffect(() => {
-    loadFrequencies()
-    loadMonths()
-    if (user?.client?.id || user?.clientId) {
-      loadShiftFrequencies()
-    }
-    loadCustomFrequencies()
-  }, [])
+  // RTK Query hooks
+  const { data: frequenciesResponse, isLoading: frequenciesLoading } = useGetAllFrequencyQuery()
+  const { data: monthsResponse, isLoading: monthsLoading } = useGetScheduleMonthListQuery()
+  const { data: customFrequenciesResponse, isLoading: customFrequenciesLoading } = useGetAllCustomFrequencyListQuery({ pageNumber: 1, pageSize: 1000 })
+  
+  const { data: shiftFrequenciesResponse, isLoading: shiftFrequenciesLoading } = useGetAllShiftListQuery(
+    {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber: 1,
+      pageSize: 1000,
+    },
+    { skip: !clientId }
+  )
 
-  // Load schedules when user context or pagination changes
+  const { data: assetCategoriesResponse, isLoading: assetCategoriesLoading } = useGetAllCategoryListQuery(
+    {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber: 1,
+      pageSize: 1000,
+    },
+    { skip: !clientId }
+  )
+
+  const { data: userRolesResponse, isLoading: userRolesLoading } = useGetUserRoleListQuery(
+    {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber: 1,
+      pageSize: 1000,
+    },
+    { skip: !clientId }
+  )
+
+  const { data: schedulesResponse, isLoading: schedulesLoading, refetch: refetchSchedules } = useGetAllScheduleMaintenanceTasksQuery(
+    {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber: pagination.current,
+      pageSize: pagination.pageSize,
+    },
+    { skip: !clientId }
+  )
+
+  const [createOrUpdateScheduleMaintenance, { isLoading: isSubmitting }] = useCreateOrUpdateScheduleMaintenanceMutation()
+
+  // Extract data from responses
+  const frequencies = frequenciesResponse?.success && Array.isArray(frequenciesResponse.data) ? frequenciesResponse.data : []
+  const months = monthsResponse?.success && Array.isArray(monthsResponse.data) ? monthsResponse.data : []
+  const customFrequencies = customFrequenciesResponse?.success && customFrequenciesResponse.data?.content ? customFrequenciesResponse.data.content : []
+  const shiftFrequencies = shiftFrequenciesResponse?.success && shiftFrequenciesResponse.data?.content ? shiftFrequenciesResponse.data.content : []
+  const assetCategories = assetCategoriesResponse?.success && assetCategoriesResponse.data?.content ? assetCategoriesResponse.data.content : []
+  const userRoles = userRolesResponse?.success && userRolesResponse.data?.content ? userRolesResponse.data.content : []
+
+  // Process schedules data
   useEffect(() => {
-    if (user?.client?.id || user?.clientId) {
-      loadSchedules(pagination.current, pagination.pageSize)
+    if (schedulesResponse?.success && schedulesResponse.data?.content) {
+      const page = pagination.current
+      const pageSize = pagination.pageSize
+      const transformedData = schedulesResponse.data.content.map((item, index) => {
+        const locations = (item.scheduleLocationMapping || [])
+          .map(mapping => mapping?.location?.name)
+          .filter(Boolean)
+        const locationDisplay = locations.length > 0 ? locations.join(', ') : '-'
+
+        const checklists = (item.scheduleChecklistMapping || [])
+          .map(mapping => mapping?.checkList?.name)
+          .filter(Boolean)
+        const checklistDisplay = checklists.length > 0 ? checklists.join(', ') : '-'
+
+        const userRoles = (item.scheduleUserRoleMapping || [])
+          .map(mapping => mapping?.userRole?.name)
+          .filter(Boolean)
+        const userRoleDisplay = userRoles.length > 0 ? userRoles.join(', ') : '-'
+
+        const serialNumber = (page - 1) * pageSize + index + 1
+
+        return {
+          key: item.id || `${page}-${index}`,
+          id: item.id,
+          serialNumber: serialNumber,
+          location: locationDisplay,
+          task: item.name || '-',
+          frequency: item.frequency?.name || '-',
+          category: item.category?.name || '-',
+          checklist: checklistDisplay,
+          userRole: userRoleDisplay,
+          rawData: item
+        }
+      })
+
+      setSchedules(transformedData)
+      setPagination(prev => ({
+        ...prev,
+        current: page,
+        pageSize: pageSize,
+        total: schedulesResponse.data?.totalElements || 0
+      }))
+      setLoading(false)
+    } else if (schedulesResponse && !schedulesResponse.success) {
+      setSchedules([])
+      setPagination(prev => ({ ...prev, total: 0 }))
+      setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.client?.id, user?.clientId, user?.domain?.name, pagination.current, pagination.pageSize])
+  }, [schedulesResponse, pagination.current, pagination.pageSize])
 
   // Reset to page 1 when user context changes
   useEffect(() => {
-    if (user?.client?.id || user?.clientId) {
+    if (clientId) {
       setPagination(prev => ({ ...prev, current: 1 }))
     }
-  }, [user?.client?.id, user?.clientId, user?.domain?.name])
+  }, [clientId, user?.domain?.name])
 
-  useEffect(() => {
-    if (user?.client?.id || user?.clientId) {
-      loadAssetCategories()
-      loadUserRoles()
-    }
-  }, [user?.client?.id, user?.clientId, user?.domain?.name])
-
-  const loadAssetCategories = async () => {
-    try {
-      setAssetCategoriesLoading(true)
-      const clientId = user?.client?.id || user?.clientId
-      const domainNameParam = user?.domain?.name || domainName
-
-      if (!clientId) {
-        setAssetCategories([])
-        setAssetCategoriesLoading(false)
-        return
-      }
-
-      const response = await apiService.getAllCategoryList({
-        domainName: domainNameParam,
-        clientId: clientId,
-        pageNumber: 1,
-        pageSize: 1000
-      })
-
-      if (response.success && response.data?.content) {
-        const categories = Array.isArray(response.data.content) ? response.data.content : []
-        setAssetCategories(categories)
-      } else {
-        setAssetCategories([])
-      }
-    } catch (error) {
-      console.error('Error loading asset categories:', error)
-      setAssetCategories([])
-    } finally {
-      setAssetCategoriesLoading(false)
-    }
-  }
-
-  const loadFrequencies = async () => {
-    try {
-      setFrequenciesLoading(true)
-      const response = await apiService.getAllFrequency()
-      
-      if (response.success && Array.isArray(response.data)) {
-        setFrequencies(response.data)
-      } else {
-        setFrequencies([])
-      }
-    } catch (error) {
-      setFrequencies([])
-    } finally {
-      setFrequenciesLoading(false)
-    }
-  }
-
-  const loadMonths = async () => {
-    try {
-      setMonthsLoading(true)
-      const response = await apiService.getScheduleMonthList()
-
-      if (response.success && Array.isArray(response.data)) {
-        setMonths(response.data)
-      } else {
-        setMonths([])
-      }
-    } catch (error) {
-      setMonths([])
-    } finally {
-      setMonthsLoading(false)
-    }
-  }
-
-  const loadShiftFrequencies = async () => {
-    try {
-      setShiftFrequenciesLoading(true)
-      const clientId = user?.client?.id || user?.clientId
-      const domainNameParam = user?.domain?.name || domainName
-
-      if (!clientId) {
-        setShiftFrequencies([])
-        setShiftFrequenciesLoading(false)
-        return
-      }
-
-      const response = await apiService.getAllShiftList({
-        domainName: domainNameParam,
-        clientId,
-        pageNumber: 1,
-        pageSize: 1000
-      })
-
-      if (response.success && response.data?.content) {
-        const shifts = Array.isArray(response.data.content) ? response.data.content : []
-        setShiftFrequencies(shifts)
-      } else {
-        setShiftFrequencies([])
-      }
-    } catch (error) {
-      setShiftFrequencies([])
-    } finally {
-      setShiftFrequenciesLoading(false)
-    }
-  }
-
-  const loadCustomFrequencies = async () => {
-    try {
-      setCustomFrequenciesLoading(true)
-
-      const response = await apiService.getAllCustomFrequencyList({
-        pageNumber: 1,
-        pageSize: 1000
-      })
-
-      if (response.success && response.data?.content) {
-        const items = Array.isArray(response.data.content) ? response.data.content : []
-        setCustomFrequencies(items)
-      } else {
-        setCustomFrequencies([])
-      }
-    } catch (error) {
-      setCustomFrequencies([])
-    } finally {
-      setCustomFrequenciesLoading(false)
-    }
-  }
-
-  const loadUserRoles = async () => {
-    try {
-      setUserRolesLoading(true)
-      const clientId = user?.client?.id || user?.clientId
-      const domainNameParam = user?.domain?.name || domainName
-
-      if (!clientId) {
-        setUserRoles([])
-        setUserRolesLoading(false)
-        return
-      }
-
-      const response = await apiService.getUserRoleList({
-        domainName: domainNameParam,
-        clientId: clientId,
-        pageNumber: 1,
-        pageSize: 1000
-      })
-
-      if (response.success && response.data?.content) {
-        setUserRoles(response.data.content)
-      } else {
-        setUserRoles([])
-      }
-    } catch (error) {
-      setUserRoles([])
-    } finally {
-      setUserRolesLoading(false)
-    }
-  }
-
-  const loadSchedules = async (page = 1, pageSize = 10) => {
-    try {
-      setLoading(true)
-      const clientId = user?.client?.id || user?.clientId
-      const domainNameParam = user?.domain?.name || domainName
-
-      if (!clientId) {
-        setSchedules([])
-        setLoading(false)
-        return
-      }
-
-      const response = await apiService.getAllScheduleMaintenanceTasks({
-        domainName: domainNameParam,
-        clientId: clientId,
-        pageNumber: page,
-        pageSize: pageSize
-      })
-
-      if (response.success && response.data?.content) {
-        // Transform the data for table display
-        const transformedData = response.data.content.map((item, index) => {
-          // Extract locations - comma-separated if multiple
-          const locations = (item.scheduleLocationMapping || [])
-            .map(mapping => mapping?.location?.name)
-            .filter(Boolean)
-          const locationDisplay = locations.length > 0 ? locations.join(', ') : '-'
-
-          // Extract checklists from scheduleChecklistMapping - comma-separated if multiple
-          const checklists = (item.scheduleChecklistMapping || [])
-            .map(mapping => mapping?.checkList?.name)
-            .filter(Boolean)
-          const checklistDisplay = checklists.length > 0 ? checklists.join(', ') : '-'
-
-          // Extract user roles - comma-separated if multiple
-          const userRoles = (item.scheduleUserRoleMapping || [])
-            .map(mapping => mapping?.userRole?.name)
-            .filter(Boolean)
-          const userRoleDisplay = userRoles.length > 0 ? userRoles.join(', ') : '-'
-
-          // Calculate serial number based on current page
-          const serialNumber = (page - 1) * pageSize + index + 1
-
-          return {
-            key: item.id || `${page}-${index}`,
-            id: item.id,
-            serialNumber: serialNumber,
-            location: locationDisplay,
-            task: item.name || '-',
-            frequency: item.frequency?.name || '-',
-            category: item.category?.name || '-',
-            checklist: checklistDisplay,
-            userRole: userRoleDisplay,
-            // Store full item data for editing
-            rawData: item
-          }
-        })
-
-        setSchedules(transformedData)
-        
-        // Update pagination info
-        setPagination(prev => ({
-          ...prev,
-          current: page,
-          pageSize: pageSize,
-          total: response.data?.totalElements || 0
-        }))
-      } else {
-        setSchedules([])
-        setPagination(prev => ({
-          ...prev,
-          total: 0
-        }))
-      }
-    } catch (error) {
-      console.error('Error loading schedules:', error)
-      setSchedules([])
-      setPagination(prev => ({
-        ...prev,
-        total: 0
-      }))
-    } finally {
-      setLoading(false)
-    }
-  }
 
 
   // Asset Category options from API - filter by isCategory === "Y" and map name to label
@@ -347,6 +193,35 @@ export default function ScheduledMaintenance() {
     return apiOptions
   })()
 
+  // RTK Query hook for checklists by category
+  const { data: checklistsResponse, isLoading: checklistsLoading } = useGetChecklistByAssetCategoryQuery(
+    { assetsCategoryId: selectedCategoryId },
+    { skip: !selectedCategoryId }
+  )
+
+  // Update checklists when response changes
+  useEffect(() => {
+    if (checklistsResponse?.success && Array.isArray(checklistsResponse.data)) {
+      setChecklists(checklistsResponse.data)
+
+      if (scheduleChecklistData.length > 0) {
+        const scheduleNames = scheduleChecklistData
+          .map(item => item.name)
+          .filter(Boolean)
+
+        const mappedIds = checklistsResponse.data
+          .filter(cl => scheduleNames.includes(cl.checklistName))
+          .map(cl => cl.checklistId)
+
+        if (mappedIds.length > 0) {
+          form.setFieldsValue({ checklist: mappedIds })
+        }
+      }
+    } else {
+      setChecklists([])
+    }
+  }, [checklistsResponse, scheduleChecklistData, form])
+
   // Checklist options from API - map checklistName to label
   // Also include schedule checklists if they exist (for editing mode)
   const checklistOptions = (() => {
@@ -377,50 +252,10 @@ export default function ScheduledMaintenance() {
     return apiOptions
   })()
 
-  // Load checklists when asset category changes
-  const loadChecklistsByCategory = async (assetsCategoryId) => {
-    if (!assetsCategoryId) {
-      setChecklists([])
-      form.setFieldsValue({ checklist: undefined })
-      return
-    }
-
-    try {
-      setChecklistsLoading(true)
-      const response = await apiService.getChecklistByAssetCategory({
-        assetsCategoryId: assetsCategoryId
-      })
-
-      if (response.success && Array.isArray(response.data)) {
-        setChecklists(response.data)
-
-        if (scheduleChecklistData.length > 0) {
-          const scheduleNames = scheduleChecklistData
-            .map(item => item.name)
-            .filter(Boolean)
-
-          const mappedIds = response.data
-            .filter(cl => scheduleNames.includes(cl.checklistName))
-            .map(cl => cl.checklistId)
-
-          if (mappedIds.length > 0) {
-            form.setFieldsValue({ checklist: mappedIds })
-          }
-        }
-      } else {
-        setChecklists([])
-      }
-    } catch (error) {
-      setChecklists([])
-    } finally {
-      setChecklistsLoading(false)
-    }
-  }
-
   // Handle asset category change
   const handleAssetCategoryChange = (categoryId) => {
     form.setFieldsValue({ checklist: undefined })
-    loadChecklistsByCategory(categoryId)
+    setSelectedCategoryId(categoryId)
   }
 
   // User Role options from API - map name to label
@@ -494,10 +329,7 @@ export default function ScheduledMaintenance() {
         })
       }
 
-      // Ensure asset categories are loaded before setting form values
-      if (assetCategories.length === 0 && (user?.client?.id || user?.clientId)) {
-        await loadAssetCategories()
-      }
+      // Asset categories are loaded via RTK Query hook
 
       // Extract location IDs
       const locationIds = (item.scheduleLocationMapping || [])
@@ -571,12 +403,11 @@ export default function ScheduledMaintenance() {
         }
       }, 300)
       
-      // Load checklists if asset category exists
+      // Set category ID to trigger checklist query
       if (item.category?.id) {
-        await loadChecklistsByCategory(item.category.id)
+        setSelectedCategoryId(item.category.id)
       } else {
         // If no category, set checklist directly using scheduleChecklistIds
-        // These IDs should match the values in scheduleChecklistData
         setTimeout(() => {
           form.setFieldsValue({ checklist: scheduleChecklistIds })
         }, 100)
@@ -709,7 +540,7 @@ export default function ScheduledMaintenance() {
           return {
             id: shiftId,
             name: shift?.name || ''
-          }
+    }
         })
         payload.shiftFrequencyIds = shiftFrequencyData
         payload.scheduleShiftMappingDtos = shiftFrequencyIds.map(shiftId => ({ shiftId: shiftId }))
@@ -733,8 +564,8 @@ export default function ScheduledMaintenance() {
         payload.id = editingRecord.id
       }
 
-      // Call API
-      const response = await apiService.createOrUpdateScheduleMaintenance(payload)
+      // Call RTK Query mutation
+      const response = await createOrUpdateScheduleMaintenance(payload).unwrap()
 
       if (response.success) {
         notification.success({
@@ -749,8 +580,8 @@ export default function ScheduledMaintenance() {
         setEditingCategory(null)
         form.resetFields()
         
-        // Reload schedules
-        await loadSchedules(pagination.current, pagination.pageSize)
+        // Refetch schedules using RTK Query
+        refetchSchedules()
       } else {
         throw new Error(response.message || 'Failed to save schedule maintenance')
       }
@@ -758,7 +589,7 @@ export default function ScheduledMaintenance() {
       console.error('Error submitting schedule maintenance:', error)
       notification.error({
         message: 'Error',
-        description: error.message || 'Failed to save schedule maintenance. Please try again.',
+        description: error?.data?.message || error?.message || 'Failed to save schedule maintenance. Please try again.',
         placement: 'topRight'
       })
     } finally {
@@ -880,7 +711,7 @@ export default function ScheduledMaintenance() {
               dataSource={schedules}
               columns={columns}
               rowKey="key"
-              loading={loading}
+              loading={schedulesLoading || loading}
               onRow={(record) => ({
                 onClick: () => handleRowClick(record),
                 style: { cursor: 'pointer' }
