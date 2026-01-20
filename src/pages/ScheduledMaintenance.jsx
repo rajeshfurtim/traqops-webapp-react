@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin } from 'antd'
+import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin, Row, Col } from 'antd'
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { apiService } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
@@ -32,6 +32,10 @@ export default function ScheduledMaintenance() {
   const [frequenciesLoading, setFrequenciesLoading] = useState(false)
   const [userRoles, setUserRoles] = useState([])
   const [userRolesLoading, setUserRolesLoading] = useState(false)
+  const [months, setMonths] = useState([])
+  const [monthsLoading, setMonthsLoading] = useState(false)
+  const [shiftFrequencies, setShiftFrequencies] = useState([])
+  const [shiftFrequenciesLoading, setShiftFrequenciesLoading] = useState(false)
   const [form] = Form.useForm()
   const { user } = useAuth()
   
@@ -40,6 +44,10 @@ export default function ScheduledMaintenance() {
 
   useEffect(() => {
     loadFrequencies()
+    loadMonths()
+    if (user?.client?.id || user?.clientId) {
+      loadShiftFrequencies()
+    }
   }, [])
 
   // Load schedules when user context or pagination changes
@@ -111,6 +119,55 @@ export default function ScheduledMaintenance() {
       setFrequencies([])
     } finally {
       setFrequenciesLoading(false)
+    }
+  }
+
+  const loadMonths = async () => {
+    try {
+      setMonthsLoading(true)
+      const response = await apiService.getScheduleMonthList()
+
+      if (response.success && Array.isArray(response.data)) {
+        setMonths(response.data)
+      } else {
+        setMonths([])
+      }
+    } catch (error) {
+      setMonths([])
+    } finally {
+      setMonthsLoading(false)
+    }
+  }
+
+  const loadShiftFrequencies = async () => {
+    try {
+      setShiftFrequenciesLoading(true)
+      const clientId = user?.client?.id || user?.clientId
+      const domainNameParam = user?.domain?.name || domainName
+
+      if (!clientId) {
+        setShiftFrequencies([])
+        setShiftFrequenciesLoading(false)
+        return
+      }
+
+      const response = await apiService.getAllShiftList({
+        domainName: domainNameParam,
+        clientId,
+        pageNumber: 1,
+        pageSize: 1000
+      })
+
+      if (response.success && response.data?.content) {
+        const shifts = Array.isArray(response.data.content) ? response.data.content : []
+        setShiftFrequencies(shifts)
+      } else {
+        setShiftFrequencies([])
+      }
+    } catch (error) {
+      setShiftFrequencies([])
+    } finally {
+      setShiftFrequenciesLoading(false)
     }
   }
 
@@ -356,6 +413,23 @@ export default function ScheduledMaintenance() {
         value: frequency?.id 
       }))
     : []
+
+  // Month options from API - map name to label
+  const monthOptions = Array.isArray(months) && months.length > 0
+    ? months.map(month => ({
+        label: month?.name || 'Unknown',
+        value: month?.id
+      }))
+    : []
+
+  // Shift Frequency options from API - map name to label
+  const shiftFrequencyOptions = Array.isArray(shiftFrequencies) && shiftFrequencies.length > 0
+    ? shiftFrequencies.map(shift => ({
+        label: shift?.name || 'Unknown',
+        value: shift?.id
+      }))
+    : []
+
 
   // Location options from API
   const locationOptions = Array.isArray(locations) && locations.length > 0
@@ -644,141 +718,243 @@ export default function ScheduledMaintenance() {
               status: true
             }}
           >
-          <Form.Item
-            label="Location"
-            name="location"
-            rules={[{ required: true, message: 'Please select location(s)' }]}
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select Location(s)"
-              loading={locationsLoading}
-              options={locationOptions}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="Asset Category"
-            name="assetCategory"
-            rules={[{ required: true, message: 'Please select asset category' }]}
-          >
-            <Select
-              placeholder="Select Asset Category"
-              options={assetCategoryOptions}
-              loading={assetCategoriesLoading}
-              showSearch
-              onChange={handleAssetCategoryChange}
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-            />
-          </Form.Item>
-
-          <Form.Item
-            label="Checklist"
-            name="checklist"
-          >
-            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.assetCategory !== currentValues.assetCategory}>
-              {({ getFieldValue }) => (
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Location"
+                name="location"
+                rules={[{ required: true, message: 'Please select location(s)' }]}
+              >
                 <Select
                   mode="multiple"
-                  placeholder="Select Checklist"
-                  options={checklistOptions}
-                  loading={checklistsLoading}
+                  placeholder="Select Location(s)"
+                  loading={locationsLoading}
+                  options={locationOptions}
                   showSearch
-                  disabled={!getFieldValue('assetCategory')}
                   filterOption={(input, option) =>
                     (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                 />
-              )}
-            </Form.Item>
-          </Form.Item>
+              </Form.Item>
+            </Col>
 
-          <Form.Item
-            label="Task"
-            name="task"
-            rules={[{ required: true, message: 'Please enter task name' }]}
-          >
-            <Input placeholder="Enter Task Name" />
-          </Form.Item>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Asset Category"
+                name="assetCategory"
+                rules={[{ required: true, message: 'Please select asset category' }]}
+              >
+                <Select
+                  placeholder="Select Asset Category"
+                  options={assetCategoryOptions}
+                  loading={assetCategoriesLoading}
+                  showSearch
+                  onChange={handleAssetCategoryChange}
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            label="Frequency"
-            name="frequency"
-            rules={[{ required: true, message: 'Please select frequency' }]}
-          >
-            <Select
-              placeholder="Select Frequency"
-              options={frequencyOptions}
-              loading={frequenciesLoading}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Checklist"
+                name="checklist"
+              >
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.assetCategory !== currentValues.assetCategory
+                  }
+                >
+                  {({ getFieldValue }) => (
+                    <Select
+                      mode="multiple"
+                      placeholder="Select Checklist"
+                      options={checklistOptions}
+                      loading={checklistsLoading}
+                      showSearch
+                      disabled={!getFieldValue('assetCategory')}
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                    />
+                  )}
+                </Form.Item>
+              </Form.Item>
+            </Col>
 
-          <Form.Item
-            label="Completed By"
-            name="completedBy"
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select Completed By"
-              options={userOptions}
-              loading={userRolesLoading}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-            />
-          </Form.Item>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Task"
+                name="task"
+                rules={[{ required: true, message: 'Please enter task name' }]}
+              >
+                <Input placeholder="Enter Task Name" />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item
-            label="Verified By"
-            name="verifiedBy"
-          >
-            <Select
-              mode="multiple"
-              placeholder="Select Verified By"
-              options={userOptions}
-              loading={userRolesLoading}
-              showSearch
-              filterOption={(input, option) =>
-                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-              }
-            />
-          </Form.Item>
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Frequency"
+                name="frequency"
+                rules={[{ required: true, message: 'Please select frequency' }]}
+              >
+                <Select
+                  placeholder="Select Frequency"
+                  options={frequencyOptions}
+                  loading={frequenciesLoading}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
 
-          <Form.Item
-            label="Description"
-            name="description"
-          >
-            <Input.TextArea rows={3} placeholder="Enter description (optional)" />
-          </Form.Item>
+            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.frequency !== currentValues.frequency}>
+              {() => {
+                const selectedFrequencyId = form.getFieldValue('frequency')
+                const selectedFrequency = frequencies.find(f => f.id === selectedFrequencyId)
+                const frequencyName = selectedFrequency?.name?.toUpperCase()
+                const showMonthField = ['MONTHLY', 'QUARTERLY', 'HALFYEARLY', 'YEARLY'].includes(frequencyName)
+                const showShiftFrequencyField = frequencyName === 'SHIFT'
 
-          <Form.Item
-            label="Status"
-            name="status"
-            valuePropName="checked"
-          >
-            <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.status !== currentValues.status}>
-              {({ getFieldValue }) => {
-                const statusValue = getFieldValue('status')
+                // Clear dependent fields when not applicable
+                if (!showMonthField) {
+                  form.setFieldsValue({ month: undefined })
+                }
+                if (!showShiftFrequencyField) {
+                  form.setFieldsValue({ shiftFrequency: undefined })
+                }
+
                 return (
-                  <Space>
-                    <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-                    <span>{statusValue ? 'Active' : 'Inactive'}</span>
-                  </Space>
+                  <>
+                    {showMonthField && (
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label="Month"
+                          name="month"
+                          rules={[{ required: true, message: 'Please select month(s)' }]}
+                        >
+                          <Select
+                            mode="multiple"
+                            placeholder="Select Month(s)"
+                            options={monthOptions}
+                            loading={monthsLoading}
+                            showSearch
+                            filterOption={(input, option) =>
+                              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                          />
+                        </Form.Item>
+                      </Col>
+                    )}
+
+                    {showShiftFrequencyField && (
+                      <Col xs={24} md={12}>
+                        <Form.Item
+                          label="Shift Frequency"
+                          name="shiftFrequency"
+                          rules={[{ required: true, message: 'Please select shift frequency' }]}
+                        >
+                          <Select
+                            mode="multiple"
+                            placeholder="Select Shift Frequency"
+                            options={shiftFrequencyOptions}
+                            loading={shiftFrequenciesLoading}
+                            showSearch
+                            filterOption={(input, option) =>
+                              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                          />
+                        </Form.Item>
+                      </Col>
+                    )}
+                  </>
                 )
               }}
             </Form.Item>
-          </Form.Item>
+
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Completed By"
+                name="completedBy"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Select Completed By"
+                  options={userOptions}
+                  loading={userRolesLoading}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Verified By"
+                name="verifiedBy"
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="Select Verified By"
+                  options={userOptions}
+                  loading={userRolesLoading}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={12}>
+              <Form.Item
+                label="Status"
+                name="status"
+                valuePropName="checked"
+              >
+                <Form.Item
+                  noStyle
+                  shouldUpdate={(prevValues, currentValues) =>
+                    prevValues.status !== currentValues.status
+                  }
+                >
+                  {({ getFieldValue }) => {
+                    const statusValue = getFieldValue('status')
+                    return (
+                      <Space>
+                        <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
+                        <span>{statusValue ? 'Active' : 'Inactive'}</span>
+                      </Space>
+                    )
+                  }}
+                </Form.Item>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                label="Description"
+                name="description"
+              >
+                <Input.TextArea rows={3} placeholder="Enter description (optional)" />
+              </Form.Item>
+            </Col>
+          </Row>
 
           <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>

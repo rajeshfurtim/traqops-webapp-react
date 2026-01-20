@@ -196,6 +196,42 @@ export const apiService = {
   },
 
   /**
+   * Get Schedule Month List API
+   * GET {apiBaseUrl}/unsecure/month/getschedulemonth
+   */
+  getScheduleMonthList: async () => {
+    const response = await api.get('/unsecure/month/getschedulemonth')
+    return response.data
+  },
+
+  /**
+   * Get All Shift List API
+   * GET {apiBaseUrl}/secure/shift/getallshift?clientId={clientId}&domainName={domainName}&pn={pageNumber}&ps={pageSize}
+   */
+  getAllShiftList: async (params = {}) => {
+    const {
+      domainName: domainNameParam,
+      clientId,
+      pageNumber = 1,
+      pageSize = 1000
+    } = params
+
+    if (!clientId) {
+      throw new Error('ClientId is required for getAllShiftList')
+    }
+
+    const queryParams = new URLSearchParams({
+      domainName: domainNameParam || domainName,
+      clientId: clientId.toString(),
+      pn: pageNumber.toString(),
+      ps: pageSize.toString()
+    })
+
+    const response = await api.get(`/secure/shift/getallshift?${queryParams.toString()}`)
+    return response.data
+  },
+
+  /**
    * Get User Role List API
    * GET {apiBaseUrl}/secure/userrole/getuserrolelist?domainName={domainName}&clientId={clientId}&pn={pageNumber}&ps={pageSize}
    */
