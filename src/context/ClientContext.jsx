@@ -10,31 +10,31 @@ export const useClient = () => {
   return context
 }
 
-const STORAGE_KEY = 'selectedClient'
-const DEFAULT_CLIENT = 'All'
+const STORAGE_KEY = 'clientId'
 
 export const ClientProvider = ({ children }) => {
-  const [selectedClient, setSelectedClient] = useState(() => {
-    // Load from localStorage on init, default to "All" if not found
+  const [clientId, setClientId] = useState(() => {
+    // Load from localStorage on init, default to null if not found
     const stored = localStorage.getItem(STORAGE_KEY)
-    return stored || DEFAULT_CLIENT
+    return stored ? Number(stored) : null
   })
   const [isChanging, setIsChanging] = useState(false)
 
   // Persist to localStorage whenever client changes
   useEffect(() => {
-    if (selectedClient) {
-      localStorage.setItem(STORAGE_KEY, selectedClient)
+    if (clientId !== null && clientId !== undefined) {
+      localStorage.setItem(STORAGE_KEY, String(clientId))
     } else {
-      localStorage.setItem(STORAGE_KEY, DEFAULT_CLIENT)
+      localStorage.removeItem(STORAGE_KEY)
     }
-  }, [selectedClient])
+  }, [clientId])
 
   const changeClient = (client) => {
+    // client is expected to be a numeric ID (e.g., 1090)
     setIsChanging(true)
     // Small delay for transition animation
     setTimeout(() => {
-      setSelectedClient(client)
+      setClientId(client)
       setIsChanging(false)
     }, 300)
   }
@@ -42,7 +42,7 @@ export const ClientProvider = ({ children }) => {
   const clearClient = () => {
     setIsChanging(true)
     setTimeout(() => {
-      setSelectedClient(null)
+      setClientId(null)
       setIsChanging(false)
     }, 300)
   }
@@ -50,7 +50,7 @@ export const ClientProvider = ({ children }) => {
   return (
     <ClientContext.Provider
       value={{
-        selectedClient,
+        clientId,
         changeClient,
         clearClient,
         isChanging

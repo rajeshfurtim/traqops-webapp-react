@@ -130,7 +130,7 @@ export default function DashboardLayout() {
   const location = useLocation()
   const { user, logout } = useAuth()
   const { collapsed, toggleSidebar } = useSidebar()
-  const { selectedClient, changeClient, isChanging } = useClient()
+  const { clientId, changeClient, isChanging } = useClient()
   const [selectedKeys, setSelectedKeys] = useState([location.pathname])
   const [openKeys, setOpenKeys] = useState(() => getOpenKeysFromPath(location.pathname))
   const [clients, setClients] = useState([])
@@ -198,7 +198,8 @@ export default function DashboardLayout() {
   }
 
   const handleClientChange = (value) => {
-    if (value) {
+    if (value !== undefined && value !== null) {
+      // value is expected to be the numeric clientId (e.g., 1090)
       changeClient(value)
     }
   }
@@ -357,20 +358,24 @@ export default function DashboardLayout() {
             {/* Client Selection Dropdown */}
             <Select
               placeholder="Select Client"
-              value={selectedClient}
+              value={clientId}
               onChange={handleClientChange}
-              style={{ minWidth: 150 }}
+              style={{ minWidth: 180 }}
               loading={clientsLoading}
               options={clients.map(client => ({
                 label: client.name,
-                value: client.name
+                // Store numeric client ID in state/localStorage (e.g., 1090)
+                value: client.id
               }))}
             />
             
             {/* Client Badge */}
-            {selectedClient && (
+            {clientId && (
               <Tag color="blue" style={{ margin: 0 }}>
-                {selectedClient}
+                {
+                  clients.find(c => c.id === clientId)?.name
+                  || `Client ID: ${clientId}`
+                }
               </Tag>
             )}
 
