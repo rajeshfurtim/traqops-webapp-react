@@ -311,56 +311,19 @@ export default function ScheduledMaintenance() {
 
       if (response.success && Array.isArray(response.data)) {
         setChecklists(response.data)
-        // If there are pending checklist IDs, map them correctly
-        if (pendingChecklistIds.length > 0) {
-          setTimeout(() => {
-            // Map checkList.id from scheduleChecklistMapping to checklistId from API
-            const mappedIds = []
-            
-            pendingChecklistIds.forEach(scheduleId => {
-              // Try to find exact match first
-              let found = response.data.find(cl => 
-                cl.checklistId === scheduleId || 
-                cl.id === scheduleId
-              )
-              
-              // If not found, try string comparison
-              if (!found) {
-                found = response.data.find(cl => 
-                  String(cl.checklistId) === String(scheduleId) ||
-                  String(cl.id) === String(scheduleId)
-                )
-              }
-              
-              // Use the checklistId from API if found, otherwise use scheduleId directly
-              if (found) {
-                mappedIds.push(found.checklistId || found.id)
-              } else {
-                // If not found in API response, use scheduleId directly
-                // The scheduleChecklistData should have this ID in options
-                mappedIds.push(scheduleId)
-              }
-            })
-            
-            // Set the form field with mapped IDs
-            if (mappedIds.length > 0) {
-              form.setFieldsValue({ checklist: mappedIds })
-            } else if (pendingChecklistIds.length > 0) {
-              // If mapping failed, use scheduleChecklistIds directly
-              // They should work since scheduleChecklistData has them in options
-              form.setFieldsValue({ checklist: pendingChecklistIds })
-            }
-            setPendingChecklistIds([])
-          }, 600)
-        } else {
-          // Even if no pending IDs, ensure form is updated after checklists load
-          // This helps if checklist was set before checklists loaded
-          setTimeout(() => {
-            const currentChecklist = form.getFieldValue('checklist')
-            if (currentChecklist && Array.isArray(currentChecklist)) {
-              form.setFieldsValue({ checklist: currentChecklist })
-            }
-          }, 100)
+
+        if (scheduleChecklistData.length > 0) {
+          const scheduleNames = scheduleChecklistData
+            .map(item => item.name)
+            .filter(Boolean)
+
+          const mappedIds = response.data
+            .filter(cl => scheduleNames.includes(cl.checklistName))
+            .map(cl => cl.checklistId)
+
+          if (mappedIds.length > 0) {
+            form.setFieldsValue({ checklist: mappedIds })
+          }
         }
       } else {
         setChecklists([])
