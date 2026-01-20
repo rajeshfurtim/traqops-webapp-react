@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
 import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
 import { apiService } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
 import { useGetLocationList } from '../hooks/useGetLocationList'
@@ -13,6 +13,8 @@ export default function ScheduledMaintenance() {
   const [loading, setLoading] = useState(true)
   const [schedules, setSchedules] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+  const [viewingRecord, setViewingRecord] = useState(null)
   const [editingRecord, setEditingRecord] = useState(null)
   const [modalLoading, setModalLoading] = useState(false)
   const [pagination, setPagination] = useState({
@@ -520,6 +522,16 @@ export default function ScheduledMaintenance() {
     // loadSchedules()
   }
 
+  const handleView = (record) => {
+    setViewingRecord(record.rawData)
+    setIsViewModalOpen(true)
+  }
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false)
+    setViewingRecord(null)
+  }
+
   const columns = [
     {
       title: 'S.No',
@@ -571,6 +583,24 @@ export default function ScheduledMaintenance() {
       key: 'userRole',
       width: 150,
       ellipsis: true
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 80,
+      align: 'center',
+      fixed: 'right',
+      render: (_, record) => (
+        <Button
+          type="text"
+          icon={<EyeOutlined />}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleView(record)
+          }}
+          title="View Details"
+        />
+      )
     }
   ]
 
@@ -639,7 +669,7 @@ export default function ScheduledMaintenance() {
         footer={null}
         width={700}
         centered
-        maskClosable={false}
+        maskClosable={true}
         confirmLoading={modalLoading}
       >
         <Spin spinning={modalLoading}>
@@ -799,6 +829,116 @@ export default function ScheduledMaintenance() {
           </Form.Item>
         </Form>
         </Spin>
+      </Modal>
+
+      {/* View Modal */}
+      <Modal
+        title="View Scheduled Maintenance Details"
+        open={isViewModalOpen}
+        onCancel={handleCloseViewModal}
+        footer={[
+          <Button key="close" onClick={handleCloseViewModal}>
+            Close
+          </Button>
+        ]}
+        width={800}
+        centered
+        maskClosable={true}
+      >
+        {viewingRecord && (
+          <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              <div>
+                <strong>Task Name:</strong>
+                <div style={{ marginTop: 4 }}>{viewingRecord.name || '-'}</div>
+              </div>
+
+              <div>
+                <strong>Description:</strong>
+                <div style={{ marginTop: 4 }}>{viewingRecord.description || '-'}</div>
+              </div>
+
+              <div>
+                <strong>Location(s):</strong>
+                <div style={{ marginTop: 4 }}>
+                  {viewingRecord.scheduleLocationMapping && viewingRecord.scheduleLocationMapping.length > 0
+                    ? viewingRecord.scheduleLocationMapping.map((mapping, index) => (
+                        <Tag key={index} color="blue" style={{ marginTop: 4 }}>
+                          {mapping?.location?.name || '-'}
+                        </Tag>
+                      ))
+                    : '-'}
+                </div>
+              </div>
+
+              <div>
+                <strong>Asset Category:</strong>
+                <div style={{ marginTop: 4 }}>
+                  <Tag color="green">{viewingRecord.category?.name || '-'}</Tag>
+                </div>
+              </div>
+
+              <div>
+                <strong>Checklist:</strong>
+                <div style={{ marginTop: 4 }}>
+                  {viewingRecord.scheduleChecklistMapping && viewingRecord.scheduleChecklistMapping.length > 0
+                    ? viewingRecord.scheduleChecklistMapping.map((mapping, index) => (
+                        <Tag key={index} color="purple" style={{ marginTop: 4 }}>
+                          {mapping?.checkList?.name || '-'}
+                        </Tag>
+                      ))
+                    : '-'}
+                </div>
+              </div>
+
+              <div>
+                <strong>Frequency:</strong>
+                <div style={{ marginTop: 4 }}>
+                  <Tag color="blue">{viewingRecord.frequency?.name || '-'}</Tag>
+                </div>
+              </div>
+
+              <div>
+                <strong>Completed By:</strong>
+                <div style={{ marginTop: 4 }}>
+                  {viewingRecord.scheduleUserRoleMapping && viewingRecord.scheduleUserRoleMapping.length > 0
+                    ? viewingRecord.scheduleUserRoleMapping
+                        .filter(mapping => mapping?.isVerified === 'N')
+                        .map((mapping, index) => (
+                          <Tag key={index} color="orange" style={{ marginTop: 4 }}>
+                            {mapping?.userRole?.name || '-'}
+                          </Tag>
+                        ))
+                    : '-'}
+                </div>
+              </div>
+
+              <div>
+                <strong>Verified By:</strong>
+                <div style={{ marginTop: 4 }}>
+                  {viewingRecord.scheduleUserRoleMapping && viewingRecord.scheduleUserRoleMapping.length > 0
+                    ? viewingRecord.scheduleUserRoleMapping
+                        .filter(mapping => mapping?.isVerified === 'Y')
+                        .map((mapping, index) => (
+                          <Tag key={index} color="cyan" style={{ marginTop: 4 }}>
+                            {mapping?.userRole?.name || '-'}
+                          </Tag>
+                        ))
+                    : '-'}
+                </div>
+              </div>
+
+              <div>
+                <strong>Status:</strong>
+                <div style={{ marginTop: 4 }}>
+                  <Tag color={viewingRecord.action === 'Y' ? 'success' : 'default'}>
+                    {viewingRecord.action === 'Y' ? 'Active' : 'Inactive'}
+                  </Tag>
+                </div>
+              </div>
+            </Space>
+          </div>
+        )}
       </Modal>
       </Box>
     </>
