@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi, API_BASE_URL } from './baseApi'
 import { domainName } from '../../config/apiConfig'
 
 /**
@@ -22,7 +22,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/schedulemaintenance/getalltask',
+          url: `${API_BASE_URL}/schedulemaintenance/getalltask`,
           method: 'GET',
           params: {
             domainName: domainNameParam || domainName,
@@ -37,7 +37,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
 
     createScheduleMaintenance: build.mutation({
       query: (payload) => ({
-        url: '/secure/schedulemaintenance/create',
+        url: `${API_BASE_URL}/schedulemaintenance/create`,
         method: 'POST',
         body: payload,
       }),
@@ -46,7 +46,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
 
     updateScheduleMaintenance: build.mutation({
       query: (payload) => ({
-        url: '/secure/schedulemaintenance/update',
+        url: `${API_BASE_URL}/schedulemaintenance/update`,
         method: 'POST',
         body: payload,
       }),
@@ -55,7 +55,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
 
     createOrUpdateScheduleMaintenance: build.mutation({
       query: (payload) => ({
-        url: '/secure/schedulemaintenance/addorupdate',
+        url: `${API_BASE_URL}/schedulemaintenance/addorupdate`,
         method: 'POST',
         body: payload,
       }),
@@ -93,7 +93,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/shift/getallshift',
+          url: `${API_BASE_URL}/shift/getallshift`,
           method: 'GET',
           params: {
             domainName: domainNameParam || domainName,
@@ -110,7 +110,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
       query: (params = {}) => {
         const { pageNumber = 1, pageSize = 1000 } = params
         return {
-          url: '/secure/customfrequency/getalllist',
+          url: `${API_BASE_URL}/customfrequency/getalllist`,
           method: 'GET',
           params: {
             pn: pageNumber.toString(),
@@ -136,7 +136,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/category/getallcategorylist',
+          url: `${API_BASE_URL}/category/getallcategorylist`,
           method: 'GET',
           params: {
             domainName: domainNameParam || domainName,
@@ -158,7 +158,7 @@ export const maintenanceApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/assets/getchecklist/byassetcategory',
+          url: `${API_BASE_URL}/assets/getchecklist/byassetcategory`,
           method: 'GET',
           params: {
             assetsCategoryId: assetsCategoryId.toString(),

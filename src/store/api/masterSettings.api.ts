@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi, API_BASE_URL } from './baseApi'
 import { domainName } from '../../config/apiConfig'
 
 /**
@@ -20,7 +20,7 @@ export const masterSettingsApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/location/getlocationlist',
+          url: `${API_BASE_URL}/location/getlocationlist`,
           method: 'GET',
           params: {
             domainName: domainNameParam || domainName,
@@ -47,7 +47,7 @@ export const masterSettingsApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/usertype/getallusertype',
+          url: `${API_BASE_URL}/usertype/getallusertype`,
           method: 'GET',
           params: {
             domainName: domainNameParam || domainName,
@@ -65,7 +65,7 @@ export const masterSettingsApi = baseApi.injectEndpoints({
         const { domainName: domainNameParam, pageNumber = 1, pageSize = 1000 } = params
 
         return {
-          url: '/secure/client/getallclientlist',
+          url: `${API_BASE_URL}/client/getallclientlist`,
           method: 'GET',
           params: {
             domainName: domainNameParam || domainName,

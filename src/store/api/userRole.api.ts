@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi, API_BASE_URL } from './baseApi'
 import { domainName } from '../../config/apiConfig'
 
 /**
@@ -20,7 +20,7 @@ export const userRoleApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/userrole/getuserrolelist',
+          url: `${API_BASE_URL}/userrole/getuserrolelist`,
           method: 'GET',
           params: {
             domainName: domainNameParam || domainName,

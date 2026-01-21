@@ -1,4 +1,4 @@
-import { baseApi } from './baseApi'
+import { baseApi, API_BASE_URL } from './baseApi'
 
 /**
  * Reports API endpoints
@@ -26,7 +26,7 @@ export const reportsApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: '/secure/report/dailylocationreport',
+          url: `${API_BASE_URL}/report/dailylocationreport`,
           method: 'GET',
           params: queryParams,
         }
