@@ -205,16 +205,30 @@ export default function ScheduledMaintenance() {
       setChecklists(checklistsResponse.data)
 
       if (scheduleChecklistData.length > 0) {
+        const scheduleIds = scheduleChecklistData.map(item => item.id).filter(Boolean)
         const scheduleNames = scheduleChecklistData
           .map(item => item.name)
           .filter(Boolean)
 
-        const mappedIds = checklistsResponse.data
+        // First try to match by ID
+        const mappedIdsById = checklistsResponse.data
+          .filter(cl => scheduleIds.includes(cl.checklistId))
+          .map(cl => cl.checklistId)
+
+        // If ID matching didn't work, try name matching
+        const mappedIdsByName = checklistsResponse.data
           .filter(cl => scheduleNames.includes(cl.checklistName))
           .map(cl => cl.checklistId)
 
-        if (mappedIds.length > 0) {
-          form.setFieldsValue({ checklist: mappedIds })
+        // Combine both, preferring ID matches
+        const mappedIds = [...new Set([...mappedIdsById, ...mappedIdsByName])]
+
+        // If we have schedule IDs but no API matches, use schedule IDs directly
+        // (they'll be in checklistOptions via scheduleChecklistData)
+        const finalIds = mappedIds.length > 0 ? mappedIds : scheduleIds
+
+        if (finalIds.length > 0) {
+          form.setFieldsValue({ checklist: finalIds })
         }
       }
     } else {
@@ -336,14 +350,21 @@ export default function ScheduledMaintenance() {
         .map(mapping => mapping?.location?.id)
         .filter(Boolean)
 
-      // Extract checklist data from scheduleChecklistMapping
+      // Extract checklist data from scheduleChecklistMapping or category.assetsCategoryChecklistMapping
       // Store both ID and name for reference
-      const scheduleChecklists = (item.scheduleChecklistMapping || [])
-        .map(mapping => ({
+      const scheduleChecklistMapping = item.scheduleChecklistMapping || []
+      const assetsCategoryChecklistMapping = item.category?.assetsCategoryChecklistMapping || []
+      
+      const scheduleChecklists = [
+        ...scheduleChecklistMapping.map(mapping => ({
+          id: mapping?.checkList?.id,
+          name: mapping?.checkList?.name
+        })),
+        ...assetsCategoryChecklistMapping.map(mapping => ({
           id: mapping?.checkList?.id,
           name: mapping?.checkList?.name
         }))
-        .filter(cl => cl.id)
+      ].filter(cl => cl.id && cl.name)
       
       const scheduleChecklistIds = scheduleChecklists.map(cl => cl.id)
 
@@ -395,22 +416,23 @@ export default function ScheduledMaintenance() {
         dailyCustomHours: dailyCustomHourIds.length > 0 ? dailyCustomHourIds : undefined
       })
       
-      // Set checklist value after a short delay to ensure options are rendered
-      // Use scheduleChecklistIds directly since they're in scheduleChecklistData options
-      setTimeout(() => {
-        if (scheduleChecklistIds.length > 0) {
-          form.setFieldsValue({ checklist: scheduleChecklistIds })
-        }
-      }, 300)
-      
       // Set category ID to trigger checklist query
       if (item.category?.id) {
         setSelectedCategoryId(item.category.id)
+        // Set checklist immediately if we have scheduleChecklistData (from category.assetsCategoryChecklistMapping)
+        // The options are already available via scheduleChecklistData
+        if (scheduleChecklistIds.length > 0) {
+          setTimeout(() => {
+            form.setFieldsValue({ checklist: scheduleChecklistIds })
+          }, 100)
+        }
       } else {
         // If no category, set checklist directly using scheduleChecklistIds
-        setTimeout(() => {
-          form.setFieldsValue({ checklist: scheduleChecklistIds })
-        }, 100)
+        if (scheduleChecklistIds.length > 0) {
+          setTimeout(() => {
+            form.setFieldsValue({ checklist: scheduleChecklistIds })
+          }, 100)
+        }
       }
     } catch (error) {
       console.error('Error loading record data:', error)
