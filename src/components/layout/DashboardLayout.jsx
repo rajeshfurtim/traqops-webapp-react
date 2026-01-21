@@ -35,8 +35,8 @@ import { useSidebar } from '../../context/SidebarContext'
 import { useClient } from '../../context/ClientContext'
 import { sidebarMenuConfig, getBreadcrumbsFromPath } from '../../config/sidebarMenu'
 import { APP_CONFIG } from '../../config/constants'
-import { apiService } from '../../services/api'
 import { domainName } from '../../config/apiConfig'
+import { useGetAllClientListQuery } from '../../store/api/masterSettings.api'
 import EllipsisTooltip from '../EllipsisTooltip'
 import clsx from 'clsx'
 import './DashboardLayout.css'
@@ -134,7 +134,6 @@ export default function DashboardLayout() {
   const [selectedKeys, setSelectedKeys] = useState([location.pathname])
   const [openKeys, setOpenKeys] = useState(() => getOpenKeysFromPath(location.pathname))
   const [clients, setClients] = useState([])
-  const [clientsLoading, setClientsLoading] = useState(true)
 
   // Use menu config directly without client filtering
   const filteredMenuConfig = sidebarMenuConfig
@@ -144,37 +143,26 @@ export default function DashboardLayout() {
     setOpenKeys(getOpenKeysFromPath(location.pathname))
   }, [location.pathname])
 
-  // Fetch clients from API
+  const domainNameParam = user?.domain?.name || domainName
+
+  // Fetch clients via RTK Query
+  const {
+    data: clientsResponse,
+    isLoading: clientsLoading,
+  } = useGetAllClientListQuery({
+    domainName: domainNameParam,
+    pageNumber: 1,
+    pageSize: 1000,
+  })
+
+  // Keep local clients array for existing logic
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        setClientsLoading(true)
-        const domainNameParam = user?.domain?.name || domainName
-        
-        const response = await apiService.getAllClientList({
-          domainName: domainNameParam,
-          pageNumber: 1,
-          pageSize: 1000
-        })
-
-        if (response.success && response.data?.content) {
-          setClients(response.data.content)
-        } else {
-          console.error('Failed to fetch clients:', response.message)
-          setClients([])
-        }
-      } catch (error) {
-        console.error('Error fetching clients:', error)
-        setClients([])
-      } finally {
-        setClientsLoading(false)
-      }
+    if (clientsResponse?.success && clientsResponse.data?.content) {
+      setClients(clientsResponse.data.content)
+    } else if (clientsResponse) {
+      setClients([])
     }
-
-    if (user) {
-      fetchClients()
-    }
-  }, [user])
+  }, [clientsResponse])
 
   // Default client selection:
   // If API returns clients and no client is selected yet, auto-select the first client.
