@@ -176,6 +176,17 @@ export default function DashboardLayout() {
     }
   }, [user])
 
+  // Default client selection:
+  // If API returns clients and no client is selected yet, auto-select the first client.
+  useEffect(() => {
+    if (!clientsLoading && !isChanging && !clientId && Array.isArray(clients) && clients.length > 0) {
+      const firstClientId = Number(clients[0]?.id)
+      if (firstClientId !== undefined && firstClientId !== null) {
+        changeClient(firstClientId)
+      }
+    }
+  }, [clientsLoading, isChanging, clientId, clients, changeClient])
+
 
   const handleMenuClick = ({ key }) => {
     const findPathByKey = (items, targetKey) => {
@@ -365,7 +376,7 @@ export default function DashboardLayout() {
               options={clients.map(client => ({
                 label: client.name,
                 // Store numeric client ID in state/localStorage (e.g., 1090)
-                value: client.id
+                value: Number(client.id)
               }))}
             />
             
@@ -373,7 +384,7 @@ export default function DashboardLayout() {
             {clientId && (
               <Tag color="blue" style={{ margin: 0 }}>
                 {
-                  clients.find(c => c.id === clientId)?.name
+                  clients.find(c => Number(c.id) === Number(clientId))?.name
                   || `Client ID: ${clientId}`
                 }
               </Tag>
