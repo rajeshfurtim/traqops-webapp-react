@@ -274,11 +274,11 @@ export default function ScheduledMaintenance() {
       }))
     : []
 
-  // Month options from API - map name to label
+  // Month options from API - map name/textField to label, id/idField to value
   const monthOptions = Array.isArray(months) && months.length > 0
     ? months.map(month => ({
-        label: month?.name || 'Unknown',
-        value: month?.id
+        label: month?.name || month?.textField || 'Unknown',
+        value: month?.id ?? month?.idField
       }))
     : []
 
@@ -365,9 +365,9 @@ export default function ScheduledMaintenance() {
       // Set form values - ensure asset category ID is set correctly
       const assetCategoryId = item.category?.id
       
-      // Extract month IDs from scheduleMonthMapping
+      // Extract month IDs from scheduleMonthMapping (use scheduleMonth.id so it matches monthOptions)
       const monthIds = (item.scheduleMonthMapping || [])
-        .map(mapping => mapping?.id)
+        .map(mapping => mapping?.scheduleMonth?.id)
         .filter(Boolean)
 
       // Extract shift frequency IDs from scheduleShiftMapping
