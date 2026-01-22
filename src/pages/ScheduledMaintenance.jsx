@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
 import { Table, Tag, Button, Modal, Form, Input, Select, Switch, Space, Spin, Row, Col, notification } from 'antd'
-import { PlusOutlined, EyeOutlined } from '@ant-design/icons'
+import { PlusOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons'
 import {
   useGetAllCategoryListQuery,
   useGetChecklistByAssetCategoryQuery,
@@ -12,6 +12,7 @@ import {
   useGetAllCustomFrequencyListQuery,
   useGetAllScheduleMaintenanceTasksQuery,
   useCreateOrUpdateScheduleMaintenanceMutation,
+  useDeleteMultipleScheduleMaintenanceMutation,
 } from '../store/api/maintenance.api'
 import { useGetUserRoleListQuery } from '../store/api/userRole.api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
@@ -36,6 +37,7 @@ export default function ScheduledMaintenance() {
   const [scheduleChecklistData, setScheduleChecklistData] = useState([])
   const [editingCategory, setEditingCategory] = useState(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState(null)
+  const [selectedRowKeys, setSelectedRowKeys] = useState([])
   const [form] = Form.useForm()
   const { user } = useAuth()
   const clientId = user?.client?.id || user?.clientId
@@ -90,6 +92,7 @@ export default function ScheduledMaintenance() {
   )
 
   const [createOrUpdateScheduleMaintenance, { isLoading: isSubmitting }] = useCreateOrUpdateScheduleMaintenanceMutation()
+  const [deleteMultipleScheduleMaintenance, { isLoading: isDeleting }] = useDeleteMultipleScheduleMaintenanceMutation()
 
   // Extract data from responses
   const frequencies = frequenciesResponse?.success && Array.isArray(frequenciesResponse.data) ? frequenciesResponse.data : []
@@ -629,6 +632,72 @@ export default function ScheduledMaintenance() {
     setViewingRecord(null)
   }
 
+  const handleDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      notification.warning({
+        message: 'No Selection',
+        description: 'Please select at least one record to delete.',
+        placement: 'topRight'
+      })
+      return
+    }
+
+    Modal.confirm({
+      title: 'Confirm Delete',
+      content: `Are you sure you want to delete ${selectedRowKeys.length} selected record(s)?`,
+      okText: 'Yes, Delete',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: async () => {
+        try {
+          setLoading(true)
+          
+          // Delete multiple records one by one (or use batch if API supports it)
+          const deletePromises = selectedRowKeys.map(id => 
+            deleteMultipleScheduleMaintenance([id]).unwrap()
+          )
+          
+          const responses = await Promise.all(deletePromises)
+          
+          // Check if all deletions were successful
+          const allSuccess = responses.every(res => res.success)
+          
+          if (allSuccess) {
+            const message = responses[0]?.message || `Successfully deleted ${selectedRowKeys.length} record(s).`
+            notification.success({
+              message: 'Success',
+              description: message,
+              placement: 'topRight'
+            })
+            setSelectedRowKeys([])
+            refetchSchedules()
+          } else {
+            throw new Error('Some records failed to delete')
+          }
+        } catch (error) {
+          console.error('Error deleting records:', error)
+          notification.error({
+            message: 'Error',
+            description: error?.data?.message || error?.message || 'Failed to delete records. Please try again.',
+            placement: 'topRight'
+          })
+        } finally {
+          setLoading(false)
+        }
+      }
+    })
+  }
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (selectedKeys) => {
+      setSelectedRowKeys(selectedKeys)
+    },
+    getCheckboxProps: (record) => ({
+      name: record.id,
+    }),
+  }
+
   const columns = [
     {
       title: 'S.No',
@@ -712,14 +781,28 @@ export default function ScheduledMaintenance() {
           <Typography variant="h4" fontWeight="bold">
           Scheduled Maintenance
         </Typography>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleAdd}
-            size="large"
-          >
-            Add Scheduled Maintenance
-          </Button>
+          <Space>
+            {selectedRowKeys.length > 0 && (
+              <Button
+                type="primary"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={handleDelete}
+                size="large"
+                loading={isDeleting}
+              >
+                Delete ({selectedRowKeys.length})
+              </Button>
+            )}
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAdd}
+              size="large"
+            >
+              Add Scheduled Maintenance
+            </Button>
+          </Space>
         </Box>
 
       <Card>
@@ -733,9 +816,15 @@ export default function ScheduledMaintenance() {
               dataSource={schedules}
               columns={columns}
               rowKey="key"
+              rowSelection={rowSelection}
               loading={schedulesLoading || loading}
               onRow={(record) => ({
-                onClick: () => handleRowClick(record),
+                onClick: (e) => {
+                  // Don't trigger row click if clicking on checkbox
+                  if (e.target.type !== 'checkbox' && !e.target.closest('.ant-checkbox-wrapper')) {
+                    handleRowClick(record)
+                  }
+                },
                 style: { cursor: 'pointer' }
               })}
               pagination={{

@@ -62,6 +62,28 @@ export const maintenanceApi = baseApi.injectEndpoints({
       invalidatesTags: ['ScheduleMaintenance'],
     }),
 
+    deleteScheduleMaintenance: build.mutation({
+      query: (id) => ({
+        url: `${API_BASE_URL}/delete/schedulemaintenance`,
+        method: 'DELETE',
+        params: {
+          id: id.toString(),
+        },
+      }),
+      invalidatesTags: ['ScheduleMaintenance'],
+    }),
+
+    deleteMultipleScheduleMaintenance: build.mutation({
+      query: (id) => ({
+        url: `${API_BASE_URL}/delete/schedulemaintenance`,
+        method: 'DELETE',
+        params: {
+          id: id.toString(),
+        },
+      }),
+      invalidatesTags: ['ScheduleMaintenance'],
+    }),
+
     // Frequency & Schedule Helpers
     getAllFrequency: build.query({
       query: () => ({
@@ -176,6 +198,8 @@ export const {
   useCreateScheduleMaintenanceMutation,
   useUpdateScheduleMaintenanceMutation,
   useCreateOrUpdateScheduleMaintenanceMutation,
+  useDeleteScheduleMaintenanceMutation,
+  useDeleteMultipleScheduleMaintenanceMutation,
   useGetAllFrequencyQuery,
   useGetScheduleMonthListQuery,
   useGetAllShiftListQuery,
