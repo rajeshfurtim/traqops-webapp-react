@@ -358,18 +358,24 @@ export default function ScheduledMaintenance() {
       const scheduleChecklistMapping = item.scheduleChecklistMapping || []
       const assetsCategoryChecklistMapping = item.category?.assetsCategoryChecklistMapping || []
       
-      const scheduleChecklists = [
-        ...scheduleChecklistMapping.map(mapping => ({
-          id: mapping?.checkList?.id,
-          name: mapping?.checkList?.name
-        })),
-        ...assetsCategoryChecklistMapping.map(mapping => ({
-          id: mapping?.checkList?.id,
-          name: mapping?.checkList?.name
-        }))
-      ].filter(cl => cl.id && cl.name)
+      const uniqueScheduleChecklists = Array.from(
+  new Map(
+    [
+      ...scheduleChecklistMapping.map((m) => ({
+        id: m?.checkList?.id,
+        name: m?.checkList?.name,
+      })),
+      ...assetsCategoryChecklistMapping.map((m) => ({
+        id: m?.checkList?.id,
+        name: m?.checkList?.name,
+      })),
+    ]
+      .filter((cl) => cl?.id && cl?.name)
+      .map((cl) => [cl.id, cl]),
+  ).values(),
+);
       
-      const scheduleChecklistIds = scheduleChecklists.map(cl => cl.id)
+      const scheduleChecklistIds = uniqueScheduleChecklists.map(cl => cl.id)
 
       // Extract completed by user role IDs
       const completedByIds = (item.scheduleUserRoleMapping || [])
@@ -384,7 +390,7 @@ export default function ScheduledMaintenance() {
         .filter(Boolean)
 
       // Store schedule checklist data FIRST so options are available immediately
-      setScheduleChecklistData(scheduleChecklists)
+      setScheduleChecklistData(uniqueScheduleChecklists)
       
       // Set form values - ensure asset category ID is set correctly
       const assetCategoryId = item.category?.id
@@ -534,7 +540,7 @@ export default function ScheduledMaintenance() {
         scheduleLocationMappingDtos: scheduleLocationMappingDtos,
         scheduleChecklistMappingDtos: scheduleChecklistMappingDtos,
         scheduleUserRoleMappingDtos: scheduleUserRoleMappingDtos,
-        action: values.status ? 'Y' : 'N',
+        action: values.status == true ? 'Y' : 'N',
         frequencyGenerated: 'N'
       }
 
@@ -913,26 +919,26 @@ export default function ScheduledMaintenance() {
                 label="Checklist"
                 name="checklist"
               >
-                <Form.Item
+                {/* <Form.Item
                   noStyle
                   shouldUpdate={(prevValues, currentValues) =>
                     prevValues.assetCategory !== currentValues.assetCategory
                   }
                 >
-                  {({ getFieldValue }) => (
+                  {({ getFieldValue }) => ( */}
                     <Select
                       mode="multiple"
                       placeholder="Select Checklist"
                       options={checklistOptions}
                       loading={checklistsLoading}
                       showSearch
-                      disabled={!getFieldValue('assetCategory')}
+                      disabled={form.getFieldValue('assetCategory') ? false : true}
                       filterOption={(input, option) =>
                         (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                       }
                     />
-                  )}
-                </Form.Item>
+                  {/* )}
+                </Form.Item> */}
               </Form.Item>
             </Col>
 
@@ -1099,7 +1105,7 @@ export default function ScheduledMaintenance() {
                 name="status"
                 valuePropName="checked"
               >
-                <Form.Item
+                {/* <Form.Item
                   noStyle
                   shouldUpdate={(prevValues, currentValues) =>
                     prevValues.status !== currentValues.status
@@ -1107,14 +1113,14 @@ export default function ScheduledMaintenance() {
                 >
                   {({ getFieldValue }) => {
                     const statusValue = getFieldValue('status')
-                    return (
-                      <Space>
+                    return ( */}
+                      {/* <Space> */}
                         <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
-                        <span>{statusValue ? 'Active' : 'Inactive'}</span>
-                      </Space>
-                    )
+                        {/* <span>{form.getFieldValue('status') ? 'Active' : 'Inactive'}</span> */}
+                      {/* </Space> */}
+                    {/* )
                   }}
-                </Form.Item>
+                </Form.Item> */}
               </Form.Item>
             </Col>
           </Row>
