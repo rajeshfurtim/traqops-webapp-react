@@ -33,8 +33,40 @@ export const reportsApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+
+    getMonthlyEmployeeReport: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId, userTypeId, clientId } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getMonthlyEmployeeReport')
+        }
+
+        if (!fromDate || !toDate) {
+          throw new Error('Month is required for getMonthlyEmployeeReport')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          clientId: clientId.toString(),
+          ...(Array.isArray(locationId) && locationId.length > 0 && {
+    locationId: locationId.join(','),
+  }),
+          userTypeId: userTypeId?.toString() ?? '-1',
+        }
+
+        return {
+          url: `${API_BASE_URL}/report/locationwise/monthlyreport`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
 
-export const { useGetDailyLocationReportQuery } = reportsApi
+export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery } = reportsApi
