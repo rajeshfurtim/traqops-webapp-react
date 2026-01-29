@@ -84,7 +84,7 @@ export default function MonthlyEmployeeAttendanceReport() {
   if (hour >= 13 && hour < 15) return 'B'
   if (hour >= 21 && hour <= 23) return 'C'
 
-  return ''
+  return 'P'
 }
 
 const transformReportRow = (item) => {

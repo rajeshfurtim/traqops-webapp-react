@@ -50,9 +50,7 @@ export const reportsApi = baseApi.injectEndpoints({
           fromDate,
           toDate,
           clientId: clientId.toString(),
-          ...(Array.isArray(locationId) && locationId.length > 0 && {
-    locationId: locationId.join(','),
-  }),
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
           userTypeId: userTypeId?.toString() ?? '-1',
         }
 
