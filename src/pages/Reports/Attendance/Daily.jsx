@@ -12,6 +12,8 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import './Daily.css'
 
+
+
 export default function DailyAttendanceReport() {
   const [loading, setLoading] = useState(false)
   const [searchTriggered, setSearchTriggered] = useState(false)
