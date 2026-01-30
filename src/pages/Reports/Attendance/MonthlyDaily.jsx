@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col } from 'antd'
+import {Table,Form,Select,DatePicker,Space,Button as AntButton,Row,Col,} from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -10,11 +10,11 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useAuth } from '../../../context/AuthContext'
 import { useGetMonthlyEmployeeReportQuery } from '../../../store/api/reports.api'
 
-export default function MonthlyDailyAttendanceReport() {
+const { RangePicker } = DatePicker
 
+export default function MonthlyDailyAttendanceReport() {
   const [form] = Form.useForm()
   const { user } = useAuth()
-  const fromDate = Form.useWatch("fromDate", form);
   const clientId = user?.client?.id || user?.clientId
 
   const [reports, setReports] = useState([])
@@ -28,376 +28,344 @@ export default function MonthlyDailyAttendanceReport() {
   const { userTypes, loading: userTypesLoading } = useGetAllUserType()
   const { locations, loading: locationsLoading } = useGetLocationList()
 
+  const locationIds = Array.isArray(locations)
+    ? locations.map(l => l?.id).filter(Boolean)
+    : []
+
   const typeOptions = [
-    { id: -1, name: 'All User Types' }, 
-    ...(Array.isArray(userTypes) && userTypes.length > 0 ? userTypes.map(user => ({ 
-      id: user?.id, 
-      name: user?.name || 'Unknown' 
-    })) : [])
+    { id: -1, name: 'All User Types' },
+    ...(userTypes || []),
   ]
 
   const locationOptions = [
-    { id: -1, name: 'All Locations' }, 
-    ...(Array.isArray(locations) && locations.length > 0 ? locations.map(loc => ({ 
-      id: loc?.id, 
-      name: loc?.name || 'Unknown' 
-    })) : [])
+    { id: -1, name: 'All Locations' },
+    ...(locations || []),
   ]
 
-  const locationIds = Array.isArray(locations)
-  ? locations.map(loc => loc?.id).filter(Boolean)
-  : []
-
   useEffect(() => {
-      form.setFieldsValue({
-        fromDate: dayjs(),
-        toDate: dayjs(),
-        location: -1,
-        type: -1
-      })
-    }, [])
+    const today = dayjs()
+
+    form.setFieldsValue({
+      dateRange: [today, today],
+      location: -1,
+      type: -1,
+    })
+
+    setFilters({
+      fromDate: today.format('YYYY-MM-DD'),
+      toDate: today.format('YYYY-MM-DD'),
+      locationId: locationIds,
+      userTypeId: null,
+    })
+  }, [locations])
 
   const handleFilterChange = (values) => {
-    console.log('Filter values:', values)
     const newFilters = {}
-    
-    if(values.fromDate) newFilters.fromDate = values.fromDate.format('YYYY-MM-DD')
-    if(values.toDate) newFilters.toDate = values.toDate.format('YYYY-MM-DD') 
-    if (values.location == -1){
-         newFilters.locationId = locationIds
-    }else{
-         newFilters.locationId = values.location
-    } 
-    if (values.type) newFilters.userTypeId = values.type
-    console.log('Applied Filters:', newFilters)
-    setFilters(prev => ({
-    ...prev,
-    ...newFilters,
-  }))
+
+    if (values.dateRange?.length === 2) {
+      const [from, to] = values.dateRange
+      newFilters.fromDate = from.format('YYYY-MM-DD')
+      newFilters.toDate = to.format('YYYY-MM-DD')
+    }
+
+    newFilters.locationId =
+      values.location === -1 ? locationIds : values.location
+
+    newFilters.userTypeId =
+      values.type === -1 ? null : values.type
+
+    setFilters(prev => ({ ...prev, ...newFilters }))
   }
 
-  const { data: response, isLoading: queryLoading, isFetching } = useGetMonthlyEmployeeReportQuery(
-        {
-      fromDate: filters.fromDate,
-      toDate: filters.toDate,
-      locationId: filters.locationId,
-      userTypeId: filters.userTypeId,
+  const {
+    data: response,
+    isLoading,
+    isFetching,
+  } = useGetMonthlyEmployeeReportQuery(
+    {
+      ...filters,
       clientId,
     },
-        { skip: !clientId || !filters.fromDate || !filters.toDate }
-      )
+    { skip: !clientId || !filters.fromDate || !filters.toDate }
+  )
 
- const getShiftByTime = (inTime) => {
-  const hour = Number(inTime.split(':')[0])
-
-  if (hour >= 5 && hour < 8) return 'A'
-  if (hour >= 8 && hour < 10) return 'G'
-  if (hour >= 13 && hour < 15) return 'B'
-  if (hour >= 21 && hour <= 23) return 'C'
-
-  return 'P'
-}
-
-const transformReportRow = (item) => {
-  const dayMap = {}
-
-  item.monthWiseShift?.forEach(shift => {
-    if (!shift?.createdAt || !shift?.inTime) return
-
-    const day = dayjs(shift.createdAt).date()
-    const shiftCode = getShiftByTime(shift.inTime)
-
-    if (!shiftCode) return
-
-    if (!dayMap[day]) {
-      dayMap[day] = new Set()
-    }
-    dayMap[day].add(shiftCode)
-  })
-
-  // Convert Set → "A/B/C"
-  Object.keys(dayMap).forEach(day => {
-    dayMap[day] = Array.from(dayMap[day]).join('/')
-  })
-
-  return {
-    id: item.employeeCode,
-    employeeId: item.employeeCode,
-    employeeName: item.userName,
-    userType: item.userTypeName,
-    location: item.locationName,
-    totalDuties: item.monthWiseShift?.length || 0,
-    ...dayMap,
+  const getShiftByTime = (inTime) => {
+    const hour = Number(inTime.split(':')[0])
+    if (hour >= 5 && hour < 8) return 'A'
+    if (hour >= 8 && hour < 10) return 'G'
+    if (hour >= 13 && hour < 15) return 'B'
+    if (hour >= 21) return 'C'
+    return 'P'
   }
-}
 
-useEffect(() => {
-  if (response?.data && Array.isArray(response.data)) {
-    const formatted = response.data.map(transformReportRow)
-    setReports(formatted)
-  } else {
-    setReports([])
-  }
-}, [response])
+  const transformReportRow = (item) => {
+    const dayMap = {}
 
-const getDateColumns = () => {
-  if (!filters.fromDate || !filters.toDate) return []
+    item.monthWiseShift?.forEach(shift => {
+      if (!shift?.createdAt || !shift?.inTime) return
+      const day = dayjs(shift.createdAt).date()
+      const code = getShiftByTime(shift.inTime)
 
-  const start = dayjs(filters.fromDate)
-  const end = dayjs(filters.toDate)
-
-  const columns = []
-  let current = start
-
-  while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
-    const day = current.date()
-
-    columns.push({
-      title: day,
-      dataIndex: day,
-      key: day,
-      width: 45,
-      align: 'center',
+      if (!dayMap[day]) dayMap[day] = new Set()
+      dayMap[day].add(code)
     })
 
-    current = current.add(1, 'day')
+    Object.keys(dayMap).forEach(d => {
+      dayMap[d] = [...dayMap[d]].join('/')
+    })
+
+    return {
+      id: item.employeeCode,
+      employeeId: item.employeeCode,
+      employeeName: item.userName,
+      userType: item.userTypeName,
+      location: item.locationName,
+      totalDuties: item.monthWiseShift?.length || 0,
+      ...dayMap,
+    }
   }
 
-  return columns
-}
+  useEffect(() => {
+    if (Array.isArray(response?.data)) {
+      setReports(response.data.map(transformReportRow))
+    } else {
+      setReports([])
+    }
+  }, [response])
+
+  const getDateColumns = () => {
+    if (!filters.fromDate || !filters.toDate) return []
+
+    const start = dayjs(filters.fromDate)
+    const end = dayjs(filters.toDate)
+    const cols = []
+
+    let current = start
+
+    while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
+      const d = current.date()
+      cols.push({
+        title: d,
+        dataIndex: d,
+        width: 45,
+        align: 'center',
+      })
+      current = current.add(1, 'day')
+    }
+
+    return cols
+  }
 
   const columns = [
-  {
-    title: 'Employee ID',
-    dataIndex: 'employeeId',
-    key: 'employeeId',
-    fixed: 'left',
-    width: 120,
-  },
-  {
-    title: 'Employee Name',
-    dataIndex: 'employeeName',
-    key: 'employeeName',
-    fixed: 'left',
-    width: 200,
-  },
-  {
-    title: 'User Type',
-    dataIndex: 'userType',
-    key: 'userType',
-    width: 120,
-  },
-  {
-    title: 'Location',
-    dataIndex: 'location',
-    key: 'location',
-    width: 120,
-  },
-  {
-    title: 'Total Duties',
-    dataIndex: 'totalDuties',
-    key: 'totalDuties',
-    width: 120,
-    align: 'center',
-  },
-  ...getDateColumns(),
-]
+    { title: 'Emp ID', dataIndex: 'employeeId', fixed: 'left', width: 120 },
+    { title: 'Employee Name', dataIndex: 'employeeName', fixed: 'left', width: 200 },
+    { title: 'User Type', dataIndex: 'userType', width: 120 },
+    { title: 'Location', dataIndex: 'location', width: 120 },
+    { title: 'Total Duties', dataIndex: 'totalDuties', width: 120, align: 'center' },
+    ...getDateColumns(),
+  ]
 
-const getSummaryData = () => {
-  const summary = {
-    totalDuties: 0,
-    dayCounts: {},
+  const getSummaryData = () => {
+    const summary = { totalDuties: 0, dayCounts: {} }
+
+    reports.forEach(row => {
+      summary.totalDuties += row.totalDuties || 0
+      Object.keys(row).forEach(k => {
+        if (!isNaN(k) && row[k]) {
+          summary.dayCounts[k] = (summary.dayCounts[k] || 0) + 1
+        }
+      })
+    })
+
+    return summary
   }
-
-  reports.forEach(row => {
-    // Total duties sum
-    summary.totalDuties += row.totalDuties || 0
-
-    // Day-wise count
-    Object.keys(row).forEach(key => {
-      if (!isNaN(key)) {
-        if (row[key]) {
-          summary.dayCounts[key] = (summary.dayCounts[key] || 0) + 1
+  const handleExportExcel = async () => {
+        try {
+          await exportToExcel(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
+          message.success('Excel file exported successfully')
+        } catch (error) {
+          message.error('Failed to export Excel file')
         }
       }
-    })
-  })
-
-  return summary
-}
+    
+    const handleExportPDF = async () => {
+        try {
+          await exportToPDF(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
+          message.success('PDF file exported successfully')
+        } catch (error) {
+          message.error('Failed to export PDF file')
+        }
+      }
 
   return (
     <>
       <Helmet>
         <title>{getPageTitle('reports/attendance/monthly-daily')}</title>
-        <meta name="description" content={`${APP_CONFIG.name} - Monthly Daily Attendance Report`} />
+        <meta
+          name="description"
+          content={`${APP_CONFIG.name} - Monthly Daily Attendance Report`}
+        />
       </Helmet>
+
       <Box>
         <Typography variant="h4" gutterBottom fontWeight="bold">
           Monthly Daily Attendance Report
         </Typography>
 
+        {/* FILTERS */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Form
-             form={form}
-             onFinish={handleFilterChange}
-             layout="vertical"
-            >
-             <Row gutter={[8, 8]}>
-              <Col xs={24} sm={12} md={6}>
-               <Form.Item name="fromDate" label="From Date">
-                <DatePicker format="DD-MM-YYYY"
-                 style={{ width: '100%' }}
-                 disabledDate={(current) => {
-                   // Disable future dates
-                   return current && current > dayjs().endOf("day");
-             }}
-                 />
-               </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={6}>
-                <Form.Item name="toDate" label="To Date">
-                  <DatePicker format="DD-MM-YYYY"
-                   style={{ width: '100%' }}
-                    disabledDate={(current) => {
-                      if (!current) return false;
-
-                       // Disable future dates
-                      if (current > dayjs().endOf("day")) return true;
-
-                      //Disable dates BEFORE fromDate
-                      if (fromDate && current < dayjs(fromDate).startOf("day")) return true;
-
-                      return false;
-                   }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={6}>
-                <Form.Item name="location" label="Location">
-                  <Select loading={locationsLoading} style={{ width: '100%' }}>
-                    {locationOptions.map(loc => (
-                  <Select.Option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </Select.Option>
-                   ))}
-                 </Select>
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={6}>
-               <Form.Item name="type" label="Type">
-                <Select loading={userTypesLoading} style={{ width: '100%' }}>
-                    {typeOptions.map(type => (
-                  <Select.Option key={type.id} value={type.id}>
-                    {type.name}
-                  </Select.Option>
-                 ))}
-                </Select>
-               </Form.Item>
-              </Col>
-
-              <Col xs={24}>
-            <Space>
-              <AntButton type="primary" htmlType="submit">
-                Apply Filters
-              </AntButton>
-              <AntButton
-                   onClick={() => {
-                      const currentDate = dayjs()
-                   
-                      form.setFieldsValue({
-                        fromDate: currentDate,
-                        toDate: currentDate,
-                        location: -1,
-                        type: -1,
+            <Form form={form} layout="inline" onFinish={handleFilterChange}>
+                  <Form.Item
+                    name="dateRange"
+                    label="Date Range"
+                    // rules={[{ required: true }]}
+                  >
+                    <RangePicker
+                      format="DD-MM-YYYY"
+                      disabledDate={(c) => c && c > dayjs().endOf('day')}
+                      allowClear={false}
+                    />
+                  </Form.Item>
+                  <Form.Item name="location" label="Location">
+                    <Select loading={locationsLoading}>
+                      {locationOptions.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item name="type" label="User Type">
+                    <Select loading={userTypesLoading}>
+                      {typeOptions.map(t => (
+                        <Select.Option key={t.id} value={t.id}>
+                          {t.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                  <Form.Item>
+                    <AntButton type="primary" htmlType="submit">
+                      Apply Filters
+                    </AntButton>
+                  </Form.Item>
+                  <Form.Item>
+                    <AntButton
+                      onClick={() => {
+                        const today = dayjs()
+                        form.setFieldsValue({
+                          dateRange: [today, today],
+                          location: -1,
+                          type: -1,
                         })
-                   
-                      handleFilterChange({
-                        fromDate: currentDate,
-                        toDate: currentDate,
-                        location: -1,
-                        type: -1,
+                        handleFilterChange({
+                          dateRange: [today, today],
+                          location: -1,
+                          type: -1,
                         })
                       }}
-               >
-                 Reset
-              </AntButton>
-            </Space>
-           </Col>
-         </Row>
-        </Form>
+                    >
+                      Reset
+                    </AntButton>
+                  </Form.Item>
+            </Form>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Space>
-                <AntButton icon={<FileExcelOutlined />}>Export Excel</AntButton>
-                <AntButton icon={<FilePdfOutlined />}>Export PDF</AntButton>
-              </Space>
-            </Box>
-            {queryLoading || isFetching ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <Table
-                dataSource={reports}
-                columns={columns}
-                rowKey="id"
-                pagination={{ pageSize: 20 }}
-                size="middle"
-                scroll={{ x: 'max-content' }}
-                summary={() => {
-                  const { totalDuties, dayCounts } = getSummaryData()
-                return (
-                  <Table.Summary fixed>
-                    <Table.Summary.Row style={{ fontWeight: 'bold', background: '#fafafa' }}>
-          
-                    {/* Employee ID */}
-                    <Table.Summary.Cell index={0} />
+      <Card>
+  <CardContent>
+    {(isLoading || isFetching) ? (
+      <Box display="flex" justifyContent="center" p={4}>
+        <CircularProgress />
+      </Box>
+    ) : (
+      <>
+        {/* SUMMARY HEADER */}
+        <Box
+          sx={{
+            mb: 2,
+            pb: 1.5,
+            borderBottom: '1px solid #f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <Typography fontWeight="bold">
+            Overall Employee Count:{' '}
+            <span style={{ color: '#1890ff' }}>
+              {reports.length}
+            </span>
+            {'  |  '}
+            Total Duty:{' '}
+            <span style={{ color: '#52c41a' }}>
+              {reports.reduce((sum, r) => sum + (r.totalDuties || 0), 0)}
+            </span>
+          </Typography>
 
-                     {/* Employee Name */}
-                    <Table.Summary.Cell index={1} />
+          <Space style={{ marginLeft: 'auto' }}>
+            <AntButton
+                    type="default"
+                    icon={<FileExcelOutlined />}
+                    onClick={handleExportExcel}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                  >Export Excel
+                  </AntButton>
+                  <AntButton
+                    type="default"
+                    icon={<FilePdfOutlined />}
+                    onClick={handleExportPDF}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                  >Export PDF
+                  </AntButton>
+          </Space>
+        </Box>
 
-                    {/* User Type */}
-                    <Table.Summary.Cell index={2} />
+        {/* TABLE */}
+        <Table
+          dataSource={reports}
+          columns={columns}
+          rowKey="id"
+          pagination={{ pageSize: 20 }}
+          scroll={{ x: 'max-content' }}
+          size="small"
+          bordered
+          summary={() => {
+            const { totalDuties, dayCounts } = getSummaryData()
+            return (
+              <Table.Summary fixed>
+                <Table.Summary.Row
+                  style={{ fontWeight: 'bold', background: '#fafafa' }}
+                >
+                  <Table.Summary.Cell colSpan={4}>
+                    Total
+                  </Table.Summary.Cell>
 
-                    {/* Location */}
-                    <Table.Summary.Cell index={3}>
-                     Total
-                    </Table.Summary.Cell>
-
-                    {/* Total Duties */}
-                    <Table.Summary.Cell index={4} align="center">
+                  <Table.Summary.Cell align="center">
                     {totalDuties}
-                    </Table.Summary.Cell>
+                  </Table.Summary.Cell>
 
-                    {/* Dynamic Date Columns */}
-                    {getDateColumns().map((col, idx) => (
-                     <Table.Summary.Cell
-                       key={col.key}
-                       index={5 + idx}
-                       align="center"
-                       >
+                  {getDateColumns().map(col => (
+                    <Table.Summary.Cell
+                      key={col.dataIndex}
+                      align="center"
+                    >
                       {dayCounts[col.dataIndex] || 0}
-                     </Table.Summary.Cell>
-                      ))}
-                    </Table.Summary.Row>
-                  </Table.Summary>
-                   )
-                 }}
-               />
-            )}
-          </CardContent>
-        </Card>
+                    </Table.Summary.Cell>
+                  ))}
+                </Table.Summary.Row>
+              </Table.Summary>
+            )
+          }}
+        />
+      </>
+    )}
+  </CardContent>
+</Card>
+
       </Box>
     </>
   )
 }
-
