@@ -129,6 +129,36 @@ useEffect(() => {
   }
 }, [response])
 
+// const getDateColumns = () => {
+//   if (!filters.fromDate || !filters.toDate) return []
+
+//   const start = dayjs(filters.fromDate)
+//   const end = dayjs(filters.toDate)
+
+//   const columns = []
+//   let current = start
+
+//   while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
+//     const day = current.date()
+
+//     columns.push({
+//       title: day,
+//       dataIndex: day,
+//       key: day,
+//       width: 120,
+//       align: 'left',
+//       render: (text) => (
+//     <div style={{ whiteSpace: 'pre-line'}}>
+//       {text}
+//     </div>
+//   ),
+//     })
+
+//     current = current.add(1, 'day')
+//   }
+
+//   return columns
+// }
 const getDateColumns = () => {
   if (!filters.fromDate || !filters.toDate) return []
 
@@ -145,13 +175,55 @@ const getDateColumns = () => {
       title: day,
       dataIndex: day,
       key: day,
-      width: 120,
-      align: 'left',
-      render: (text) => (
-    <div style={{ whiteSpace: 'pre-line'}}>
-      {text}
-    </div>
-  ),
+      width: 240,
+      align: 'center',
+      render: (text) => {
+        if (!text) return null
+
+        // Split multiline string into individual shifts
+        const shifts = text.split('\n')
+
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {shifts.map((shiftStr, idx) => {
+              const [inPart, outPart] = shiftStr.split(' Out:')
+              return (
+                <div key={idx} style={{
+                  display: 'flex',
+                  borderRadius: 25,
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  width: '220px',
+                  fontSize: 16,
+                }}>
+                  <div style={{
+                    flex: 1,
+                    backgroundColor: '#4CAF50',
+                    color: '#fff',
+                    textAlign: 'center',
+                    padding: '2px 4px',
+                    borderTopLeftRadius: 25,
+                    borderBottomLeftRadius: 25,
+                  }}>
+                    {inPart.toUpperCase()}
+                  </div>
+                  <div style={{
+                    flex: 1,
+                    backgroundColor: '#FF5722',
+                    color: '#fff',
+                    textAlign: 'center',
+                    padding: '2px 4px',
+                    borderTopRightRadius: 25,
+                    borderBottomRightRadius: 25,
+                  }}>
+                    OUT:{outPart}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      }
     })
 
     current = current.add(1, 'day')
@@ -159,6 +231,7 @@ const getDateColumns = () => {
 
   return columns
 }
+
 
   const columns = [
   {
@@ -196,6 +269,24 @@ const getDateColumns = () => {
   },
   ...getDateColumns(),
 ]
+ const handleExportExcel = async () => {
+      try {
+        await exportToExcel(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
+        message.success('Excel file exported successfully')
+      } catch (error) {
+        message.error('Failed to export Excel file')
+      }
+    }
+  
+    const handleExportPDF = async () => {
+      try {
+        await exportToPDF(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
+        message.success('PDF file exported successfully')
+      } catch (error) {
+        message.error('Failed to export PDF file')
+      }
+    }
+
 
   return (
     <>
@@ -283,29 +374,67 @@ const getDateColumns = () => {
         </Card>
 
         <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Space>
-                <AntButton icon={<FileExcelOutlined />}>Export Excel</AntButton>
-                <AntButton icon={<FilePdfOutlined />}>Export PDF</AntButton>
-              </Space>
-            </Box>
-            {queryLoading || isFetching ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <Table
-                dataSource={reports}
-                columns={columns}
-                rowKey="id"
-                pagination={{ pageSize: 20 }}
-                size="middle"
-                scroll={{ x: 'max-content' }}
-              />
-            )}
-          </CardContent>
-        </Card>
+    <CardContent>
+      {/* SUMMARY HEADER */}
+      <Box
+        sx={{
+          mb: 2,
+          pb: 1.5,
+          borderBottom: '1px solid #f0f0f0',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <Typography fontWeight="bold">
+          Overall Employee Count:{' '}
+          <span style={{ color: '#1890ff' }}>
+            {reports.length}
+          </span>
+          {'  |  '}
+          Total Duty:{' '}
+          <span style={{ color: '#52c41a' }}>
+            {reports.reduce((sum, r) => sum + (r.totalDuties || 0), 0)}
+          </span>
+        </Typography>
+
+        <Space style={{ marginLeft: 'auto' }}>
+          <AntButton
+                    type="default"
+                    icon={<FileExcelOutlined />}
+                    onClick={handleExportExcel}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                  >Export Excel
+                  </AntButton>
+                  <AntButton
+                    type="default"
+                    icon={<FilePdfOutlined />}
+                    onClick={handleExportPDF}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                  >Export PDF
+                  </AntButton>
+        </Space>
+      </Box>
+
+      {queryLoading || isFetching ? (
+        <Box display="flex" justifyContent="center" p={4}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Table
+          dataSource={reports}
+          columns={columns}
+          rowKey="id"
+          pagination={{ pageSize: 20 }}
+          size="small"
+          bordered
+          scroll={{ x: 'max-content' }}
+        />
+      )}
+    </CardContent>
+</Card>
+
       </Box>
     </>
   )
