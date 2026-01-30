@@ -87,26 +87,55 @@ export default function TimesheetReport() {
           { skip: !clientId || !filters.fromDate || !filters.toDate }
         )
  
- const transformReportRow = (item) => {
+//  const transformReportRow = (item) => {
+//   const dayMap = {}
+
+//   item.monthWiseShift?.forEach(shift => {
+//     if (!shift?.createdAt || !shift?.inTime || !shift?.outTime) return
+
+//     const day = dayjs(shift.createdAt).date()
+
+//     if (!dayMap[day]) {
+//       dayMap[day] = []
+//     }
+
+//     dayMap[day].push(
+//       `In:${shift.inTime} Out:${shift.outTime}`
+//     )
+//   })
+
+//   // Convert array → multiline string
+//   Object.keys(dayMap).forEach(day => {
+//     dayMap[day] = dayMap[day].join('\n')
+//   })
+
+//   return {
+//     id: item.employeeCode,
+//     employeeId: item.employeeCode,
+//     employeeName: item.userName,
+//     userType: item.userTypeName,
+//     location: item.locationName,
+//     totalDuties: item.monthWiseShift?.length || 0,
+//     ...dayMap,
+//   }
+// }       
+
+const transformReportRow = (item) => {
   const dayMap = {}
 
   item.monthWiseShift?.forEach(shift => {
     if (!shift?.createdAt || !shift?.inTime || !shift?.outTime) return
 
-    const day = dayjs(shift.createdAt).date()
+    const day = String(dayjs(shift.createdAt).date())
 
     if (!dayMap[day]) {
       dayMap[day] = []
     }
 
-    dayMap[day].push(
-      `In:${shift.inTime} Out:${shift.outTime}`
-    )
-  })
-
-  // Convert array → multiline string
-  Object.keys(dayMap).forEach(day => {
-    dayMap[day] = dayMap[day].join('\n')
+    dayMap[day].push({
+      inTime: shift.inTime,
+      outTime: shift.outTime,
+    })
   })
 
   return {
@@ -116,9 +145,9 @@ export default function TimesheetReport() {
     userType: item.userTypeName,
     location: item.locationName,
     totalDuties: item.monthWiseShift?.length || 0,
-    ...dayMap,
+    shifts: dayMap,
   }
-}       
+}
 
 useEffect(() => {
   if (response?.data && Array.isArray(response.data)) {
@@ -146,7 +175,15 @@ useEffect(() => {
 //       dataIndex: day,
 //       key: day,
 //       width: 120,
-//       align: 'left',
+//       align: 'center',
+//       children: [
+//           {
+//             title: 'IN',
+//             width: 100,
+//           },{
+//             title: 'OUT',
+//             width: 100,
+//       }],
 //       render: (text) => (
 //     <div style={{ whiteSpace: 'pre-line'}}>
 //       {text}
@@ -159,6 +196,7 @@ useEffect(() => {
 
 //   return columns
 // }
+
 const getDateColumns = () => {
   if (!filters.fromDate || !filters.toDate) return []
 
@@ -170,60 +208,75 @@ const getDateColumns = () => {
 
   while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
     const day = current.date()
+    const dayKey = String(day)
 
     columns.push({
       title: day,
-      dataIndex: day,
-      key: day,
-      width: 240,
-      align: 'center',
-      render: (text) => {
-        if (!text) return null
+      key: dayKey,
+      children: [
+        {
+          title: 'IN',
+          key: `${dayKey}-in`,
+          width: 100,
+          align: 'center',
+          fontWeight: 'bold',
+          render: (_, record) => {
+            const dayShifts = record.shifts?.[dayKey] || []
+            if (dayShifts.length === 0) return null
 
-        // Split multiline string into individual shifts
-        const shifts = text.split('\n')
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {dayShifts.map((shift, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '2px 6px',
+                      textAlign: 'center',
+                      fontSize: 16,
+                      minWidth: 50,
+                      userSelect: 'none',
+                    }}
+                    title={`In Time: ${shift.inTime}`}
+                  >
+                    {shift.inTime}
+                  </div>
+                ))}
+              </div>
+            )
+          },
+        },
+        {
+          title: 'OUT',
+          key: `${dayKey}-out`,
+          width: 100,
+          align: 'center',
+           fontWeight: 'bold',
+          render: (_, record) => {
+            const dayShifts = record.shifts?.[dayKey] || []
+            if (dayShifts.length === 0) return null
 
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {shifts.map((shiftStr, idx) => {
-              const [inPart, outPart] = shiftStr.split(' Out:')
-              return (
-                <div key={idx} style={{
-                  display: 'flex',
-                  borderRadius: 25,
-                  overflow: 'hidden',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                  width: '220px',
-                  fontSize: 16,
-                }}>
-                  <div style={{
-                    flex: 1,
-                    backgroundColor: '#4CAF50',
-                    color: '#fff',
-                    textAlign: 'center',
-                    padding: '2px 4px',
-                    borderTopLeftRadius: 25,
-                    borderBottomLeftRadius: 25,
-                  }}>
-                    {inPart.toUpperCase()}
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {dayShifts.map((shift, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: '2px 6px',
+                      textAlign: 'center',
+                      fontSize: 16,
+                      minWidth: 50,
+                      userSelect: 'none',
+                    }}
+                    title={`Out Time: ${shift.outTime}`}
+                  >
+                    {shift.outTime}
                   </div>
-                  <div style={{
-                    flex: 1,
-                    backgroundColor: '#FF5722',
-                    color: '#fff',
-                    textAlign: 'center',
-                    padding: '2px 4px',
-                    borderTopRightRadius: 25,
-                    borderBottomRightRadius: 25,
-                  }}>
-                    OUT:{outPart}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )
-      }
+                ))}
+              </div>
+            )
+          },
+        },
+      ],
     })
 
     current = current.add(1, 'day')
@@ -231,6 +284,82 @@ const getDateColumns = () => {
 
   return columns
 }
+
+
+
+
+// const getDateColumns = () => {
+//   if (!filters.fromDate || !filters.toDate) return []
+
+//   const start = dayjs(filters.fromDate)
+//   const end = dayjs(filters.toDate)
+
+//   const columns = []
+//   let current = start
+
+//   while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
+//     const day = current.date()
+
+//     columns.push({
+//       title: day,
+//       dataIndex: day,
+//       key: day,
+//       width: 240,
+//       align: 'center',
+//       render: (text) => {
+//         if (!text) return null
+
+//         // Split multiline string into individual shifts
+//         const shifts = text.split('\n')
+
+//         return (
+//           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+//             {shifts.map((shiftStr, idx) => {
+//               const [inPart, outPart] = shiftStr.split(' Out:')
+//               return (
+//                 <div key={idx} style={{
+//                   display: 'flex',
+//                   borderRadius: 25,
+//                   overflow: 'hidden',
+//                   boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+//                   width: '220px',
+//                   fontSize: 16,
+//                 }}>
+//                   <div style={{
+//                     flex: 1,
+//                     backgroundColor: '#4CAF50',
+//                     color: '#fff',
+//                     textAlign: 'center',
+//                     padding: '2px 4px',
+//                     borderTopLeftRadius: 25,
+//                     borderBottomLeftRadius: 25,
+//                   }}>
+//                     {inPart.toUpperCase()}
+//                   </div>
+//                   <div style={{
+//                     flex: 1,
+//                     backgroundColor: '#FF5722',
+//                     color: '#fff',
+//                     textAlign: 'center',
+//                     padding: '2px 4px',
+//                     borderTopRightRadius: 25,
+//                     borderBottomRightRadius: 25,
+//                   }}>
+//                     OUT:{outPart}
+//                   </div>
+//                 </div>
+//               )
+//             })}
+//           </div>
+//         )
+//       }
+//     })
+
+//     current = current.add(1, 'day')
+//   }
+
+//   return columns
+// }
 
 
   const columns = [
