@@ -64,15 +64,24 @@ export default function DailyAttendanceReport() {
   // Get current form values for RTK Query
   const formValues = Form.useWatch([], form)
   const selectedDate = formValues?.date || filters.date || dayjs()
-  const selectedLocationName = formValues?.location || filters.location
+  const selectedLocationName = formValues?.location || filters.location || 'All Locations'
   const selectedUserTypeName = formValues?.type || filters.type || 'All'
   
   // Get clientId from user context
   const clientId = user?.client?.id || user?.clientId
   
-  // Find locationId from selected location name
-  let locationId = -1
-  if (selectedLocationName && selectedLocationName !== 'All Locations') {
+  // Find locationId(s) from selected location name
+  let locationId = null
+  if (selectedLocationName === 'All Locations') {
+    
+    // Send all location IDs as comma-separated string when "All Locations" is selected
+    if (locationOptions.length > 0) {
+      locationId = locationOptions
+        .filter(loc => loc.id !== -1) // Exclude the "All Locations" option itself
+        .map(loc => loc.id)
+        .join(',')
+    }
+  } else if (selectedLocationName) {
     const selectedLocation = locationOptions.find(loc => loc.name === selectedLocationName)
     if (selectedLocation) {
       locationId = selectedLocation.id
@@ -99,7 +108,7 @@ export default function DailyAttendanceReport() {
       userTypeId: userTypeId,
       clientId: clientId,
     },
-    { skip: !clientId || !formattedDate }
+    { skip: !clientId || !formattedDate || locationId === null }
   )
 
   // Process response data
