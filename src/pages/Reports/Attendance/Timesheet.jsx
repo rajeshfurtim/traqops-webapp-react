@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect,useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col } from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col,Input } from 'antd'
+import { FileExcelOutlined, FilePdfOutlined,SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
@@ -76,6 +76,21 @@ export default function TimesheetReport() {
   }))
   }
 
+
+  //filter
+   const [searchText, setSearchText] = useState('')
+      const filteredReports = useMemo(() => {
+        if (!searchText) return reports
+        const lowerSearch = searchText.trim().toLowerCase()
+        return reports.filter(r =>
+          r.employeeId?.toLowerCase().includes(lowerSearch) ||
+          r.employeeName?.toLowerCase().includes(lowerSearch) ||
+          r.userType?.toLowerCase().includes(lowerSearch) ||
+          r.location?.toLowerCase().includes(lowerSearch)
+        )
+      }, [reports, searchText])
+
+
   const { data: response, isLoading: queryLoading, isFetching } = useGetMonthlyEmployeeReportQuery(
           {
         fromDate: filters.fromDate,
@@ -120,7 +135,37 @@ export default function TimesheetReport() {
 //   }
 // }       
 
-const transformReportRow = (item) => {
+// const transformReportRow = (item) => {
+//   const dayMap = {}
+
+//   item.monthWiseShift?.forEach(shift => {
+//     if (!shift?.createdAt || !shift?.inTime || !shift?.outTime) return
+
+//     const day = String(dayjs(shift.createdAt).date())
+
+//     if (!dayMap[day]) {
+//       dayMap[day] = []
+//     }
+
+//     dayMap[day].push({
+//       inTime: shift.inTime,
+//       outTime: shift.outTime,
+//     })
+//   })
+
+//   return {
+//     key: `${item.employeeCode}-${filters.fromDate}-${index}`, // ✅ UNIQUE
+//     id: item.employeeCode,
+//     employeeId: item.employeeCode,
+//     employeeName: item.userName,
+//     userType: item.userTypeName,
+//     location: item.locationName,
+//     totalDuties: item.monthWiseShift?.length || 0,
+//     shifts: dayMap,
+//   }
+// }
+
+const transformReportRow = (item, index) => {
   const dayMap = {}
 
   item.monthWiseShift?.forEach(shift => {
@@ -128,9 +173,7 @@ const transformReportRow = (item) => {
 
     const day = String(dayjs(shift.createdAt).date())
 
-    if (!dayMap[day]) {
-      dayMap[day] = []
-    }
+    if (!dayMap[day]) dayMap[day] = []
 
     dayMap[day].push({
       inTime: shift.inTime,
@@ -139,7 +182,7 @@ const transformReportRow = (item) => {
   })
 
   return {
-    id: item.employeeCode,
+    key: `${item.employeeCode}-${filters.fromDate}-${index}`, // ✅ UNIQUE
     employeeId: item.employeeCode,
     employeeName: item.userName,
     userType: item.userTypeName,
@@ -148,6 +191,7 @@ const transformReportRow = (item) => {
     shifts: dayMap,
   }
 }
+
 
 useEffect(() => {
   if (response?.data && Array.isArray(response.data)) {
@@ -226,21 +270,22 @@ const getDateColumns = () => {
 
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {dayShifts.map((shift, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: '2px 6px',
-                      textAlign: 'center',
-                      fontSize: 16,
-                      minWidth: 50,
-                      userSelect: 'none',
-                    }}
-                    title={`In Time: ${shift.inTime}`}
-                  >
-                    {shift.inTime}
-                  </div>
-                ))}
+               {dayShifts.map((shift, idx) => (
+  <div
+    key={`in-${dayKey}-${idx}`}
+    style={{
+      padding: '2px 6px',
+      textAlign: 'center',
+      fontSize: 16,
+      minWidth: 50,
+      userSelect: 'none',
+    }}
+    title={`In Time: ${shift.inTime}`}
+  >
+    {shift.inTime}
+  </div>
+))}
+
               </div>
             )
           },
@@ -258,20 +303,21 @@ const getDateColumns = () => {
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {dayShifts.map((shift, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      padding: '2px 6px',
-                      textAlign: 'center',
-                      fontSize: 16,
-                      minWidth: 50,
-                      userSelect: 'none',
-                    }}
-                    title={`Out Time: ${shift.outTime}`}
-                  >
-                    {shift.outTime}
-                  </div>
-                ))}
+  <div
+    key={`out-${dayKey}-${idx}`}
+    style={{
+      padding: '2px 6px',
+      textAlign: 'center',
+      fontSize: 16,
+      minWidth: 50,
+      userSelect: 'none',
+    }}
+    title={`Out Time: ${shift.outTime}`}
+  >
+    {shift.outTime}
+  </div>
+))}
+
               </div>
             )
           },
@@ -376,18 +422,21 @@ const getDateColumns = () => {
     key: 'employeeName',
     fixed: 'left',
     width: 200,
+    sorter: (a, b) => a.employeeName.localeCompare(b.employeeName),
   },
   {
     title: 'User Type',
     dataIndex: 'userType',
     key: 'userType',
     width: 120,
+    sorter: (a, b) => a.userType.localeCompare(b.userType),
   },
   {
     title: 'Location',
     dataIndex: 'location',
     key: 'location',
     width: 120,
+    sorter: (a, b) => a.location.localeCompare(b.location),
   },
   {
     title: 'Total Duties',
@@ -395,6 +444,7 @@ const getDateColumns = () => {
     key: 'totalDuties',
     width: 120,
     align: 'center',
+    sorter: (a, b) => (a.totalDuties || 0) - (b.totalDuties || 0),
   },
   ...getDateColumns(),
 ]
@@ -526,7 +576,15 @@ const getDateColumns = () => {
           </span>
         </Typography>
 
-        <Space style={{ marginLeft: 'auto' }}>
+        <Space style={{ marginLeft: 'auto' }} size={12}>
+          <Input
+              placeholder="Search"
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              allowClear
+              style={{ width: 250 }}
+          />
           <AntButton
                     type="default"
                     icon={<FileExcelOutlined />}
@@ -551,8 +609,8 @@ const getDateColumns = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Table
-          dataSource={reports}
+        <Table 
+          dataSource={filteredReports}
           columns={columns}
           rowKey="id"
           pagination={{ pageSize: 20 }}
