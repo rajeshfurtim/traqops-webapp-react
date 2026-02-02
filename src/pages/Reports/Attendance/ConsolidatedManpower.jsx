@@ -1,22 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, message } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import { useAuth } from '../../../context/AuthContext'
 import { useGetConsolidateManpowerReportQuery } from '../../../store/api/reports.api'
 
-export default function ConsolidatedManpowerReport() {
+const { RangePicker } = DatePicker
 
+export default function ConsolidatedManpowerReport() {
   const [form] = Form.useForm()
   const { user } = useAuth()
-  const fromDate = Form.useWatch("fromDate", form);
   const clientId = user?.client?.id || user?.clientId
 
-  const [reports, setReports] = useState([])
   const [filters, setFilters] = useState({
     fromDate: null,
     toDate: null,
@@ -25,259 +25,247 @@ export default function ConsolidatedManpowerReport() {
 
   const { userTypes, loading: userTypesLoading } = useGetAllUserType()
 
-  const typeOptions = [
-    // { id: -1, name: 'All User Types' }, 
-    ...(Array.isArray(userTypes) && userTypes.length > 0 ? userTypes.map(user => ({ 
-      id: user?.id, 
-      name: user?.name || 'Unknown' 
-    })) : [])
-  ]
-
+  /* ---- INITIAL LOAD ---- */
   useEffect(() => {
-        form.setFieldsValue({
-          fromDate: dayjs().startOf('month'),
-          toDate: dayjs().endOf('month'),
-          type: 261586,
-        })
-      }, [])
+    const today = dayjs()
 
-  const handleFilterChange = (values) => {
-    console.log('Filter values:', values)
-    const newFilters = {}
-    
-    if(values.fromDate) newFilters.fromDate = values.fromDate.format('YYYY-MM-DD')
-    if(values.toDate) newFilters.toDate = values.toDate.format('YYYY-MM-DD') 
-    if (values.type) newFilters.userTypeId = values.type
-    console.log('Applied Filters:', newFilters)
-    setFilters(prev => ({
-    ...prev,
-    ...newFilters,
-  }))
+    form.setFieldsValue({
+      dateRange: [today, today],
+      type: 261586,
+    })
+
+    setFilters({
+      fromDate: today.format('YYYY-MM-DD'),
+      toDate: today.format('YYYY-MM-DD'),
+      userTypeId: 261586,
+    })
+  }, [])
+
+  /* ---- FILTER SUBMIT ---- */
+  const handleFilterChange = values => {
+    const [from, to] = values.dateRange || []
+
+    setFilters({
+      fromDate: from?.format('YYYY-MM-DD'),
+      toDate: to?.format('YYYY-MM-DD'),
+      userTypeId: values.type,
+    })
   }
 
-  const { data: response, isLoading: queryLoading, isFetching } = useGetConsolidateManpowerReportQuery(
-          {
-        fromDate: filters.fromDate,
-        toDate: filters.toDate,
-        userTypeId: filters.userTypeId,
+  /* ---- API CALL ---- */
+  const { data: response, isLoading, isFetching } =
+    useGetConsolidateManpowerReportQuery(
+      {
+        ...filters,
         clientId,
       },
-          { skip: !clientId || !filters.fromDate || !filters.toDate }
-        )
+      {
+        skip: !clientId || !filters.fromDate || !filters.toDate,
+      }
+    )
 
-  useEffect(() => {
-    console.log('API Response:', response)
-  if (!response?.data || !Array.isArray(response?.data)) {
-    setReports([])
-    return
-  }
+  /* ---- BUILD TABLE ROWS ---- */
+  const reports = useMemo(() => {
+    if (!Array.isArray(response?.data)) return []
 
-  const allDatesSet = new Set()
+    return response.data.map(item => {
+      const row = {
+        id: item.locationId,
+        location: item.locationName,
+        totalDuties: 0,
+      }
 
-  // Collect all unique dates
-  response?.data?.forEach(item => {
-    Object.keys(item.counts || {}).forEach(date => {
-      allDatesSet.add(date)
+      Object.entries(item.counts || {}).forEach(([date, count]) => {
+        row[date] = count
+        row.totalDuties += count
+      })
+
+      return row
     })
-  })
+  }, [response])
 
-  const allDates = Array.from(allDatesSet).sort()
+  /* ---- DATE COLUMNS ---- */
+  const dateColumns = useMemo(() => {
+    if (!filters.fromDate || !filters.toDate) return []
 
-  // Build table rows
-  const rows = response?.data?.map(item => {
-    let total = 0
-    const row = {
-      id: item.locationId,
-      location: item.locationName,
-      userTypeName: item.userTypeName,
-    }
+    const start = dayjs(filters.fromDate)
+    const end = dayjs(filters.toDate)
+    const cols = []
 
-    allDates.forEach(date => {
-      const value = item.counts?.[date] || 0
-      row[date] = value
-      total += value
-    })
+    let current = start
 
-    row.total = total
-    return row
-  })
+    while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
+      const fullDate = current.format('YYYY-MM-DD')
 
-  // Grand total row
-  const totalRow = {
-    id: 'total',
-    location: '',
-    userTypeName: 'Total',
-    total: 0,
-  }
-
-  allDates.forEach(date => {
-    totalRow[date] = rows.reduce((sum, r) => sum + (r[date] || 0), 0)
-    totalRow.total += totalRow[date]
-  })
-
-  setReports([...rows, totalRow])
-}, [response])      
-
-  const dateColumns = reports.length
-  ? Object.keys(reports[0])
-      .filter(key => key.match(/^\d{4}-\d{2}-\d{2}$/))
-      .map(date => ({
-        title: dayjs(date).format('D'),
-        dataIndex: date,
-        key: date,
+      cols.push({
+        title: current.format('DD-MM-YY'),
+        dataIndex: fullDate,
+        key: fullDate,
         align: 'center',
         width: 80,
-      }))
-  : []
+        render: v => v ?? 0,
+      })
 
-const columns = [
-  {
-    title: 'Location',
-    dataIndex: 'location',
-    key: 'location',
-    fixed: 'left',
-    width: 220,
-  },
-  {
-    title: 'User Type',
-    dataIndex: 'userTypeName',
-    key: 'userTypeName',
-    fixed: 'left',
-    width: 180,
-  },
-  {
-    title: 'Total',
-    dataIndex: 'total',
-    key: 'total',
-    align: 'center',
-    fixed: 'left',
-    width: 100,
-  },
-  ...dateColumns,
-]
+      current = current.add(1, 'day')
+    }
 
+    return cols
+  }, [filters])
+
+  /* ---- BUILD DATA WITH TOTAL ROW ---- */
+  const reportsWithTotal = useMemo(() => {
+    if (!reports.length) return []
+
+    const totalRow = { id: 'total', location: 'Total', totalDuties: 0 }
+    dateColumns.forEach(col => {
+      totalRow[col.dataIndex] = 0
+    })
+
+    reports.forEach(row => {
+      totalRow.totalDuties += row.totalDuties || 0
+      dateColumns.forEach(col => {
+        totalRow[col.dataIndex] += row[col.dataIndex] || 0
+      })
+    })
+
+    return [...reports, totalRow]
+  }, [reports, dateColumns])
+
+  /* ---- TABLE COLUMNS ---- */
+  const columns = [
+    {
+      title: 'Location',
+      dataIndex: 'location',
+      width: 250,
+      fixed: 'left',
+    },
+    {
+      title: 'Total Duty',
+      dataIndex: 'totalDuties',
+      width: 120,
+      align: 'center',
+      fixed: 'left',
+    },
+    ...dateColumns,
+  ]
+
+  /* ---- EXPORT PLACEHOLDERS ---- */
+  const handleExportExcel = () => message.info('Excel export coming soon')
+  const handleExportPDF = () => message.info('PDF export coming soon')
+
+  /* ---- UI ---- */
   return (
     <>
       <Helmet>
         <title>{getPageTitle('reports/attendance/consolidated-manpower')}</title>
-        <meta name="description" content={`${APP_CONFIG.name} - Consolidated Manpower Report`} />
+        <meta
+          name="description"
+          content={`${APP_CONFIG.name} - Consolidated Manpower Report`}
+        />
       </Helmet>
+
       <Box>
         <Typography variant="h4" gutterBottom fontWeight="bold">
           Consolidated Manpower Report
         </Typography>
 
+        {/*  FILTERS  */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Form
-             form={form}
-             onFinish={handleFilterChange}
-             layout="vertical"
+              form={form}
+              layout="inline"
+              onFinish={handleFilterChange}
             >
-             <Row gutter={[8, 8]}>
-              <Col xs={24} sm={12} md={6}>
-               <Form.Item name="fromDate" label="From Date">
-                <DatePicker format="DD-MM-YYYY"
-                 style={{ width: '100%' }}
-                 disabledDate={(current) => {
-                   // Disable future dates
-                   return current && current > dayjs().endOf("month");
-             }}
-                 />
-               </Form.Item>
-              </Col>
+              <Form.Item name="dateRange" label="Date Range">
+                <RangePicker
+                  format="DD-MM-YYYY"
+                  allowClear={false}
+                  disabledDate={d => d && d > dayjs().endOf('day')}
+                />
+              </Form.Item>
 
-              <Col xs={24} sm={12} md={6}>
-                <Form.Item name="toDate" label="To Date">
-                  <DatePicker format="DD-MM-YYYY"
-                   style={{ width: '100%' }}
-                    disabledDate={(current) => {
-                      if (!current) return false;
-
-                       // Disable future dates
-                      if (current > dayjs().endOf("month")) return true;
-
-                      //Disable dates BEFORE fromDate
-                      if (fromDate && current < dayjs(fromDate).startOf("day")) return true;
-
-                      return false;
-                   }}
-                  />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} sm={12} md={6}>
-               <Form.Item name="type" label="Type">
-                <Select loading={userTypesLoading} style={{ width: '100%' }}>
-                    {typeOptions.map(type => (
-                  <Select.Option key={type.id} value={type.id}>
-                    {type.name}
-                  </Select.Option>
-                 ))}
+              <Form.Item name="type" label="Type" style={{ width: 250 }}>
+                <Select loading={userTypesLoading}>
+                  {userTypes?.map(type => (
+                    <Select.Option key={type.id} value={type.id}>
+                      {type.name}
+                    </Select.Option>
+                  ))}
                 </Select>
-               </Form.Item>
-              </Col>
+              </Form.Item>
 
-              <Col xs={24} sm={12} md={6}>
-              <div style={{ marginTop: 30 }}>
-            <Space>
-              <AntButton type="primary" htmlType="submit">
-                Apply Filters
-              </AntButton>
-              <AntButton
-                   onClick={() => {
-                      const fromMonth = dayjs().startOf("month")
-                      const toMonth = dayjs().endOf("month")
-                   
-                      form.setFieldsValue({
-                        fromDate: fromMonth,
-                        toDate: toMonth,
-                        type: 261586,
-                        })
-                   
-                      handleFilterChange({
-                        fromDate: fromMonth,
-                        toDate: toMonth,
-                        type: 261586,
-                        })
-                      }}
-               >
-                 Reset
-              </AntButton>
-            </Space>
-            </div>
-           </Col>
-         </Row>
-        </Form>
+              <Form.Item>
+                <AntButton type="primary" htmlType="submit">
+                  Apply Filters
+                </AntButton>
+              </Form.Item>
+            </Form>
           </CardContent>
         </Card>
 
+        {/*  TABLE */}
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Space>
-                <AntButton icon={<FileExcelOutlined />}>Export Excel</AntButton>
-                <AntButton icon={<FilePdfOutlined />}>Export PDF</AntButton>
-              </Space>
-            </Box>
-            {queryLoading || isFetching ? (
+            {isLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
                 <CircularProgress />
               </Box>
             ) : (
-              <Table
-                dataSource={reports}
-                columns={columns}
-                rowKey="id"
-                pagination={{ pageSize: 20 }}
-                size="middle"
-                scroll={{ x: 'max-content' }}
-              />
+              <>
+                <Box display="flex" justifyContent="space-between" mb={2}>
+                  <Typography fontWeight="bold">
+                    Total Duty:{' '}
+                    <span style={{ color: '#52c41a' }}>
+                      {reportsWithTotal.find(r => r.id === 'total')?.totalDuties || 0}
+                    </span>
+                  </Typography>
+
+                  <Space style={{ marginLeft: 'auto' }} size={12}>
+                  <AntButton
+                    type="default"
+                    icon={<FileExcelOutlined />}
+                    onClick={handleExportExcel}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                  >Export Excel
+                  </AntButton>
+                  <AntButton
+                    type="default"
+                    icon={<FilePdfOutlined />}
+                    onClick={handleExportPDF}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                  >Export PDF
+                  </AntButton>
+                </Space>
+                </Box>
+
+                <Table
+                  rowKey="id"
+                  dataSource={reportsWithTotal}
+                  columns={columns}
+                  pagination={{ pageSize: 20 }}
+                  scroll={{ x: 'max-content' }}
+                  size="small"
+                  bordered
+                  rowClassName={record =>
+                    record.id === 'total' ? 'ant-table-row-total' : ''
+                  }
+                />
+              </>
             )}
           </CardContent>
         </Card>
       </Box>
+
+      {/* Optional CSS for total row */}
+      <style>{`
+        .ant-table-row-total {
+          font-weight: bold;
+          background: #fafafa;
+        }
+      `}</style>
     </>
   )
 }
-
