@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo} from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetDailyLocationReportQuery } from '../../../store/api/reports.api'
@@ -182,6 +182,20 @@ export default function DailyAttendanceReport() {
       setExporting(prev => ({ ...prev, pdf: false }))
     }
   }
+  //filter
+  const [searchText, setSearchText] = useState('')
+      const filteredReports = useMemo(() => {
+        if (!searchText) return reports
+        const lowerSearch = searchText.trim().toLowerCase()
+        return reports.filter(r =>
+          r.employeeId?.toLowerCase().includes(lowerSearch) ||
+          r.employeeName?.toLowerCase().includes(lowerSearch) ||
+          r.userType?.toLowerCase().includes(lowerSearch) ||
+          r.location?.toLowerCase().includes(lowerSearch) ||
+          r.shift?.toLowerCase().includes(lowerSearch)
+        )
+      }, [reports, searchText])
+    
 
   const columns = [
     {
@@ -362,8 +376,44 @@ export default function DailyAttendanceReport() {
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             ) : (
+              <>
+              <Box 
+                sx={{
+                  mb: 2,
+                  pb: 2,
+                  borderBottom: '1px solid #f0f0f0',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  <Space style={{ marginLeft: 'auto' }} size={12}>
+                  <Input
+                    placeholder="Search"
+                    prefix={<SearchOutlined />}
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    allowClear
+                    style={{ width: 250 }}
+                  />
+                  <AntButton
+                    type="default"
+                    icon={<FileExcelOutlined />}
+                    onClick={handleExportExcel}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                  >Export Excel
+                  </AntButton>
+                  <AntButton
+                    type="default"
+                    icon={<FilePdfOutlined />}
+                    onClick={handleExportPDF}
+                    disabled={reports.length === 0}
+                    style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                  >Export PDF
+                  </AntButton>
+                </Space>
+              </Box>
               <Table
-                dataSource={reports}
+                dataSource={filteredReports}
                 columns={columns}
                 rowKey="id"
                 pagination={{
@@ -375,6 +425,7 @@ export default function DailyAttendanceReport() {
                 scroll={{ x: 800 }}
                 className="attendance-table"
               />
+              </>
             )}
           </CardContent>
         </Card>
