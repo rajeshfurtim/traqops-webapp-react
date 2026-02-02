@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetMonthlyEmployeeReportQuery } from '../../../store/api/reports.api'
@@ -224,6 +224,20 @@ export default function MonthlyAttendanceReport() {
     // Trigger API call after filters are updated
     setShouldFetch(true)
   }
+  //filter
+   const [searchText, setSearchText] = useState('')
+    const filteredReports = useMemo(() => {
+      if (!searchText) return reports
+      const lowerSearch = searchText.trim().toLowerCase()
+      return reports.filter(r =>
+        r.employeeNo?.toLowerCase().includes(lowerSearch) ||
+        r.employeeName?.toLowerCase().includes(lowerSearch) ||
+        r.userType?.toLowerCase().includes(lowerSearch) ||
+        r.location?.toLowerCase().includes(lowerSearch)
+      )
+    }, [reports, searchText])
+  
+
 
   const handleSearch = () => {
     if (!clientId) {
@@ -453,6 +467,14 @@ export default function MonthlyAttendanceReport() {
 
                 {/* Right buttons */}
                 <Space style={{ marginLeft: 'auto' }} size={12}>
+                  <Input
+                    placeholder="Search"
+                    prefix={<SearchOutlined />}
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    allowClear
+                    style={{ width: 250 }}
+                  />
                   <AntButton
                     type="default"
                     icon={<FileExcelOutlined />}
@@ -473,7 +495,7 @@ export default function MonthlyAttendanceReport() {
               </Box>
 
               <Table
-                dataSource={reports}
+                dataSource={filteredReports}
                 columns={columns}
                 rowKey="id"
                 pagination={{

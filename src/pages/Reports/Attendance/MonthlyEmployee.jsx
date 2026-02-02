@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton } from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message } from 'antd'
+import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useAuth } from '../../../context/AuthContext'
 import { useGetMonthlyEmployeeReportQuery } from '../../../store/api/reports.api'
+// import { exportToExcel, exportToPDF } from 'your-export-utils' // adjust accordingly
 
 export default function MonthlyEmployeeAttendanceReport() {
   const [form] = Form.useForm()
@@ -76,7 +77,7 @@ export default function MonthlyEmployeeAttendanceReport() {
     return 'P'
   }
 
-  const transformReportRow = (item) => {
+  const transformReportRow = (item, index) => {
     const dayMap = {}
 
     item.monthWiseShift?.forEach(shift => {
@@ -84,9 +85,7 @@ export default function MonthlyEmployeeAttendanceReport() {
       const day = dayjs(shift.createdAt).date()
       const code = getShiftByTime(shift.inTime)
 
-      if (!dayMap[`day${day}`]) {
-        dayMap[`day${day}`] = new Set()
-      }
+      if (!dayMap[`day${day}`]) dayMap[`day${day}`] = new Set()
       dayMap[`day${day}`].add(code)
     })
 
@@ -95,7 +94,7 @@ export default function MonthlyEmployeeAttendanceReport() {
     })
 
     return {
-      id: item.employeeCode,
+      id: `${item.employeeCode}-${index}`, // guaranteed unique key
       employeeNo: item.employeeCode,
       employeeName: item.userName,
       userType: item.userTypeName,
@@ -104,9 +103,21 @@ export default function MonthlyEmployeeAttendanceReport() {
     }
   }
 
+  // Search state
+  const [searchText, setSearchText] = useState('')
+  const filteredReports = useMemo(() => {
+    if (!searchText) return reports
+    const lowerSearch = searchText.trim().toLowerCase()
+    return reports.filter(r =>
+      r.employeeNo?.toLowerCase().includes(lowerSearch) ||
+      r.employeeName?.toLowerCase().includes(lowerSearch) ||
+      r.userType?.toLowerCase().includes(lowerSearch)
+    )
+  }, [reports, searchText])
+
   useEffect(() => {
     if (Array.isArray(response?.data)) {
-      setReports(response.data.map(transformReportRow))
+      setReports(response.data.map((item, idx) => transformReportRow(item, idx)))
     } else {
       setReports([])
     }
@@ -157,23 +168,23 @@ export default function MonthlyEmployeeAttendanceReport() {
 
   const loading = isLoading || isFetching
 
-   const handleExportExcel = async () => {
-      try {
-        await exportToExcel(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
-        message.success('Excel file exported successfully')
-      } catch (error) {
-        message.error('Failed to export Excel file')
-      }
+  const handleExportExcel = async () => {
+    try {
+      await exportToExcel(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
+      message.success('Excel file exported successfully')
+    } catch (error) {
+      message.error('Failed to export Excel file')
     }
-  
-    const handleExportPDF = async () => {
-      try {
-        await exportToPDF(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
-        message.success('PDF file exported successfully')
-      } catch (error) {
-        message.error('Failed to export PDF file')
-      }
+  }
+
+  const handleExportPDF = async () => {
+    try {
+      await exportToPDF(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
+      message.success('PDF file exported successfully')
+    } catch (error) {
+      message.error('Failed to export PDF file')
     }
+  }
 
   return (
     <>
@@ -248,29 +259,39 @@ export default function MonthlyEmployeeAttendanceReport() {
                   </Typography>
 
                   <Space style={{ marginLeft: 'auto' }}>
+                    <Input
+                      placeholder="Search"
+                      prefix={<SearchOutlined />}
+                      value={searchText}
+                      onChange={e => setSearchText(e.target.value)}
+                      allowClear
+                      style={{ width: 250 }}
+                    />
                     <AntButton
-                    type="default"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={reports.length === 0}
-                    style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                  >Export Excel
-                  </AntButton>
-                  <AntButton
-                    type="default"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={reports.length === 0}
-                    style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                  >Export PDF
-                  </AntButton>
+                      type="default"
+                      icon={<FileExcelOutlined />}
+                      onClick={handleExportExcel}
+                      disabled={reports.length === 0}
+                      style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                    >
+                      Export Excel
+                    </AntButton>
+                    <AntButton
+                      type="default"
+                      icon={<FilePdfOutlined />}
+                      onClick={handleExportPDF}
+                      disabled={reports.length === 0}
+                      style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                    >
+                      Export PDF
+                    </AntButton>
                   </Space>
                 </Box>
 
                 <Table
-                  dataSource={reports}
+                  dataSource={filteredReports}
                   columns={columns}
-                  rowKey="id"
+                  rowKey="id" // fixed duplicate key issue
                   pagination={{ pageSize: 100 }}
                   scroll={{ x: 'max-content' }}
                   bordered

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import {Table,Form,Select,DatePicker,Space,Button as AntButton,Row,Col,} from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import {Table,Form,Select,DatePicker,Space,Button as AntButton,Input,Row,Col,} from 'antd'
+import { FileExcelOutlined, FilePdfOutlined,SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
@@ -42,6 +42,8 @@ export default function MonthlyDailyAttendanceReport() {
     ...(locations || []),
   ]
 
+  const [searchText, setSearchText] = useState('') // search input state
+
   useEffect(() => {
     const today = dayjs()
 
@@ -59,6 +61,17 @@ export default function MonthlyDailyAttendanceReport() {
     })
   }, [locations])
 
+  //filter 
+  const filteredReports = useMemo(() => {
+    if(!searchText) return reports
+    const lowerSearch = searchText.toLowerCase()
+    return reports.filter(r => 
+      (r.employeeId && r.employeeId.toLowerCase().includes(lowerSearch)) ||
+      (r.employeeName && r.employeeName.toLowerCase().includes(lowerSearch)) ||
+      (r.userType && r.userType.toLowerCase().includes(lowerSearch)) ||
+      (r.location && r.location.toLowerCase().includes(lowerSearch))
+    )
+  },[reports, searchText])
   const handleFilterChange = (values) => {
     const newFilters = {}
 
@@ -303,7 +316,14 @@ export default function MonthlyDailyAttendanceReport() {
             </span>
           </Typography>
 
-          <Space style={{ marginLeft: 'auto' }}>
+          <Space style={{ marginLeft: 'auto' }} size={12}>
+            <Input 
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              allowClear
+              style={{ width: 250 }}
+              />
             <AntButton
                     type="default"
                     icon={<FileExcelOutlined />}
@@ -325,7 +345,7 @@ export default function MonthlyDailyAttendanceReport() {
 
         {/* TABLE */}
         <Table
-          dataSource={reports}
+          dataSource={filteredReports}
           columns={columns}
           rowKey="id"
           pagination={{ pageSize: 20 }}
