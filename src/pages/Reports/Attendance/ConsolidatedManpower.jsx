@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, message } from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message } from 'antd'
+import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import { useAuth } from '../../../context/AuthContext'
@@ -22,18 +21,17 @@ export default function ConsolidatedManpowerReport() {
     toDate: null,
     userTypeId: null,
   })
+  const [searchText, setSearchText] = useState('') // search input state
 
   const { userTypes, loading: userTypesLoading } = useGetAllUserType()
 
-  /* ---- INITIAL LOAD ---- */
+  // Initial load
   useEffect(() => {
     const today = dayjs()
-
     form.setFieldsValue({
       dateRange: [today, today],
       type: 261586,
     })
-
     setFilters({
       fromDate: today.format('YYYY-MM-DD'),
       toDate: today.format('YYYY-MM-DD'),
@@ -41,10 +39,9 @@ export default function ConsolidatedManpowerReport() {
     })
   }, [])
 
-  /* ---- FILTER SUBMIT ---- */
+  // Apply filters
   const handleFilterChange = values => {
     const [from, to] = values.dateRange || []
-
     setFilters({
       fromDate: from?.format('YYYY-MM-DD'),
       toDate: to?.format('YYYY-MM-DD'),
@@ -52,28 +49,19 @@ export default function ConsolidatedManpowerReport() {
     })
   }
 
-  /* ---- API CALL ---- */
+  // API Call
   const { data: response, isLoading, isFetching } =
     useGetConsolidateManpowerReportQuery(
-      {
-        ...filters,
-        clientId,
-      },
-      {
-        skip: !clientId || !filters.fromDate || !filters.toDate,
-      }
+      { ...filters, clientId },
+      { skip: !clientId || !filters.fromDate || !filters.toDate }
     )
 
-  /* ---- BUILD TABLE ROWS ---- */
+  // Build table rows
   const reports = useMemo(() => {
     if (!Array.isArray(response?.data)) return []
 
     return response.data.map(item => {
-      const row = {
-        id: item.locationId,
-        location: item.locationName,
-        totalDuties: 0,
-      }
+      const row = { id: item.locationId, location: item.locationName, totalDuties: 0 }
 
       Object.entries(item.counts || {}).forEach(([date, count]) => {
         row[date] = count
@@ -84,42 +72,36 @@ export default function ConsolidatedManpowerReport() {
     })
   }, [response])
 
-  /* ---- DATE COLUMNS ---- */
+  // Build date columns
   const dateColumns = useMemo(() => {
     if (!filters.fromDate || !filters.toDate) return []
 
     const start = dayjs(filters.fromDate)
     const end = dayjs(filters.toDate)
     const cols = []
-
     let current = start
 
     while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
       const fullDate = current.format('YYYY-MM-DD')
-
       cols.push({
-        title: current.format('DD-MM-YY'),
+        title: current.format('DD'),
         dataIndex: fullDate,
         key: fullDate,
         align: 'center',
-        width: 80,
+        width: 60,
         render: v => v ?? 0,
       })
-
       current = current.add(1, 'day')
     }
-
     return cols
   }, [filters])
 
-  /* ---- BUILD DATA WITH TOTAL ROW ---- */
+  // Build total row
   const reportsWithTotal = useMemo(() => {
     if (!reports.length) return []
 
     const totalRow = { id: 'total', location: 'Total', totalDuties: 0 }
-    dateColumns.forEach(col => {
-      totalRow[col.dataIndex] = 0
-    })
+    dateColumns.forEach(col => (totalRow[col.dataIndex] = 0))
 
     reports.forEach(row => {
       totalRow.totalDuties += row.totalDuties || 0
@@ -131,29 +113,26 @@ export default function ConsolidatedManpowerReport() {
     return [...reports, totalRow]
   }, [reports, dateColumns])
 
-  /* ---- TABLE COLUMNS ---- */
+  // Filtered by search
+  const filteredReports = useMemo(() => {
+    if (!searchText) return reportsWithTotal
+    const lowerText = searchText.toLowerCase()
+    return reportsWithTotal.filter(
+      r => r.location?.toLowerCase().includes(lowerText) || r.id === 'total'
+    )
+  }, [reportsWithTotal, searchText])
+
+  // Columns
   const columns = [
-    {
-      title: 'Location',
-      dataIndex: 'location',
-      width: 250,
-      fixed: 'left',
-    },
-    {
-      title: 'Total Duty',
-      dataIndex: 'totalDuties',
-      width: 120,
-      align: 'center',
-      fixed: 'left',
-    },
+    { title: 'Location', dataIndex: 'location', width: 250, fixed: 'left' },
+    { title: 'Total Duty', dataIndex: 'totalDuties', width: 120, align: 'center', fixed: 'left' },
     ...dateColumns,
   ]
 
-  /* ---- EXPORT PLACEHOLDERS ---- */
+  // Export
   const handleExportExcel = () => message.info('Excel export coming soon')
   const handleExportPDF = () => message.info('PDF export coming soon')
 
-  /* ---- UI ---- */
   return (
     <>
       <Helmet>
@@ -169,14 +148,10 @@ export default function ConsolidatedManpowerReport() {
           Consolidated Manpower Report
         </Typography>
 
-        {/*  FILTERS  */}
+        {/* Filters */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Form
-              form={form}
-              layout="inline"
-              onFinish={handleFilterChange}
-            >
+            <Form form={form} layout="inline" onFinish={handleFilterChange}>
               <Form.Item name="dateRange" label="Date Range">
                 <RangePicker
                   format="DD-MM-YYYY"
@@ -204,7 +179,7 @@ export default function ConsolidatedManpowerReport() {
           </CardContent>
         </Card>
 
-        {/*  TABLE */}
+        {/* Table */}
         <Card>
           <CardContent>
             {isLoading || isFetching ? (
@@ -213,15 +188,25 @@ export default function ConsolidatedManpowerReport() {
               </Box>
             ) : (
               <>
-                <Box display="flex" justifyContent="space-between" mb={2}>
+                <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
                   <Typography fontWeight="bold">
                     Total Duty:{' '}
                     <span style={{ color: '#52c41a' }}>
                       {reportsWithTotal.find(r => r.id === 'total')?.totalDuties || 0}
                     </span>
                   </Typography>
-
-                  <Space style={{ marginLeft: 'auto' }} size={12}>
+                  
+                  {/* Export buttons */}
+                    <Space style={{ marginLeft: 'auto' }} size={12}>
+                  <Input
+                    // placeholder="Search Location"
+                    prefix={<SearchOutlined />}
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    allowClear
+                    style={{ width: 250 }}
+                    className="custom-search-input"
+                  />
                   <AntButton
                     type="default"
                     icon={<FileExcelOutlined />}
@@ -243,15 +228,13 @@ export default function ConsolidatedManpowerReport() {
 
                 <Table
                   rowKey="id"
-                  dataSource={reportsWithTotal}
+                  dataSource={filteredReports}
                   columns={columns}
                   pagination={{ pageSize: 20 }}
                   scroll={{ x: 'max-content' }}
                   size="small"
                   bordered
-                  rowClassName={record =>
-                    record.id === 'total' ? 'ant-table-row-total' : ''
-                  }
+                  rowClassName={record => (record.id === 'total' ? 'ant-table-row-total' : '')}
                 />
               </>
             )}
@@ -259,7 +242,6 @@ export default function ConsolidatedManpowerReport() {
         </Card>
       </Box>
 
-      {/* Optional CSS for total row */}
       <style>{`
         .ant-table-row-total {
           font-weight: bold;
