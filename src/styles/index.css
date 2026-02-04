@@ -17,3 +17,54 @@ body {
   height: 100vh;
 }
 
+/* Force text color on actual input element */
+.ant-input-affix-wrapper input.ant-input {
+  color: #000 !important;
+  background-color: transparent !important;
+}
+
+/* While focused and typing */
+.ant-input-affix-wrapper-focused input.ant-input,
+.ant-input-affix-wrapper:focus-within input.ant-input {
+  color: #000 !important;
+}
+
+/* Prevent MUI / reset from overriding during typing */
+.ant-input-affix-wrapper input {
+  -webkit-text-fill-color: #000 !important; /* Chrome fix */
+}
+
+/* Cursor visibility */
+.ant-input {
+  caret-color: #000 !important;
+}
+
+.ant-input-affix-wrapper {
+  background: #fff !important;
+}
+
+.ant-input-affix-wrapper:hover {
+  border-color: #4096ff !important;
+}
+
+.ant-input-affix-wrapper-focused,
+.ant-input-affix-wrapper:focus-within {
+  border-color: #4096ff !important;
+  box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.15);
+}
+
+.ant-input::placeholder,
+.ant-input-affix-wrapper input::placeholder {
+  color: #8c8c8c !important;   /* light gray */
+  opacity: 0.5;                 /* ensure visible in all browsers */
+}
+
+/* For Safari / WebKit */
+.ant-input::-webkit-input-placeholder {
+  color: #8c8c8c !important;
+}
+
+/* For Firefox */
+.ant-input::-moz-placeholder {
+  color: #8c8c8c !important;
+}
