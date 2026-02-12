@@ -4,6 +4,8 @@ import { Tabs } from 'antd'
 import { UserAddOutlined, SolutionOutlined, FileSearchOutlined, ToolOutlined, BulbOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import User from './UserMenuPages/User'
+import UserType from './UserMenuPages/UserType'
+import Department from './UserMenuPages/Department'
 
 export default function UserMaster() {
 
@@ -12,37 +14,37 @@ export default function UserMaster() {
   }
 
   const items = [
-  {
-    key: '1',
-    label: 'User',
-    children: <User />,
-    icon: <UserAddOutlined />,
-  },
-  {
-    key: '2',
-    label: 'User Type',
-    children: 'Content of Tab Pane 2',
-    icon: <SolutionOutlined />,
-  },
-  {
-    key: '3',
-    label: 'Department',
-    children: 'Content of Tab Pane 3',
-    icon: <FileSearchOutlined />,
-  },
-  {
-    key: '4',
-    label: 'Skill',
-    children: 'Content of Tab Pane 4',
-    icon: <ToolOutlined />,
-  },
-  {
-    key: '5',
-    label: 'Skill Level',
-    children: 'Content of Tab Pane 5',
-    icon: <BulbOutlined />,
-  }
-];
+    {
+      key: '1',
+      label: 'User',
+      children: <User />,
+      icon: <UserAddOutlined />,
+    },
+    {
+      key: '2',
+      label: 'User Type',
+      children: <UserType />,
+      icon: <SolutionOutlined />,
+    },
+    {
+      key: '3',
+      label: 'Department',
+      children: <Department />,
+      icon: <FileSearchOutlined />,
+    },
+    {
+      key: '4',
+      label: 'Skill',
+      children: 'Content of Tab Pane 4',
+      icon: <ToolOutlined />,
+    },
+    {
+      key: '5',
+      label: 'Skill Level',
+      children: 'Content of Tab Pane 5',
+      icon: <BulbOutlined />,
+    }
+  ];
 
   return (
     <>

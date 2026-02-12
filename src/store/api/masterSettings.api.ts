@@ -36,7 +36,6 @@ export const masterSettingsApi = baseApi.injectEndpoints({
     getAllUserType: build.query({
       query: (params) => {
         const {
-          domainName: domainNameParam,
           clientId,
           pageNumber = 1,
           pageSize = 1000,
@@ -50,7 +49,7 @@ export const masterSettingsApi = baseApi.injectEndpoints({
           url: `${API_BASE_URL}/usertype/getallusertype`,
           method: 'GET',
           params: {
-            domainName: domainNameParam || domainName,
+            domainName,
             clientId: clientId.toString(),
             pn: pageNumber.toString(),
             ps: pageSize.toString(),
@@ -271,12 +270,61 @@ export const masterSettingsApi = baseApi.injectEndpoints({
 
 deleteUser: build.mutation({
   query: (id) => ({
-    url: `${API_BASE_URL}/userinfo/deletee`,
-    method: "DELETE",
-    body: { id },
+    url: `${API_BASE_URL}/userinfo/delete?idd=${id}`,
+    method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
     error ? [] :["UserInfo"],
+}),
+
+addUserType: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for addUserType");
+    }
+
+    return {
+      url: `${API_BASE_URL}/usertype/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["UserType"], 
+}),
+
+deleteUserType: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/usertype?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["UserType"],
+}),
+
+addDepartment: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for addUserType");
+    }
+
+    return {
+      url: `${API_BASE_URL}/department/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Department"], 
+}),
+
+deleteDepartment: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/department?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Department"],
 }),
 
   }),
@@ -296,4 +344,8 @@ export const {
   useGetMobileAuthorizationListQuery,
   useAddUserMutation,
   useDeleteUserMutation,
+  useAddUserTypeMutation,
+  useDeleteUserTypeMutation,
+  useAddDepartmentMutation,
+  useDeleteDepartmentMutation
 } = masterSettingsApi

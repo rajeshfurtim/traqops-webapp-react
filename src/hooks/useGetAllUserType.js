@@ -5,7 +5,6 @@ import { domainName } from '../config/apiConfig'
 export const useGetAllUserType = () => {
   const { user } = useAuth()
   const clientId = user?.client?.id || user?.clientId
-  const domainNameParam = user?.domain?.name || domainName
 
   const {
     data: response,
@@ -13,7 +12,7 @@ export const useGetAllUserType = () => {
     error: queryError,
   } = useGetAllUserTypeQuery(
     {
-      domainName: domainNameParam,
+      domainName,
       clientId: clientId,
       pageNumber: 1,
       pageSize: 1000,

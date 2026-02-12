@@ -275,10 +275,10 @@ export default function User() {
 
   const handleSubmit = async (payload) => {
     try {
-      await addUser(payload).unwrap();
-      message.success("User added successfully");
+      const response = await addUser(payload).unwrap();
+      message.success(response?.message || "User saved successfully");
     } catch (error) {
-      message.error("Failed to add user");
+      message.error(error?.data?.message || error?.data?.error || "Failed to add user");
     } finally {
       handleModalCancel()
     }
@@ -286,10 +286,10 @@ export default function User() {
 
   const handleDelete = async () => {
     try {
-      await deleteUser(selectedRecord.id).unwrap();
-      message.success("User deleted successfully");
+      const response = await deleteUser(selectedRecord.id).unwrap();
+      message.success(response?.message || "User deleted successfully");
     } catch (error) {
-      message.error("Failed to delete user");
+      message.error(error?.data?.message || error?.data?.error || "Failed to delete user");
     } finally {
       handleModalCancel()
     }
