@@ -327,6 +327,56 @@ deleteDepartment: build.mutation({
     error ? [] :["Department"],
 }),
 
+addSkill: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add skill");
+    }
+
+    return {
+      url: `${API_BASE_URL}/skill/addorupadatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Skill"], 
+}),
+
+deleteSkill: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/skill?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Skill"],
+}),
+
+addSkillLevel: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add skill level");
+    }
+
+    return {
+      url: `${API_BASE_URL}/skilllevel/addorupadatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["SkillLevel"], 
+}),
+
+deleteSkillLevel: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/skilllevel?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["SkillLevel"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -347,5 +397,9 @@ export const {
   useAddUserTypeMutation,
   useDeleteUserTypeMutation,
   useAddDepartmentMutation,
-  useDeleteDepartmentMutation
+  useDeleteDepartmentMutation,
+  useAddSkillMutation,
+  useDeleteSkillMutation,
+  useAddSkillLevelMutation,
+  useDeleteSkillLevelMutation
 } = masterSettingsApi

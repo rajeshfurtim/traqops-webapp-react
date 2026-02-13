@@ -6,6 +6,8 @@ import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import User from './UserMenuPages/User'
 import UserType from './UserMenuPages/UserType'
 import Department from './UserMenuPages/Department'
+import Skill from './UserMenuPages/Skill'
+import SkillLevel from './UserMenuPages/SkillLevel'
 
 export default function UserMaster() {
 
@@ -35,13 +37,13 @@ export default function UserMaster() {
     {
       key: '4',
       label: 'Skill',
-      children: 'Content of Tab Pane 4',
+      children: <Skill />,
       icon: <ToolOutlined />,
     },
     {
       key: '5',
       label: 'Skill Level',
-      children: 'Content of Tab Pane 5',
+      children: <SkillLevel />,
       icon: <BulbOutlined />,
     }
   ];
