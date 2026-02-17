@@ -453,6 +453,108 @@ deleteLocation: build.mutation({
     error ? [] :["Location"],
 }),
 
+getAreaList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getAreaList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/area/getallarealist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['Area'],
+    }),
+
+    addArea: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add area");
+    }
+
+    return {
+      url: `${API_BASE_URL}/area/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Area"], 
+}),
+
+deleteArea: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/area?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Area"],
+}),
+
+getSubAreaList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getSubAreaList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/subarea/getallsubarealist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['SubArea'],
+    }),
+
+    addSubArea: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add sub area");
+    }
+
+    return {
+      url: `${API_BASE_URL}/subarea/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["SubArea"], 
+}),
+
+deleteSubArea: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/subarea?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["SubArea"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -482,5 +584,11 @@ export const {
   useAddLocationGroupMutation,
   useDeleteLocationGroupMutation,
   useAddLocationMutation,
-  useDeleteLocationMutation
+  useDeleteLocationMutation,
+  useGetAreaListQuery,
+  useAddAreaMutation,
+  useDeleteAreaMutation,
+  useGetSubAreaListQuery,
+  useAddSubAreaMutation,
+  useDeleteSubAreaMutation
 } = masterSettingsApi

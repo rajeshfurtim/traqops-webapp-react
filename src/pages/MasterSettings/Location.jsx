@@ -5,6 +5,8 @@ import { EnvironmentOutlined, TagsOutlined, PushpinOutlined, BulbOutlined } from
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import LocationGroups from './LocationMenuPages/LocationGroups'
 import Location from './LocationMenuPages/Location'
+import Area from './LocationMenuPages/Area'
+import SubArea from './LocationMenuPages/SubArea'
 
 export default function LocationMaster() {
 
@@ -28,13 +30,13 @@ export default function LocationMaster() {
     {
       key: '3',
       label: 'Area',
-      children: 'Area',
+      children: <Area />,
       icon: <PushpinOutlined />,
     },
     {
       key: '4',
       label: 'Sub Area',
-      children: 'Sub Area',
+      children: <SubArea />,
       icon: <BulbOutlined />,
     }
   ];

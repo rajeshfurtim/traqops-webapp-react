@@ -47,7 +47,9 @@ export const baseApi = createApi({
     'Skill',
     'SkillLevel',
     'Mobile',
-    'LocationGroup'
+    'LocationGroup',
+    'Area',
+    'SubArea',
   ],
   endpoints: () => ({}),
 })
