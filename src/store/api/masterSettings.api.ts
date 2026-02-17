@@ -377,6 +377,82 @@ deleteSkillLevel: build.mutation({
     error ? [] :["SkillLevel"],
 }),
 
+getLocationGroupList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getLocationGroupList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/locationgroup/getlocationgrouplist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['LocationGroup'],
+    }),
+
+    addLocationGroup: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add location group");
+    }
+
+    return {
+      url: `${API_BASE_URL}/locationgroup/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["LocationGroup"], 
+}),
+
+deleteLocationGroup: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/locationgroup?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["LocationGroup"],
+}),
+
+addLocation: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add location");
+    }
+
+    return {
+      url: `${API_BASE_URL}/location/addLocationn`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Location"], 
+}),
+
+deleteLocation: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/location?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Location"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -401,5 +477,10 @@ export const {
   useAddSkillMutation,
   useDeleteSkillMutation,
   useAddSkillLevelMutation,
-  useDeleteSkillLevelMutation
+  useDeleteSkillLevelMutation,
+  useGetLocationGroupListQuery,
+  useAddLocationGroupMutation,
+  useDeleteLocationGroupMutation,
+  useAddLocationMutation,
+  useDeleteLocationMutation
 } = masterSettingsApi
