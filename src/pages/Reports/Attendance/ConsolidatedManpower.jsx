@@ -8,6 +8,8 @@ import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import { useAuth } from '../../../context/AuthContext'
 import { useGetConsolidateManpowerReportQuery } from '../../../store/api/reports.api'
+import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
+
 
 const { RangePicker } = DatePicker
 
@@ -15,7 +17,7 @@ export default function ConsolidatedManpowerReport() {
   const [form] = Form.useForm()
   const { user } = useAuth()
   const clientId = user?.client?.id || user?.clientId
-
+  const [shouldFetch, setShouldFetch] = useState(false)
   const [filters, setFilters] = useState({
     fromDate: null,
     toDate: null,
@@ -32,11 +34,11 @@ export default function ConsolidatedManpowerReport() {
       dateRange: [today, today],
       type: 261586,
     })
-    setFilters({
-      fromDate: today.format('YYYY-MM-DD'),
-      toDate: today.format('YYYY-MM-DD'),
-      userTypeId: 261586,
-    })
+    // setFilters({
+    //   fromDate: today.format('YYYY-MM-DD'),
+    //   toDate: today.format('YYYY-MM-DD'),
+    //   userTypeId: 261586,
+    // })
   }, [])
 
   // Apply filters
@@ -47,30 +49,32 @@ export default function ConsolidatedManpowerReport() {
       toDate: to?.format('YYYY-MM-DD'),
       userTypeId: values.type,
     })
+    setShouldFetch(true)
   }
 
   // API Call
-  const { data: response, isLoading, isFetching } =
+  const { data: response, isLoading: queryLoading,} =
     useGetConsolidateManpowerReportQuery(
       { ...filters, clientId },
       { skip: !clientId || !filters.fromDate || !filters.toDate }
     )
 
   // Build table rows
-  const reports = useMemo(() => {
-    if (!Array.isArray(response?.data)) return []
+ const reports = useMemo(() => {
+  if (queryLoading) return []
+  if (!response?.data || !Array.isArray(response.data)) return []
 
-    return response.data.map(item => {
-      const row = { id: item.locationId, location: item.locationName, totalDuties: 0 }
+  return response.data.map(item => {
+    const row = { id: item.locationId, location: item.locationName, totalDuties: 0 }
 
-      Object.entries(item.counts || {}).forEach(([date, count]) => {
-        row[date] = count
-        row.totalDuties += count
-      })
-
-      return row
+    Object.entries(item.counts || {}).forEach(([date, count]) => {
+      row[date] = count
+      row.totalDuties += count
     })
-  }, [response])
+
+    return row
+  })
+}, [response, queryLoading])
 
   // Build date columns
   const dateColumns = useMemo(() => {
@@ -129,9 +133,55 @@ export default function ConsolidatedManpowerReport() {
     ...dateColumns,
   ]
 
-  // Export
-  const handleExportExcel = () => message.info('Excel export coming soon')
-  const handleExportPDF = () => message.info('PDF export coming soon')
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
+  const handleExportExcel = async () => {
+    try {
+      setExporting(prev => ({ ...prev, excel: true }))
+  
+      await exportToExcel(
+        columns,            
+        filteredReports,    
+        `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+      )
+  
+      message.success('Excel exported successfully')
+    } catch (err) {
+      message.error('Excel export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
+    }
+  }
+  
+  
+    const handleExportPDF = async () => {
+    try {
+      setExporting(prev => ({ ...prev, pdf: true }))
+  
+      await exportToPDF(
+        columns,            
+        filteredReports,
+        `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+      )
+  
+      message.success('PDF exported successfully')
+    } catch (err) {
+      message.error('PDF export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
+    }
+  }
+  
+  const handleResetFilters = () => {
+      const currentMonth = dayjs()
+      setApiError(null)
+      setShouldFetch(false)
+      setReports([])
+      form.setFieldsValue({
+        month: currentMonth,
+        location: 'All Locations',
+        department: 'All Departments'
+      })
+    }
 
   return (
     <>
@@ -175,6 +225,11 @@ export default function ConsolidatedManpowerReport() {
                   Apply Filters
                 </AntButton>
               </Form.Item>
+              <Form.Item>
+              <AntButton onClick={handleResetFilters}>
+                Reset
+              </AntButton>
+              </Form.Item>
             </Form>
           </CardContent>
         </Card>
@@ -182,7 +237,7 @@ export default function ConsolidatedManpowerReport() {
         {/* Table */}
         <Card>
           <CardContent>
-            {isLoading || isFetching ? (
+            {queryLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
                 <CircularProgress />
               </Box>

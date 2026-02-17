@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Empty } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -9,14 +9,18 @@ import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useAuth } from '../../../context/AuthContext'
 import { useGetMonthlyEmployeeReportQuery } from '../../../store/api/reports.api'
-// import { exportToExcel, exportToPDF } from 'your-export-utils' // adjust accordingly
+import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
 
 export default function MonthlyEmployeeAttendanceReport() {
   const [form] = Form.useForm()
   const { user } = useAuth()
   const clientId = user?.client?.id || user?.clientId
 
+  const [shouldFetch, setShouldFetch] = useState(false)
   const [reports, setReports] = useState([])
+  const [searchText, setSearchText] = useState('')
+  const [columns, setColumns] = useState([])
+
   const [filters, setFilters] = useState({
     fromDate: null,
     toDate: null,
@@ -38,25 +42,9 @@ export default function MonthlyEmployeeAttendanceReport() {
     })
   }, [])
 
-  const handleFilterChange = (values) => {
-    const newFilters = {}
-
-    if (values.month) {
-      newFilters.fromDate = values.month.startOf('month').format('YYYY-MM-DD')
-      newFilters.toDate = values.month.endOf('month').format('YYYY-MM-DD')
-    }
-
-    newFilters.userTypeId = values.userTypeId
-    newFilters.locationId = locationIds
-
-    setReports([])
-    setFilters(prev => ({ ...prev, ...newFilters }))
-  }
-
   const {
     data: response,
-    isLoading,
-    isFetching,
+    isLoading: queryLoading,
   } = useGetMonthlyEmployeeReportQuery(
     {
       fromDate: filters.fromDate,
@@ -65,9 +53,10 @@ export default function MonthlyEmployeeAttendanceReport() {
       userTypeId: filters.userTypeId === -1 ? null : filters.userTypeId,
       clientId,
     },
-    { skip: !clientId || !filters.fromDate || !filters.toDate }
+    { skip: !clientId || !shouldFetch }
   )
 
+  // Shift Logic
   const getShiftByTime = (inTime) => {
     const hour = Number(inTime.split(':')[0])
     if (hour >= 5 && hour < 8) return 'A'
@@ -94,7 +83,7 @@ export default function MonthlyEmployeeAttendanceReport() {
     })
 
     return {
-      id: `${item.employeeCode}-${index}`, // guaranteed unique key
+      id: `${item.employeeCode}-${index}`,
       employeeNo: item.employeeCode,
       employeeName: item.userName,
       userType: item.userTypeName,
@@ -103,26 +92,57 @@ export default function MonthlyEmployeeAttendanceReport() {
     }
   }
 
-  // Search state
-  const [searchText, setSearchText] = useState('')
+  // Handle Search
+  const handleSearch = () => {
+    if (!clientId) {
+      message.error('Client id not found. Please login again')
+      return
+    }
+
+    const values = form.getFieldsValue()
+
+    if (!values.month) {
+      message.error('Please select month')
+      return
+    }
+
+    const fromDate = values.month.startOf('month').format('YYYY-MM-DD')
+    const toDate = values.month.endOf('month').format('YYYY-MM-DD')
+
+    setFilters({
+      fromDate,
+      toDate,
+      locationId: locationIds,
+      userTypeId: values.userTypeId,
+    })
+
+    setShouldFetch(true)
+  }
+
+  // Filter Search
   const filteredReports = useMemo(() => {
     if (!searchText) return reports
-    const lowerSearch = searchText.trim().toLowerCase()
+    const lower = searchText.toLowerCase()
+
     return reports.filter(r =>
-      r.employeeNo?.toLowerCase().includes(lowerSearch) ||
-      r.employeeName?.toLowerCase().includes(lowerSearch) ||
-      r.userType?.toLowerCase().includes(lowerSearch)
+      r.employeeNo?.toLowerCase().includes(lower) ||
+      r.employeeName?.toLowerCase().includes(lower) ||
+      r.userType?.toLowerCase().includes(lower)
     )
   }, [reports, searchText])
 
+  // Set Report Data
   useEffect(() => {
-    if (Array.isArray(response?.data)) {
+    if (queryLoading) return
+
+    if (response?.success && Array.isArray(response?.data)) {
       setReports(response.data.map((item, idx) => transformReportRow(item, idx)))
     } else {
       setReports([])
     }
-  }, [response])
+  }, [response, queryLoading])
 
+  // Base Columns
   const baseColumns = [
     {
       title: 'Employee No',
@@ -152,38 +172,70 @@ export default function MonthlyEmployeeAttendanceReport() {
     },
   ]
 
-  const [columns, setColumns] = useState([])
-
+  // Dynamic Day Columns
   useEffect(() => {
     if (!filters.fromDate) return
+
     const days = dayjs(filters.fromDate).daysInMonth()
+
     const dayColumns = Array.from({ length: days }, (_, i) => ({
       title: i + 1,
       dataIndex: `day${i + 1}`,
       width: 70,
       align: 'center',
     }))
+
     setColumns([...baseColumns, ...dayColumns])
   }, [filters.fromDate])
 
-  const loading = isLoading || isFetching
+  // Export
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
 
   const handleExportExcel = async () => {
     try {
-      await exportToExcel(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
-      message.success('Excel file exported successfully')
-    } catch (error) {
-      message.error('Failed to export Excel file')
+      setExporting(prev => ({ ...prev, excel: true }))
+
+      await exportToExcel(
+        columns,
+        filteredReports,
+        `monthly-attendance-${filters.fromDate}`
+      )
+
+      message.success('Excel exported successfully')
+    } catch {
+      message.error('Excel export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
     }
   }
 
   const handleExportPDF = async () => {
     try {
-      await exportToPDF(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
-      message.success('PDF file exported successfully')
-    } catch (error) {
-      message.error('Failed to export PDF file')
+      setExporting(prev => ({ ...prev, pdf: true }))
+
+      await exportToPDF(
+        columns,
+        filteredReports,
+        `monthly-attendance-${filters.fromDate}`
+      )
+
+      message.success('PDF exported successfully')
+    } catch {
+      message.error('PDF export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
     }
+  }
+
+  const handleResetFilters = () => {
+    setShouldFetch(false)
+    setReports([])
+    setSearchText('')
+
+    form.setFieldsValue({
+      month: dayjs(),
+      userTypeId: -1,
+    })
   }
 
   return (
@@ -203,11 +255,7 @@ export default function MonthlyEmployeeAttendanceReport() {
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Form
-              form={form}
-              layout="inline"
-              onFinish={handleFilterChange}
-            >
+            <Form form={form} layout="inline">
               <Form.Item name="month" label="Month">
                 <DatePicker picker="month" allowClear={false} />
               </Form.Item>
@@ -224,8 +272,19 @@ export default function MonthlyEmployeeAttendanceReport() {
               </Form.Item>
 
               <Form.Item>
-                <AntButton type="primary" htmlType="submit">
-                  Apply
+                <AntButton
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  loading={queryLoading}
+                  onClick={handleSearch}
+                >
+                  Search
+                </AntButton>
+              </Form.Item>
+
+              <Form.Item>
+                <AntButton onClick={handleResetFilters}>
+                  Reset
                 </AntButton>
               </Form.Item>
             </Form>
@@ -234,8 +293,11 @@ export default function MonthlyEmployeeAttendanceReport() {
 
         <Card>
           <CardContent>
-            {loading ? (
-              <Box display="flex" justifyContent="center" p={4}>
+            {!shouldFetch ? (
+              <Empty description ="Click search to view data" />
+            ) :
+             queryLoading ? (
+              <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
                 <CircularProgress />
               </Box>
             ) : (
@@ -249,7 +311,7 @@ export default function MonthlyEmployeeAttendanceReport() {
                     alignItems: 'center',
                   }}
                 >
-                  <Typography fontWeight="bold">
+                  <Typography fontWeight="bold" variant="body2" sx={{ fontSize: '1.2rem' }} >
                     Overall Employee Count:{' '}
                     <span style={{ color: '#1890ff' }}>{reports.length}</span>
                     {' | '}Total Duty:{' '}
@@ -258,7 +320,7 @@ export default function MonthlyEmployeeAttendanceReport() {
                     </span>
                   </Typography>
 
-                  <Space style={{ marginLeft: 'auto' }}>
+                  <Space style={{ marginLeft: 'auto' }} size={12}>
                     <Input
                       placeholder="Search"
                       prefix={<SearchOutlined />}
@@ -267,8 +329,8 @@ export default function MonthlyEmployeeAttendanceReport() {
                       allowClear
                       style={{ width: 250 }}
                     />
+
                     <AntButton
-                      type="default"
                       icon={<FileExcelOutlined />}
                       onClick={handleExportExcel}
                       disabled={reports.length === 0}
@@ -276,12 +338,12 @@ export default function MonthlyEmployeeAttendanceReport() {
                     >
                       Export Excel
                     </AntButton>
+
                     <AntButton
-                      type="default"
                       icon={<FilePdfOutlined />}
                       onClick={handleExportPDF}
                       disabled={reports.length === 0}
-                      style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                       style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
                     >
                       Export PDF
                     </AntButton>
@@ -291,10 +353,39 @@ export default function MonthlyEmployeeAttendanceReport() {
                 <Table
                   dataSource={filteredReports}
                   columns={columns}
-                  rowKey="id" // fixed duplicate key issue
+                  rowKey="id"
                   pagination={{ pageSize: 100 }}
-                  scroll={{ x: 'max-content' }}
+                  size="middle"
+                  scroll={{ x: 'max-content', y: 450 }}
                   bordered
+                  components={{
+                  header: {
+                    cell: (props) => (
+                      <th
+                        {...props}
+                        style={{
+                          ...props.style,
+                          fontSize: '16px',
+                          fontWeight: 600,
+                          padding: '12px 8px'
+                        }}
+                      />
+                    )
+                  },
+                  body: {
+                    cell: (props) => (
+                      <td
+                        {...props}
+                        style={{
+                          ...props.style,
+                          fontSize: '15px',
+                          fontWeight: 400,
+                          padding: '12px 8px'
+                        }}
+                      />
+                    )
+                  }
+                }}
                 />
               </>
             )}

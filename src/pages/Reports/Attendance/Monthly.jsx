@@ -260,23 +260,45 @@ export default function MonthlyAttendanceReport() {
     })
   }
 
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
   const handleExportExcel = async () => {
-    try {
-      await exportToExcel(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
-      message.success('Excel file exported successfully')
-    } catch (error) {
-      message.error('Failed to export Excel file')
-    }
+  try {
+    setExporting(prev => ({ ...prev, excel: true }))
+
+    await exportToExcel(
+      columns,            
+      filteredReports,    
+      `monthly-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+    )
+
+    message.success('Excel exported successfully')
+  } catch (err) {
+    message.error('Excel export failed')
+  } finally {
+    setExporting(prev => ({ ...prev, excel: false }))
   }
+}
+
 
   const handleExportPDF = async () => {
-    try {
-      await exportToPDF(reports, `monthly-attendance-${dayjs(filters.fromDate).format('YYYY-MM')}`)
-      message.success('PDF file exported successfully')
-    } catch (error) {
-      message.error('Failed to export PDF file')
-    }
+  try {
+    console.log("adhsgvuiav bjhav")
+    setExporting(prev => ({ ...prev, pdf: true }))
+
+    await exportToPDF(
+      columns,           
+      filteredReports,
+      `monthly-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+    )
+
+    message.success('PDF exported successfully')
+  } catch (err) {
+    message.error('PDF export failed')
+  } finally {
+    setExporting(prev => ({ ...prev, pdf: false }))
   }
+}
+
 
   const columns = [
     {
@@ -427,7 +449,7 @@ export default function MonthlyAttendanceReport() {
             {queryLoading ? (
               <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
                 <CircularProgress />
-                <Typography variant="body2" sx={{ mt: 2 }}>Loading report...</Typography>
+                {/* <Typography variant="body2" sx={{ mt: 2 }}>Loading report...</Typography> */}
               </Box>
             ) : apiError ? (
               <Empty
@@ -436,7 +458,7 @@ export default function MonthlyAttendanceReport() {
               />
             ) : reports.length === 0 ? (
               <Empty
-                description="No attendance records found for the selected period"
+                // description="No attendance records found for the selected period"
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
               />
             ) : (

@@ -1,64 +1,71 @@
-/**
- * Export utility functions for generating Excel and PDF exports
- */
+// npm install xlsx jspdf jspdf-autotable
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
-// Mock Excel export function
-export const exportToExcel = async (data, filename = 'attendance-report') => {
-  // In a real implementation, you would use a library like xlsx or exceljs
-  // This is a mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Simulate file download
-      const csvContent = convertToCSV(data)
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      link.setAttribute('href', url)
-      link.setAttribute('download', `${filename}.csv`)
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      resolve()
-    }, 1000)
+const prepareTableData = (columns, data) => {
+  const headers = columns
+    .filter(col => col.dataIndex) // ignore action columns
+    .map(col => col.title)
+
+  const rows = data.map(row =>
+    columns
+      .filter(col => col.dataIndex)
+      .map(col => {
+        const value = row[col.dataIndex]
+        return value !== undefined && value !== null ? value : '-'
+      })
+  )
+
+  return { headers, rows }
+}
+
+
+export const exportToExcel = async (
+  columns,
+  data,
+  filename = 'attendance-report'
+) => {
+  if (!data || data.length === 0) return
+
+  const { headers, rows } = prepareTableData(columns, data)
+
+  const worksheetData = [headers, ...rows]
+  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+  const workbook = XLSX.utils.book_new()
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Report')
+
+  XLSX.writeFile(workbook, `${filename}.xlsx`)
+}
+
+
+export const exportToPDF = async (
+  columns,
+  data,
+  filename = 'attendance-report'
+) => {
+  if (!data || data.length === 0) return
+
+  const { headers, rows } = prepareTableData(columns, data)
+
+  const doc = new jsPDF('l', 'mm', 'a4') // landscape for wide tables
+
+  doc.setFontSize(14)
+  doc.text('Daily Attendance Report', 14, 15)
+
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 20,
+    styles: {
+      fontSize: 9,
+      cellPadding: 3
+    },
+    headStyles: {
+      fillColor: [22, 119, 255] // AntD blue
+    }
   })
-}
 
-// Mock PDF export function
-export const exportToPDF = async (data, filename = 'attendance-report') => {
-  // In a real implementation, you would use a library like jsPDF or pdfmake
-  // This is a mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // For now, we'll create a simple text representation
-      // In production, use a proper PDF library
-      console.log('PDF Export:', data)
-      alert(`PDF export for ${data.length} records would be generated here.\nIn production, this would download a PDF file.`)
-      resolve()
-    }, 1000)
-  })
+  doc.save(`${filename}.pdf`)
 }
-
-// Helper function to convert data to CSV
-const convertToCSV = (data) => {
-  if (!data || data.length === 0) return ''
-  
-  const headers = ['Employee ID', 'Employee Name', 'Location', 'Shift', 'In Time', 'Out Time', 'Status']
-  const rows = data.map(item => [
-    item.employeeId || '',
-    item.employeeName || '',
-    item.location || '',
-    item.shift || '',
-    item.inTime || '-',
-    item.outTime || '-',
-    item.status || ''
-  ])
-  
-  const csvRows = [
-    headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-  ]
-  
-  return csvRows.join('\n')
-}
-
