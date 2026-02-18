@@ -1,14 +1,37 @@
-import { baseApi } from './baseApi'
+import { baseApi, API_BASE_URL } from './baseApi'
+
+/** Params for getIndentFilter */
+export interface GetIndentFilterParams {
+  clientId: string
+  fromDate: string
+  toDate: string
+  pn: number
+  ps: number
+  type: 'INWARD' | 'OUTWARD'
+}
 
 /**
  * Inventory API endpoints
  */
 export const inventoryApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    // Add inventory endpoints here when available
+    getIndentFilter: build.query({
+      query: (params: GetIndentFilterParams) => ({
+        url: `${API_BASE_URL}/stockindent/inward/getIndentfilter`,
+        method: 'GET',
+        params: {
+          clientId: params.clientId,
+          fromDate: params.fromDate,
+          toDate: params.toDate,
+          pn: String(params.pn),
+          ps: String(params.ps),
+          type: params.type,
+        },
+      }),
+      providesTags: ['Inventory'],
+    }),
   }),
   overrideExisting: false,
 })
 
-// Export hooks when endpoints are added
-// export const { useGetInventoryQuery } = inventoryApi
+export const { useGetIndentFilterQuery, useLazyGetIndentFilterQuery } = inventoryApi

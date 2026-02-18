@@ -33,6 +33,27 @@ export const masterSettingsApi = baseApi.injectEndpoints({
       providesTags: ['Location'],
     }),
 
+    getLocationByIsStore: build.query({
+      query: (params) => {
+        const { clientId, pageNumber = 1, pageSize = 1000 } = params ?? {}
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getLocationByIsStore')
+        }
+
+        return {
+          url: `${API_BASE_URL}/location/getbyisstore`,
+          method: 'GET',
+          params: {
+            clientId: String(clientId),
+            pn: String(pageNumber),
+            ps: String(pageSize),
+          },
+        }
+      },
+      providesTags: ['Location'],
+    }),
+
     getAllUserType: build.query({
       query: (params) => {
         const {
@@ -637,6 +658,7 @@ deleteShiftLocationMapping: build.mutation({
 
 export const {
   useGetLocationListQuery,
+  useGetLocationByIsStoreQuery,
   useGetAllUserTypeQuery,
   useGetAllClientListQuery,
   useGetAllRoleListQuery,
