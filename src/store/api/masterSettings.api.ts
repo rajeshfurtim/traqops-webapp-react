@@ -652,6 +652,152 @@ deleteShiftLocationMapping: build.mutation({
     error ? [] :["ShiftLocationMapping"],
 }),
 
+getCheckListByClient: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getCheckListByClient')
+        }
+
+        return {
+          url: `${API_BASE_URL}/checklist/getlist/byclient`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['CheckList'],
+    }),
+
+addAssetCategory: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add asset category");
+    }
+
+    return {
+      url: `${API_BASE_URL}/category/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["CheckList"], 
+}),
+
+deleteAssetCategory: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/category/delete?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["CheckList"],
+}),
+
+getAssetsLocationWise: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+          locationId
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getAssetsLocationWise')
+        }
+
+        return {
+          url: `${API_BASE_URL}/assets/getassetsfilter/locationwise`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+            locationId: locationId?.toString() ?? '',
+          },
+        }
+      },
+      providesTags: ['Assets'],
+    }),
+
+getAreaByLocation: build.query({
+      query: (params) => {
+        const {
+          locationId
+        } = params
+
+        if (!locationId) {
+          throw new Error('LocationId is required for getAreaByLocation')
+        }
+
+        return {
+          url: `${API_BASE_URL}/assets/getarea/bylocation`,
+          method: 'GET',
+          params: {
+            locationId: locationId.toString()
+          },
+        }
+      },
+      providesTags: ['Assets'],
+    }),
+
+getSubAreaByArea: build.query({
+      query: (params) => {
+        const {
+          areaId
+        } = params
+
+        if (!areaId) {
+          throw new Error('AreaId is required for getSubAreaByArea')
+        }
+
+        return {
+          url: `${API_BASE_URL}/assets/getsubarea/byarea`,
+          method: 'GET',
+          params: {
+            areaId: areaId.toString()
+          },
+        }
+      },
+      providesTags: ['Assets'],
+    }),
+
+addAsset: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add asset");
+    }
+
+    return {
+      url: `${API_BASE_URL}/assets/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Assets"], 
+}),
+
+deleteAsset: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/assets/delete?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Assets"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -693,5 +839,13 @@ export const {
   useDeleteShiftMutation,
   useGetShiftLocationMappingListQuery,
   useAddShiftLocationMappingMutation,
-  useDeleteShiftLocationMappingMutation
+  useDeleteShiftLocationMappingMutation,
+  useGetCheckListByClientQuery,
+  useAddAssetCategoryMutation,
+  useDeleteAssetCategoryMutation,
+  useGetAssetsLocationWiseQuery,
+  useGetAreaByLocationQuery,
+  useGetSubAreaByAreaQuery,
+  useAddAssetMutation,
+  useDeleteAssetMutation
 } = masterSettingsApi

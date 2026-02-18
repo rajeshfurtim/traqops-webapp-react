@@ -50,7 +50,9 @@ export const baseApi = createApi({
     'LocationGroup',
     'Area',
     'SubArea',
-    'ShiftLocationMapping'
+    'ShiftLocationMapping',
+    'CheckList',
+    'Assets'
   ],
   endpoints: () => ({}),
 })
