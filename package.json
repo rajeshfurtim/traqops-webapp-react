@@ -22,6 +22,8 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.24.12",
+    "jspdf": "^4.1.0",
+    "jspdf-autotable": "^5.0.7",
     "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
@@ -30,6 +32,7 @@
     "react-hook-form": "^7.52.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.26.0",
+    "xlsx": "^0.18.5",
     "yup": "^1.4.0"
   },
   "devDependencies": {

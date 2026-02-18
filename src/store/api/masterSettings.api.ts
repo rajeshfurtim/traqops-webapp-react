@@ -555,6 +555,82 @@ deleteSubArea: build.mutation({
     error ? [] :["SubArea"],
 }),
 
+    addShift: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add shift");
+    }
+
+    return {
+      url: `${API_BASE_URL}/shift/addorupdatee`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Shift"], 
+}),
+
+deleteShift: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/shiftbyid?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Shift"],
+}),
+
+getShiftLocationMappingList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getShiftLocationMappingList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/shiftlocationmapping/getalllist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['ShiftLocationMapping'],
+    }),
+
+addShiftLocationMapping: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add shift location mapping");
+    }
+
+    return {
+      url: `${API_BASE_URL}/shiftlocation/mappingg`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["ShiftLocationMapping"], 
+}),
+
+deleteShiftLocationMapping: build.mutation({
+  query: (id) => ({
+    url: `${API_BASE_URL}/delete/shiftmapping?idd=${id}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["ShiftLocationMapping"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -590,5 +666,10 @@ export const {
   useDeleteAreaMutation,
   useGetSubAreaListQuery,
   useAddSubAreaMutation,
-  useDeleteSubAreaMutation
+  useDeleteSubAreaMutation,
+  useAddShiftMutation,
+  useDeleteShiftMutation,
+  useGetShiftLocationMappingListQuery,
+  useAddShiftLocationMappingMutation,
+  useDeleteShiftLocationMappingMutation
 } = masterSettingsApi
