@@ -101,10 +101,8 @@ export default function DailyAttendanceReport() {
   // Format date as YYYY-MM-DD
   const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
 
-
-
   // RTK Query hook
-  const { data: response, isLoading, isFetching, error: queryError, } = useGetDailyLocationReportQuery(
+  const { data: response, isLoading: queryLoading, error: queryError,  } = useGetDailyLocationReportQuery(
     {
       date: formattedDate,
       locationId: locationId,
@@ -113,13 +111,6 @@ export default function DailyAttendanceReport() {
     },
     { skip: !clientId || !shouldFetch }
   )
-  const queryLoading = isLoading || isFetching
-
-  useEffect(() => {
-    if (clientId) {
-      setShouldFetch(true)
-    }
-  }, [clientId])
 
   useEffect(() => {
     if (shouldFetch) {
@@ -164,28 +155,28 @@ export default function DailyAttendanceReport() {
 
 
   useEffect(() => {
-    if (queryLoading) return
+  if (queryLoading) return
 
-    if (response?.success && Array.isArray(response.data)) {
-      const mappedReports = response.data.map((item, index) => ({
-        id: item.id ?? `${item.employeeCode}-${index}`, // safer unique key
-        serialNo: index + 1,
-        date: item.createAt || formattedDate,
-        employeeName: item.userName || '-',
-        employeeId: item.employeeCode || '-',
-        location: item.locationName || '-',
-        userType: item.userTypeName || '-',
-        shift: item.shiftName || '-',
-        punchIn: item.inTime || '-',
-        punchOut: item.outTime || '-'
-      }))
+  if (response?.success && Array.isArray(response.data)) {
+    const mappedReports = response.data.map((item, index) => ({
+      id: item.id ?? `${item.employeeCode}-${index}`, // safer unique key
+      serialNo: index + 1,
+      date: item.createAt || formattedDate,
+      employeeName: item.userName || '-',
+      employeeId: item.employeeCode || '-',
+      location: item.locationName || '-',
+      userType: item.userTypeName || '-',
+      shift: item.shiftName || '-',
+      punchIn: item.inTime || '-',
+      punchOut: item.outTime || '-'
+    }))
 
-      setReports(mappedReports)
-    } else if (response && !response.success) {
-      message.error(response.message || 'Failed to load daily location report')
-      setReports([])
-    }
-  }, [response, queryLoading, formattedDate])
+    setReports(mappedReports)
+  } else if (response && !response.success) {
+    message.error(response.message || 'Failed to load daily location report')
+    setReports([])
+  }
+}, [response, queryLoading, formattedDate])
 
   const handleSearch = () => {
     if (!clientId) {
@@ -361,7 +352,7 @@ export default function DailyAttendanceReport() {
                   placeholder="All Locations"
                   style={{ width: 180 }}
                   loading={locationsLoading}
-                // onChange={(value) => handleFilterChange('location', value)}
+                  // onChange={(value) => handleFilterChange('location', value)}
                 >
                   {locationOptions.map(location => (
                     <Select.Option key={location.id} value={location.name}>
@@ -375,7 +366,7 @@ export default function DailyAttendanceReport() {
                 <Select
                   style={{ width: 150 }}
                   loading={userTypesLoading}
-                // onChange={(value) => handleFilterChange('type', value)}
+                  // onChange={(value) => handleFilterChange('type', value)}
                 >
                   {userTypeOptions.map(type => (
                     <Select.Option key={type.id || 'all'} value={type.name}>
@@ -408,12 +399,13 @@ export default function DailyAttendanceReport() {
         <Card>
           <CardContent>
 
-            {queryLoading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" p={4}>
+            {!shouldFetch ? (
+              <Empty description="Click Search to view data" />
+            ) :
+            queryLoading ? (
+              <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
                 <Spin />
               </Box>
-            ) : !shouldFetch ? (
-              <Empty description="Click Search to view data" />
             ) : (
               <>
                 <Box
@@ -464,33 +456,33 @@ export default function DailyAttendanceReport() {
                   scroll={{ x: 'max-content', y: 450 }}
                   bordered
                   components={{
-                    header: {
-                      cell: (props) => (
-                        <th
-                          {...props}
-                          style={{
-                            ...props.style,
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            padding: '12px 8px'
-                          }}
-                        />
-                      )
-                    },
-                    body: {
-                      cell: (props) => (
-                        <td
-                          {...props}
-                          style={{
-                            ...props.style,
-                            fontSize: '15px',
-                            fontWeight: 400,
-                            padding: '12px 8px'
-                          }}
-                        />
-                      )
-                    }
-                  }}
+                  header: {
+                    cell: (props) => (
+                      <th
+                        {...props}
+                        style={{
+                          ...props.style,
+                          fontSize: '16px',
+                          fontWeight: 600,
+                          padding: '12px 8px'
+                        }}
+                      />
+                    )
+                  },
+                  body: {
+                    cell: (props) => (
+                      <td
+                        {...props}
+                        style={{
+                          ...props.style,
+                          fontSize: '15px',
+                          fontWeight: 400,
+                          padding: '12px 8px'
+                        }}
+                      />
+                    )
+                  }
+                }}
                 />
               </>
             )}
