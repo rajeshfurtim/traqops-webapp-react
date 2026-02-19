@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { Box, Card, CardContent, CircularProgress, Typography } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, DatePicker, Tag } from "antd"
+import { Box, Card, CardContent, Typography } from "@mui/material"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, DatePicker, Tag, Spin } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetShiftLocationMappingListQuery, useAddShiftLocationMappingMutation, useDeleteShiftLocationMappingMutation, useGetLocationListQuery, useGetAllUserTypeQuery } from '../../../store/api/masterSettings.api'
 import { useGetAllShiftListQuery } from '../../../store/api/maintenance.api'
@@ -15,6 +15,9 @@ export default function ShiftLocationMapping() {
     const clientId = user?.client?.id || user?.clientId
     const [form] = Form.useForm()
 
+    const [current, setCurrent] = useState(1);
+    const [pageSize, setPagesize] = useState(25);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedRecord, setSelectedRecord] = useState(null)
 
@@ -32,7 +35,7 @@ export default function ShiftLocationMapping() {
             dataIndex: 'sno',
             key: 'sno',
             width: 80,
-            render: (_, __, index) => index + 1
+            render: (_, __, index) => ((current - 1) * pageSize) + index + 1
         },
         {
             title: 'Date',
@@ -208,14 +211,25 @@ export default function ShiftLocationMapping() {
 
     const handleDelete = async () => {
         try {
-            const response = await deleteShiftLocationMapping(selectedRecord?.shiftLocationMapping?.id).unwrap();
+            const queryString = selectedRowKeys
+                .map(id => `id=${id}`)
+                .join('&');
+            const response = await deleteShiftLocationMapping(queryString).unwrap();
             message.success(response?.message || "Shift Location Mapping deleted successfully");
+            setSelectedRowKeys([]);
         } catch (error) {
             message.error(error?.data?.message || error?.data?.error || "Failed to delete shift location mapping");
         } finally {
             handleModalCancel()
         }
     }
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        }
+    };
 
     return (
         <>
@@ -224,6 +238,22 @@ export default function ShiftLocationMapping() {
                     <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                             <Space>
+                                <>
+                                    {selectedRowKeys.length > 0 && (
+                                        <>
+                                            <Popconfirm
+                                                title={`Are you sure you want to delete ${selectedRowKeys.length} selected shift location mapping(s)?`}
+                                                onConfirm={handleDelete}
+                                                okText="Confirm"
+                                                cancelText="Cancel"
+                                            >
+                                                <AntButton danger icon={<DeleteOutlined />} style={{ color: '#ffff', backgroundColor: '#f73b3b' }}>
+                                                    ({selectedRowKeys.length})
+                                                </AntButton>
+                                            </Popconfirm>
+                                        </>
+                                    )}
+                                </>
                                 <Input
                                     placeholder="Search"
                                     prefix={<SearchOutlined />}
@@ -239,46 +269,47 @@ export default function ShiftLocationMapping() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {(shiftLocationMappingLoading || isFetching) ? (
+                        {shiftLocationMappingLoading ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <CircularProgress />
+                                <Spin />
                             </Box>
                         ) : (
                             <Table
                                 dataSource={filteredData ?? shiftLocationMappingListData?.data?.content}
                                 columns={columns}
+                                rowSelection={{ type: 'checkbox', ...rowSelection }}
+                                loading={shiftLocationMappingLoading || isFetching}
                                 rowKey="id"
-                                pagination={{ pageSize: 20 }}
                                 size="middle"
                                 scroll={{ x: 'max-content' }}
                                 onRow={(record) => ({
                                     onClick: () => handleEdit(record),
                                     style: { cursor: "pointer" },
                                 })}
+                                pagination={{
+                                    position: ['bottomRight'],
+                                    current: current,
+                                    pageSize: pageSize,
+                                    onChange: setCurrent,
+                                    showSizeChanger: true,
+                                    onShowSizeChange: (current, size) => {
+                                        setPagesize(size);
+                                        setCurrent(current);
+                                    },
+                                    pageSizeOptions: ['25', '50', '100'],
+                                    showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                                    className: "custom-pagination"
+                                }}
                             />
                         )}
                     </CardContent>
                 </Card>
 
                 <Modal
-                    title="Shift Location Mapping"
+                    title={selectedRecord ? "Edit Shift Location Mapping" : "Add Shift Location Mapping"}
                     open={isModalOpen}
                     onCancel={handleModalCancel}
                     footer={[
-                        selectedRecord && (
-                            <Popconfirm
-                                key="delete"
-                                title="Are you sure you want to delete this shift location mapping?"
-                                onConfirm={handleDelete}
-                                okText="Confirm"
-                                cancelText="Cancel"
-                                placement="top"
-                            >
-                                <AntButton danger style={{ float: "left", backgroundColor: '#fd4141', color: '#ffff' }}>
-                                    <DeleteOutlined />
-                                </AntButton>
-                            </Popconfirm>
-                        ),
 
                         // Cancel Button
                         <AntButton key="cancel" onClick={handleModalCancel}>

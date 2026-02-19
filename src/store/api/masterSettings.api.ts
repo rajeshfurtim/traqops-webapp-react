@@ -280,7 +280,7 @@ export const masterSettingsApi = baseApi.injectEndpoints({
     }
 
     return {
-      url: `${API_BASE_URL}/user/addd`,
+      url: `${API_BASE_URL}/user/add/poov`,
       method: "POST",
       body: payload,
     };
@@ -290,8 +290,8 @@ export const masterSettingsApi = baseApi.injectEndpoints({
 }),
 
 deleteUser: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/userinfo/delete?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/userinfo/delete/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -305,7 +305,7 @@ addUserType: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/usertype/addorupdatee`,
+      url: `${API_BASE_URL}/usertype/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -315,8 +315,8 @@ addUserType: build.mutation({
 }),
 
 deleteUserType: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/usertype?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/usertype/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -330,7 +330,7 @@ addDepartment: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/department/addorupdatee`,
+      url: `${API_BASE_URL}/department/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -340,8 +340,8 @@ addDepartment: build.mutation({
 }),
 
 deleteDepartment: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/department?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/department/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -355,7 +355,7 @@ addSkill: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/skill/addorupadatee`,
+      url: `${API_BASE_URL}/skill/addorupadate/poov`,
       method: "POST",
       body: payload,
     };
@@ -365,8 +365,8 @@ addSkill: build.mutation({
 }),
 
 deleteSkill: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/skill?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/skill/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -380,7 +380,7 @@ addSkillLevel: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/skilllevel/addorupadatee`,
+      url: `${API_BASE_URL}/skilllevel/addorupadate/poov`,
       method: "POST",
       body: payload,
     };
@@ -390,8 +390,8 @@ addSkillLevel: build.mutation({
 }),
 
 deleteSkillLevel: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/skilllevel?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/skilllevel/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -431,7 +431,7 @@ getLocationGroupList: build.query({
     }
 
     return {
-      url: `${API_BASE_URL}/locationgroup/addorupdatee`,
+      url: `${API_BASE_URL}/locationgroup/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -441,8 +441,8 @@ getLocationGroupList: build.query({
 }),
 
 deleteLocationGroup: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/locationgroup?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/locationgroup/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -456,7 +456,7 @@ addLocation: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/location/addLocationn`,
+      url: `${API_BASE_URL}/location/addLocation/poov`,
       method: "POST",
       body: payload,
     };
@@ -466,8 +466,8 @@ addLocation: build.mutation({
 }),
 
 deleteLocation: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/location?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/location/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -507,7 +507,7 @@ getAreaList: build.query({
     }
 
     return {
-      url: `${API_BASE_URL}/area/addorupdatee`,
+      url: `${API_BASE_URL}/area/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -517,8 +517,8 @@ getAreaList: build.query({
 }),
 
 deleteArea: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/area?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/area/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -558,7 +558,7 @@ getSubAreaList: build.query({
     }
 
     return {
-      url: `${API_BASE_URL}/subarea/addorupdatee`,
+      url: `${API_BASE_URL}/subarea/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -568,8 +568,8 @@ getSubAreaList: build.query({
 }),
 
 deleteSubArea: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/subarea?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/subarea/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -583,7 +583,7 @@ deleteSubArea: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/shift/addorupdatee`,
+      url: `${API_BASE_URL}/shift/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -593,8 +593,8 @@ deleteSubArea: build.mutation({
 }),
 
 deleteShift: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/shiftbyid?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/shiftbyid/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -634,7 +634,7 @@ addShiftLocationMapping: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/shiftlocation/mappingg`,
+      url: `${API_BASE_URL}/shiftlocation/mapping/poov`,
       method: "POST",
       body: payload,
     };
@@ -644,8 +644,8 @@ addShiftLocationMapping: build.mutation({
 }),
 
 deleteShiftLocationMapping: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/delete/shiftmapping?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/shiftmapping/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -685,7 +685,7 @@ addAssetCategory: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/category/addorupdatee`,
+      url: `${API_BASE_URL}/category/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -695,8 +695,8 @@ addAssetCategory: build.mutation({
 }),
 
 deleteAssetCategory: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/category/delete?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/category/delete/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
@@ -720,7 +720,6 @@ getAssetsLocationWise: build.query({
           url: `${API_BASE_URL}/assets/getassetsfilter/locationwise`,
           method: 'GET',
           params: {
-            domainName,
             clientId: clientId.toString(),
             pn: pageNumber.toString(),
             ps: pageSize.toString(),
@@ -780,7 +779,7 @@ addAsset: build.mutation({
     }
 
     return {
-      url: `${API_BASE_URL}/assets/addorupdatee`,
+      url: `${API_BASE_URL}/assets/addorupdate/poov`,
       method: "POST",
       body: payload,
     };
@@ -790,8 +789,8 @@ addAsset: build.mutation({
 }),
 
 deleteAsset: build.mutation({
-  query: (id) => ({
-    url: `${API_BASE_URL}/assets/delete?idd=${id}`,
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/assets/delete/poov?${queryString}`,
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>

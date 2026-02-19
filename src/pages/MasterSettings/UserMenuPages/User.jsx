@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Space, Button as AntButton, Tag, Input, Select, Modal, Form, Row, Col, Switch, TreeSelect, Popconfirm, message } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Space, Button as AntButton, Tag, Input, Select, Modal, Form, Row, Col, Switch, TreeSelect, Popconfirm, message, Spin } from 'antd'
 import { PlusOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useGetAllRoleListQuery, useGetAllUserListQuery, useGetDepartmentListQuery, useGetSkillListQuery, useGetSkillLevelListQuery, useGetClientListQuery, useGetMobileAuthorizationListQuery, useAddUserMutation, useDeleteUserMutation } from '../../../store/api/masterSettings.api'
 import { useAuth } from '../../../context/AuthContext'
@@ -24,6 +24,10 @@ export default function User() {
   const loginUser = Form.useWatch("loginUser", form);
   const { user } = useAuth()
   const clientId = user?.client?.id || user?.clientId
+
+  const [current, setCurrent] = useState(1);
+  const [pageSize, setPagesize] = useState(25);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -90,6 +94,13 @@ export default function User() {
   ];
 
   const columns = [
+    {
+      title: 'S.No',
+      dataIndex: 'sno',
+      key: 'sno',
+      width: 80,
+      render: (_, __, index) => ((current - 1) * pageSize) + index + 1
+    },
     {
       title: 'Emp ID',
       dataIndex: 'empId',
@@ -177,6 +188,7 @@ export default function User() {
 
   const visibleColumns = useMemo(() => {
     return columns.filter(col =>
+      col.dataIndex === 'sno' ||
       col.dataIndex === 'empId' ||
       col.dataIndex === 'name' ||
       col.dataIndex === 'location' ||
@@ -286,12 +298,23 @@ export default function User() {
 
   const handleDelete = async () => {
     try {
-      const response = await deleteUser(selectedRecord.id).unwrap();
+      const queryString = selectedRowKeys
+        .map(id => `id=${id}`)
+        .join('&');
+      const response = await deleteUser(queryString).unwrap();
       message.success(response?.message || "User deleted successfully");
+      setSelectedRowKeys([]);
     } catch (error) {
       message.error(error?.data?.message || error?.data?.error || "Failed to delete user");
     } finally {
       handleModalCancel()
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
     }
   };
 
@@ -364,6 +387,22 @@ export default function User() {
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Space>
+                <>
+                  {selectedRowKeys.length > 0 && (
+                    <>
+                      <Popconfirm
+                        title={`Are you sure you want to delete ${selectedRowKeys.length} selected user(s)?`}
+                        onConfirm={handleDelete}
+                        okText="Confirm"
+                        cancelText="Cancel"
+                      >
+                        <AntButton danger icon={<DeleteOutlined />} style={{ color: '#ffff', backgroundColor: '#f73b3b' }}>
+                          ({selectedRowKeys.length})
+                        </AntButton>
+                      </Popconfirm>
+                    </>
+                  )}
+                </>
                 <Select
                   mode="multiple"
                   allowClear
@@ -387,46 +426,47 @@ export default function User() {
                 </AntButton>
               </Space>
             </Box>
-            {(userListLoading || isFetching) ? (
+            {userListLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
+                <Spin />
               </Box>
             ) : (
               <Table
                 dataSource={filteredData ?? userListData?.data?.content}
                 columns={visibleColumns}
+                rowSelection={{ type: 'checkbox', ...rowSelection }}
+                loading={userListLoading || isFetching}
                 rowKey="id"
-                pagination={{ pageSize: 20 }}
                 size="middle"
                 scroll={{ x: 'max-content' }}
                 onRow={(record) => ({
                   onClick: () => handleEdit(record),
                   style: { cursor: "pointer" },
                 })}
+                pagination={{
+                  position: ['bottomRight'],
+                  current: current,
+                  pageSize: pageSize,
+                  onChange: setCurrent,
+                  showSizeChanger: true,
+                  onShowSizeChange: (current, size) => {
+                    setPagesize(size);
+                    setCurrent(current);
+                  },
+                  pageSizeOptions: ['25', '50', '100'],
+                  showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                  className: "custom-pagination"
+                }}
               />
             )}
           </CardContent>
         </Card>
 
         <Modal
-          title="User"
+          title={selectedRecord ? "Edit User" : "Add User"}
           open={isModalOpen}
           onCancel={handleModalCancel}
           footer={[
-            selectedRecord && (
-              <Popconfirm
-                key="delete"
-                title="Are you sure you want to delete this user?"
-                onConfirm={handleDelete}
-                okText="Confirm"
-                cancelText="Cancel"
-                placement="top"
-              >
-                <AntButton danger style={{ float: "left", backgroundColor: '#fd4141', color: '#ffff' }}>
-                  <DeleteOutlined />
-                </AntButton>
-              </Popconfirm>
-            ),
 
             // Cancel Button
             <AntButton key="cancel" onClick={handleModalCancel}>

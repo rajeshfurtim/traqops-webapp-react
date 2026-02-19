@@ -1,10 +1,10 @@
 import { useState } from "react"
-import { Box, Card, CardContent, CircularProgress } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, TreeSelect, DatePicker, Switch, Select } from "antd"
+import { Box, Card, CardContent } from "@mui/material"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, DatePicker, Switch, Select, Spin } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useAddAssetMutation, useDeleteAssetMutation, useGetAssetsLocationWiseQuery, useGetLocationListQuery, useGetAreaByLocationQuery, useGetSubAreaByAreaQuery } from '../../../store/api/masterSettings.api'
 import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
-import { skipToken } from '@reduxjs/toolkit/query'
+import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from '../../../context/AuthContext'
 import { domainName } from '../../../config/apiConfig'
 import dayjs from "dayjs"
@@ -15,12 +15,16 @@ export default function Asset() {
     const clientId = user?.client?.id || user?.clientId
     const [form] = Form.useForm()
 
+    const [current, setCurrent] = useState(1);
+    const [pageSize, setPagesize] = useState(25);
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedRecord, setSelectedRecord] = useState(null)
     const [selectedLocationId, setSelectedLocationId] = useState(null);
+    const [selectedHeaderLocationId, setSelectedHeaderLocationId] = useState(10339);
     const [selectedAreaId, setSelectedAreaId] = useState(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
-    const { data: assetsListData, isLoading: assetsListLoading, isFetching } = useGetAssetsLocationWiseQuery(clientId ? { clientId, pageNumber: 1, pageSize: 1000, locationId: 10339 } : skipToken)
+    const { data: assetsListData, isLoading: assetsListLoading, isFetching } = useGetAssetsLocationWiseQuery({ clientId, pageNumber: 1, pageSize: 1000, locationId: selectedHeaderLocationId }, { skip: !selectedHeaderLocationId })
     const { data: locationList, loading: locationListLoading } = useGetLocationListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
     const { data: categoryList, loading: categoryListLoading } = useGetAllCategoryListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
     const { data: areaList, isLoading: areaListLoading } = useGetAreaByLocationQuery(
@@ -41,7 +45,7 @@ export default function Asset() {
             dataIndex: 'sno',
             key: 'sno',
             width: 80,
-            render: (_, __, index) => index + 1
+            render: (_, __, index) => ((current - 1) * pageSize) + index + 1
         },
         {
             title: 'Location',
@@ -107,8 +111,9 @@ export default function Asset() {
 
     const handleAdd = () => {
         form.setFieldsValue({
-            location: 10339
+            location: selectedHeaderLocationId
         })
+        setSelectedLocationId(selectedHeaderLocationId);
         setIsModalOpen(true)
     }
 
@@ -192,8 +197,12 @@ export default function Asset() {
 
     const handleDelete = async () => {
         try {
-            const response = await deleteAsset(selectedRecord.assetId).unwrap();
+            const queryString = selectedRowKeys
+                .map(id => `id=${id}`)
+                .join('&');
+            const response = await deleteAsset(queryString).unwrap();
             message.success(response?.message || "Asset deleted successfully");
+            setSelectedRowKeys([]);
         } catch (error) {
             message.error(error?.data?.message || error?.data?.error || "Failed to delete asset");
         } finally {
@@ -206,10 +215,22 @@ export default function Asset() {
         setSelectedLocationId(roleId);
     }
 
+    const handleHeaderLocationChange = (roleId) => {
+        console.log("role id:", roleId)
+        setSelectedHeaderLocationId(roleId);
+    }
+
     const handleAreaChange = (roleId) => {
         console.log("role id:", roleId)
         setSelectedAreaId(roleId);
     }
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        }
+    };
 
     return (
         <>
@@ -218,6 +239,34 @@ export default function Asset() {
                     <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                             <Space>
+                                <>
+                                    {selectedRowKeys.length > 0 && (
+                                        <>
+                                            <Popconfirm
+                                                title={`Are you sure you want to delete ${selectedRowKeys.length} selected asset(s)?`}
+                                                onConfirm={handleDelete}
+                                                okText="Confirm"
+                                                cancelText="Cancel"
+                                            >
+                                                <AntButton danger icon={<DeleteOutlined />} style={{ color: '#ffff', backgroundColor: '#f73b3b' }}>
+                                                    ({selectedRowKeys.length})
+                                                </AntButton>
+                                            </Popconfirm>
+                                        </>
+                                    )}
+                                </>
+                                <Select
+                                    onChange={(value) => handleHeaderLocationChange(value)}
+                                    placeholder="Select Location"
+                                    style={{ width: 220 }}
+                                    defaultValue={selectedHeaderLocationId}
+                                >
+                                    {locationList?.data?.content?.map(l => (
+                                        <Select.Option key={l.id} value={l.id}>
+                                            {l.name}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
                                 <Input
                                     placeholder="Search"
                                     prefix={<SearchOutlined />}
@@ -235,45 +284,45 @@ export default function Asset() {
                         </Box>
                         {assetsListLoading ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <CircularProgress />
+                                <Spin />
                             </Box>
                         ) : (
                             <Table
                                 dataSource={filteredData ?? assetsListData?.data?.content}
                                 columns={columns}
+                                rowSelection={{ type: 'checkbox', ...rowSelection }}
                                 loading={assetsListLoading || isFetching}
-                                rowKey="id"
-                                pagination={{ pageSize: 20 }}
+                                rowKey="assetId"
                                 size="middle"
                                 scroll={{ x: 'max-content' }}
                                 onRow={(record) => ({
                                     onClick: () => handleEdit(record),
                                     style: { cursor: "pointer" },
                                 })}
+                                pagination={{
+                                    position: ['bottomRight'],
+                                    current: current,
+                                    pageSize: pageSize,
+                                    onChange: setCurrent,
+                                    showSizeChanger: true,
+                                    onShowSizeChange: (current, size) => {
+                                        setPagesize(size);
+                                        setCurrent(current);
+                                    },
+                                    pageSizeOptions: ['25', '50', '100'],
+                                    showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                                    className: "custom-pagination"
+                                }}
                             />
                         )}
                     </CardContent>
                 </Card>
 
                 <Modal
-                    title="Asset"
+                    title={selectedRecord ? "Edit Asset" : "Add Asset"}
                     open={isModalOpen}
                     onCancel={handleModalCancel}
                     footer={[
-                        selectedRecord && (
-                            <Popconfirm
-                                key="delete"
-                                title="Are you sure you want to delete this asset?"
-                                onConfirm={handleDelete}
-                                okText="Confirm"
-                                cancelText="Cancel"
-                                placement="top"
-                            >
-                                <AntButton danger style={{ float: "left", backgroundColor: '#fd4141', color: '#ffff' }}>
-                                    <DeleteOutlined />
-                                </AntButton>
-                            </Popconfirm>
-                        ),
 
                         // Cancel Button
                         <AntButton key="cancel" onClick={handleModalCancel}>
@@ -435,6 +484,19 @@ export default function Asset() {
                                 >
                                     <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
                                 </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                {selectedRecord?.assetId && (
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
+                                        <Box sx={{ mt: 1, fontWeight: 700 }}>
+                                            Asset Qr Code
+                                        </Box>
+                                        <QRCodeCanvas
+                                            value={`AST_${selectedRecord.assetId}`}
+                                            size={160}
+                                        />
+                                    </Box>
+                                )}
                             </Col>
                         </Row>
                     </Form>

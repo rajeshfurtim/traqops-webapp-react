@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { Box, Card, CardContent, CircularProgress } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select } from "antd"
+import { Box, Card, CardContent } from "@mui/material"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Spin } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetAreaListQuery, useAddAreaMutation, useDeleteAreaMutation, useGetLocationListQuery } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -13,6 +13,9 @@ export default function Area() {
     const clientId = user?.client?.id || user?.clientId
     const [form] = Form.useForm()
 
+    const [current, setCurrent] = useState(1);
+    const [pageSize, setPagesize] = useState(25);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedRecord, setSelectedRecord] = useState(null)
 
@@ -28,7 +31,7 @@ export default function Area() {
             dataIndex: 'sno',
             key: 'sno',
             width: 80,
-            render: (_, __, index) => index + 1
+            render: (_, __, index) => ((current - 1) * pageSize) + index + 1
         },
         {
             title: 'Location',
@@ -127,14 +130,25 @@ export default function Area() {
 
     const handleDelete = async () => {
         try {
-            const response = await deleteArea(selectedRecord.id).unwrap();
+            const queryString = selectedRowKeys
+                .map(id => `id=${id}`)
+                .join('&');
+            const response = await deleteArea(queryString).unwrap();
             message.success(response?.message || "Area deleted successfully");
+            setSelectedRowKeys([]);
         } catch (error) {
             message.error(error?.data?.message || error?.data?.error || "Failed to delete area");
         } finally {
             handleModalCancel()
         }
     }
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: (newSelectedRowKeys) => {
+            setSelectedRowKeys(newSelectedRowKeys);
+        }
+    };
 
     return (
         <>
@@ -143,6 +157,22 @@ export default function Area() {
                     <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                             <Space>
+                                <>
+                                    {selectedRowKeys.length > 0 && (
+                                        <>
+                                            <Popconfirm
+                                                title={`Are you sure you want to delete ${selectedRowKeys.length} selected area(s)?`}
+                                                onConfirm={handleDelete}
+                                                okText="Confirm"
+                                                cancelText="Cancel"
+                                            >
+                                                <AntButton danger icon={<DeleteOutlined />} style={{ color: '#ffff', backgroundColor: '#f73b3b' }}>
+                                                    ({selectedRowKeys.length})
+                                                </AntButton>
+                                            </Popconfirm>
+                                        </>
+                                    )}
+                                </>
                                 <Input
                                     placeholder="Search"
                                     prefix={<SearchOutlined />}
@@ -158,46 +188,47 @@ export default function Area() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {(areaListLoading || isFetching) ? (
+                        {areaListLoading ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <CircularProgress />
+                                <Spin />
                             </Box>
                         ) : (
                             <Table
                                 dataSource={filteredData ?? areaListData?.data?.content}
                                 columns={columns}
+                                rowSelection={{ type: 'checkbox', ...rowSelection }}
+                                loading={areaListLoading || isFetching}
                                 rowKey="id"
-                                pagination={{ pageSize: 20 }}
                                 size="middle"
                                 scroll={{ x: 'max-content' }}
                                 onRow={(record) => ({
                                     onClick: () => handleEdit(record),
                                     style: { cursor: "pointer" },
                                 })}
+                                pagination={{
+                                    position: ['bottomRight'],
+                                    current: current,
+                                    pageSize: pageSize,
+                                    onChange: setCurrent,
+                                    showSizeChanger: true,
+                                    onShowSizeChange: (current, size) => {
+                                        setPagesize(size);
+                                        setCurrent(current);
+                                    },
+                                    pageSizeOptions: ['25', '50', '100'],
+                                    showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                                    className: "custom-pagination"
+                                }}
                             />
                         )}
                     </CardContent>
                 </Card>
 
                 <Modal
-                    title="Area"
+                    title={selectedRecord ? "Edit Area" : "Add Area"}
                     open={isModalOpen}
                     onCancel={handleModalCancel}
                     footer={[
-                        selectedRecord && (
-                            <Popconfirm
-                                key="delete"
-                                title="Are you sure you want to delete this area?"
-                                onConfirm={handleDelete}
-                                okText="Confirm"
-                                cancelText="Cancel"
-                                placement="top"
-                            >
-                                <AntButton danger style={{ float: "left", backgroundColor: '#fd4141', color: '#ffff' }}>
-                                    <DeleteOutlined />
-                                </AntButton>
-                            </Popconfirm>
-                        ),
 
                         // Cancel Button
                         <AntButton key="cancel" onClick={handleModalCancel}>
