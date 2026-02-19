@@ -797,6 +797,57 @@ deleteAsset: build.mutation({
     error ? [] :["Assets"],
 }),
 
+getAllInventoryCategory: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getAllInventoryCategory')
+        }
+
+        return {
+          url: `${API_BASE_URL}/inventorycatgegory/getallinventorycategory`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['InventoryCategory'],
+    }),
+
+addInventoryCategory: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add inventory category");
+    }
+
+    return {
+      url: `${API_BASE_URL}/inventorycategory/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["InventoryCategory"], 
+}),
+
+deleteInventoryCategory: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/inventorycategory/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["InventoryCategory"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -846,5 +897,8 @@ export const {
   useGetAreaByLocationQuery,
   useGetSubAreaByAreaQuery,
   useAddAssetMutation,
-  useDeleteAssetMutation
+  useDeleteAssetMutation,
+  useGetAllInventoryCategoryQuery,
+  useAddInventoryCategoryMutation,
+  useDeleteInventoryCategoryMutation
 } = masterSettingsApi

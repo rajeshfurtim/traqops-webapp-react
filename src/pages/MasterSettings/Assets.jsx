@@ -5,6 +5,7 @@ import { ProjectOutlined, ShoppingCartOutlined, QrcodeOutlined } from '@ant-desi
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import AssetCategory from './AssetManuPages/AssetCategory'
 import Asset from './AssetManuPages/Asset'
+import AssetQrCodes from './AssetManuPages/AssetQrCodes'
 
 export default function AssetsMaster() {
 
@@ -28,7 +29,7 @@ export default function AssetsMaster() {
     {
       key: '3',
       label: 'Asset QR Codes',
-      children: 'Asset QR Codes Content',
+      children: <AssetQrCodes />,
       icon: <QrcodeOutlined />,
     }
   ]

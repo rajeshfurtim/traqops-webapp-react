@@ -52,7 +52,8 @@ export const baseApi = createApi({
     'SubArea',
     'ShiftLocationMapping',
     'CheckList',
-    'Assets'
+    'Assets',
+    'InventoryCategory'
   ],
   endpoints: () => ({}),
 })

@@ -59,8 +59,8 @@ export default function Asset() {
         },
         {
             title: 'Item Name',
-            dataIndex: 'itemCode',
-            key: 'itemCode'
+            dataIndex: 'assetName',
+            key: 'assetName'
         },
         {
             title: 'Item Code',
@@ -101,7 +101,7 @@ export default function Asset() {
 
         const filtered = assetsListData?.data?.content?.filter((item) =>
             `${item?.locationName ?? ''} ${item?.categoryName ?? ''}
-         ${item?.itemCode ?? ''} ${item?.action ?? ''}`
+         ${item?.assetName ?? ''} ${item?.itemCode ?? ''} ${item?.action ?? ''}`
                 .toLowerCase()
                 .includes(searchValue)
         );
