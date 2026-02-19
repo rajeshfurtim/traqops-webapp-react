@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetMonthlyEmployeeReportQuery } from '../../../store/api/reports.api'
@@ -448,7 +448,7 @@ export default function MonthlyAttendanceReport() {
           <CardContent>
             {queryLoading ? (
               <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
-                <CircularProgress />
+                <Spin />
                 {/* <Typography variant="body2" sx={{ mt: 2 }}>Loading report...</Typography> */}
               </Box>
             ) : apiError ? (
@@ -502,7 +502,7 @@ export default function MonthlyAttendanceReport() {
                     icon={<FileExcelOutlined />}
                     onClick={handleExportExcel}
                     disabled={reports.length === 0}
-                    style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                    // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
                   >Export Excel
                   </AntButton>
                   <AntButton
@@ -510,7 +510,7 @@ export default function MonthlyAttendanceReport() {
                     icon={<FilePdfOutlined />}
                     onClick={handleExportPDF}
                     disabled={reports.length === 0}
-                    style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                    // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
                   >Export PDF
                   </AntButton>
                 </Space>

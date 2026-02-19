@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, Row, Col,Empty } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, Row, Col,Empty, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -322,7 +322,7 @@ const handlereset = () => {
               <Empty description="Click search to view data" />
             ) : queryLoading ? (
                <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
+                <Spin />
               </Box>
             ) : (
               <>
@@ -361,7 +361,7 @@ const handlereset = () => {
                       icon={<FileExcelOutlined />}
                       onClick={handleExportExcel}
                       disabled={reports.length === 0}
-                      style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
                     >Export Excel
                     </AntButton>
                     <AntButton
@@ -369,7 +369,7 @@ const handlereset = () => {
                       icon={<FilePdfOutlined />}
                       onClick={handleExportPDF}
                       disabled={reports.length === 0}
-                      style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
                     >Export PDF
                     </AntButton>
                   </Space>

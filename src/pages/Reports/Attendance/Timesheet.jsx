@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton,Empty, Row, Col, Input } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton,Empty, Row, Col, Input,Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -573,7 +573,7 @@ export default function TimesheetReport() {
             ) :
             queryLoading ? (
               <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
-                <CircularProgress />
+                <Spin />
               </Box>
             ) : (
               <>
@@ -599,7 +599,7 @@ export default function TimesheetReport() {
                       icon={<FileExcelOutlined />}
                       onClick={handleExportExcel}
                       disabled={reports.length === 0}
-                      style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
                     >Export Excel
                     </AntButton>
                     <AntButton
@@ -607,7 +607,7 @@ export default function TimesheetReport() {
                       icon={<FilePdfOutlined />}
                       onClick={handleExportPDF}
                       disabled={reports.length === 0}
-                      style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
                     >Export PDF
                     </AntButton>
                   </Space>

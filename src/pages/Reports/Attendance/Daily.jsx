@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetDailyLocationReportQuery } from '../../../store/api/reports.api'
@@ -101,8 +101,10 @@ export default function DailyAttendanceReport() {
   // Format date as YYYY-MM-DD
   const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
 
+
+
   // RTK Query hook
-  const { data: response, isLoading: queryLoading, error: queryError,  } = useGetDailyLocationReportQuery(
+  const { data: response, isLoading, isFetching, error: queryError, } = useGetDailyLocationReportQuery(
     {
       date: formattedDate,
       locationId: locationId,
@@ -111,6 +113,13 @@ export default function DailyAttendanceReport() {
     },
     { skip: !clientId || !shouldFetch }
   )
+  const queryLoading = isLoading || isFetching
+
+  useEffect(() => {
+    if (clientId) {
+      setShouldFetch(true)
+    }
+  }, [clientId])
 
   useEffect(() => {
     if (shouldFetch) {
@@ -155,28 +164,28 @@ export default function DailyAttendanceReport() {
 
 
   useEffect(() => {
-  if (queryLoading) return
+    if (queryLoading) return
 
-  if (response?.success && Array.isArray(response.data)) {
-    const mappedReports = response.data.map((item, index) => ({
-      id: item.id ?? `${item.employeeCode}-${index}`, // safer unique key
-      serialNo: index + 1,
-      date: item.createAt || formattedDate,
-      employeeName: item.userName || '-',
-      employeeId: item.employeeCode || '-',
-      location: item.locationName || '-',
-      userType: item.userTypeName || '-',
-      shift: item.shiftName || '-',
-      punchIn: item.inTime || '-',
-      punchOut: item.outTime || '-'
-    }))
+    if (response?.success && Array.isArray(response.data)) {
+      const mappedReports = response.data.map((item, index) => ({
+        id: item.id ?? `${item.employeeCode}-${index}`, // safer unique key
+        serialNo: index + 1,
+        date: item.createAt || formattedDate,
+        employeeName: item.userName || '-',
+        employeeId: item.employeeCode || '-',
+        location: item.locationName || '-',
+        userType: item.userTypeName || '-',
+        shift: item.shiftName || '-',
+        punchIn: item.inTime || '-',
+        punchOut: item.outTime || '-'
+      }))
 
-    setReports(mappedReports)
-  } else if (response && !response.success) {
-    message.error(response.message || 'Failed to load daily location report')
-    setReports([])
-  }
-}, [response, queryLoading, formattedDate])
+      setReports(mappedReports)
+    } else if (response && !response.success) {
+      message.error(response.message || 'Failed to load daily location report')
+      setReports([])
+    }
+  }, [response, queryLoading, formattedDate])
 
   const handleSearch = () => {
     if (!clientId) {
@@ -352,7 +361,7 @@ export default function DailyAttendanceReport() {
                   placeholder="All Locations"
                   style={{ width: 180 }}
                   loading={locationsLoading}
-                  // onChange={(value) => handleFilterChange('location', value)}
+                // onChange={(value) => handleFilterChange('location', value)}
                 >
                   {locationOptions.map(location => (
                     <Select.Option key={location.id} value={location.name}>
@@ -366,7 +375,7 @@ export default function DailyAttendanceReport() {
                 <Select
                   style={{ width: 150 }}
                   loading={userTypesLoading}
-                  // onChange={(value) => handleFilterChange('type', value)}
+                // onChange={(value) => handleFilterChange('type', value)}
                 >
                   {userTypeOptions.map(type => (
                     <Select.Option key={type.id || 'all'} value={type.name}>
@@ -399,13 +408,12 @@ export default function DailyAttendanceReport() {
         <Card>
           <CardContent>
 
-            {!shouldFetch ? (
-              <Empty description="Click Search to view data" />
-            ) :
-            queryLoading ? (
-              <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
-                <CircularProgress />
+            {queryLoading ? (
+              <Box display="flex" justifyContent="center" alignItems="center" p={4}>
+                <Spin />
               </Box>
+            ) : !shouldFetch ? (
+              <Empty description="Click Search to view data" />
             ) : (
               <>
                 <Box
@@ -430,7 +438,7 @@ export default function DailyAttendanceReport() {
                       icon={<FileExcelOutlined />}
                       onClick={handleExportExcel}
                       disabled={reports.length === 0}
-                      style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
                     >Export Excel
                     </AntButton>
                     <AntButton
@@ -438,7 +446,7 @@ export default function DailyAttendanceReport() {
                       icon={<FilePdfOutlined />}
                       onClick={handleExportPDF}
                       disabled={reports.length === 0}
-                      style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
                     >Export PDF
                     </AntButton>
                   </Space>
@@ -456,33 +464,33 @@ export default function DailyAttendanceReport() {
                   scroll={{ x: 'max-content', y: 450 }}
                   bordered
                   components={{
-                  header: {
-                    cell: (props) => (
-                      <th
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '16px',
-                          fontWeight: 600,
-                          padding: '12px 8px'
-                        }}
-                      />
-                    )
-                  },
-                  body: {
-                    cell: (props) => (
-                      <td
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '15px',
-                          fontWeight: 400,
-                          padding: '12px 8px'
-                        }}
-                      />
-                    )
-                  }
-                }}
+                    header: {
+                      cell: (props) => (
+                        <th
+                          {...props}
+                          style={{
+                            ...props.style,
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            padding: '12px 8px'
+                          }}
+                        />
+                      )
+                    },
+                    body: {
+                      cell: (props) => (
+                        <td
+                          {...props}
+                          style={{
+                            ...props.style,
+                            fontSize: '15px',
+                            fontWeight: 400,
+                            padding: '12px 8px'
+                          }}
+                        />
+                      )
+                    }
+                  }}
                 />
               </>
             )}
