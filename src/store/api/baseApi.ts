@@ -32,6 +32,7 @@ export const baseApi = createApi({
     'ScheduleMaintenance',
     'CorrectiveMaintenance',
     'Inventory',
+    'StockIndent',
     'Category',
     'Checklist',
     'Frequency',

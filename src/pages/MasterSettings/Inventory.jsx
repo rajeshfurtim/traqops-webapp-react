@@ -4,6 +4,7 @@ import { Tabs } from 'antd'
 import { HddOutlined, FormatPainterOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import InventoryCategory from './InventoryMenuPages/InventoryCategory'
+import Inventory from './InventoryMenuPages/Inventory'
 
 export default function InventoryMaster() {
 
@@ -21,7 +22,7 @@ export default function InventoryMaster() {
     {
       key: '2',
       label: 'Inventory',
-      children: 'Inventory Content',
+      children: <Inventory />,
       icon: <FormatPainterOutlined />,
     }
   ]

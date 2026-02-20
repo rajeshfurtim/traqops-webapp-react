@@ -28,7 +28,7 @@ export const inventoryApi = baseApi.injectEndpoints({
           type: params.type,
         },
       }),
-      providesTags: ['Inventory'],
+      providesTags: ['StockIndent'],
     }),
   }),
   overrideExisting: false,

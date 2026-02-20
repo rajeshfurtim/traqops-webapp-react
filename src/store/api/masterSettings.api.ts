@@ -848,6 +848,57 @@ deleteInventoryCategory: build.mutation({
     error ? [] :["InventoryCategory"],
 }),
 
+getInventoryList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getInventoryList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/inventory/getinventorylist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['Inventory'],
+    }),
+
+addInventory: build.mutation({
+  query: (payload) => {
+    if (!payload?.get?.("clientId")) {
+        throw new Error("clientId is required for add inventory");
+      }
+
+    return {
+      url: `${API_BASE_URL}/inventory/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Inventory"], 
+}),
+
+deleteInventory: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/inventory/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Inventory"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -900,5 +951,8 @@ export const {
   useDeleteAssetMutation,
   useGetAllInventoryCategoryQuery,
   useAddInventoryCategoryMutation,
-  useDeleteInventoryCategoryMutation
+  useDeleteInventoryCategoryMutation,
+  useGetInventoryListQuery,
+  useAddInventoryMutation,
+  useDeleteInventoryMutation
 } = masterSettingsApi
