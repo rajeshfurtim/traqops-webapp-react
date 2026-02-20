@@ -285,7 +285,7 @@ export default function ToolsMaster() {
         </Card>
 
         <Modal
-          title={selectedRecord ? "Edit Area" : "Add Area"}
+          title={selectedRecord ? "Edit Tool" : "Add Tool"}
           open={isModalOpen}
           onCancel={handleModalCancel}
           footer={[

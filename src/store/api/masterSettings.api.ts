@@ -691,7 +691,7 @@ addAssetCategory: build.mutation({
     };
   },
   invalidatesTags: (result, error) =>
-    error ? [] :["CheckList"], 
+    error ? [] :["Category"], 
 }),
 
 deleteAssetCategory: build.mutation({
@@ -700,7 +700,7 @@ deleteAssetCategory: build.mutation({
     method: "DELETE"
   }),
   invalidatesTags: (result, error) =>
-    error ? [] :["CheckList"],
+    error ? [] :["Category"],
 }),
 
 getAssetsLocationWise: build.query({
@@ -950,6 +950,107 @@ deleteTools: build.mutation({
     error ? [] :["Tools"],
 }),
 
+getCheckListType: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getCheckListType')
+        }
+
+        return {
+          url: `${API_BASE_URL}/checklisttype/getalllist/byclient`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['CheckListType'],
+    }),
+
+addCheckListType: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add check list type");
+    }
+
+    return {
+      url: `${API_BASE_URL}/checklisttype/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["CheckListType"], 
+}),
+
+deleteCheckListType: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/checklisttype/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["CheckListType"],
+}),
+
+getElementsCheckList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getElementsCheckList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/elementschecklist/getlist`,
+          method: 'GET',
+          params: {
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['ElementsCheckList'],
+    }),
+
+addCheckList: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add check list");
+    }
+
+    return {
+      url: `${API_BASE_URL}/checklist/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["CheckList"], 
+}),
+
+deleteCheckList: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/checklist/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["CheckList"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -1008,5 +1109,11 @@ export const {
   useDeleteInventoryMutation,
   useGetToolsListQuery,
   useAddToolsMutation,
-  useDeleteToolsMutation
+  useDeleteToolsMutation,
+  useGetCheckListTypeQuery,
+  useAddCheckListTypeMutation,
+  useDeleteCheckListTypeMutation,
+  useGetElementsCheckListQuery,
+  useAddCheckListMutation,
+  useDeleteCheckListMutation
 } = masterSettingsApi
