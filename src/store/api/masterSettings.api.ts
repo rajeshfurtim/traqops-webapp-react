@@ -899,6 +899,57 @@ deleteInventory: build.mutation({
     error ? [] :["Inventory"],
 }),
 
+getToolsList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getToolsList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/tools/gettoolslist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['Tools'],
+    }),
+
+addTools: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add tools");
+    }
+
+    return {
+      url: `${API_BASE_URL}/tools/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Tools"], 
+}),
+
+deleteTools: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/tools/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Tools"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -954,5 +1005,8 @@ export const {
   useDeleteInventoryCategoryMutation,
   useGetInventoryListQuery,
   useAddInventoryMutation,
-  useDeleteInventoryMutation
+  useDeleteInventoryMutation,
+  useGetToolsListQuery,
+  useAddToolsMutation,
+  useDeleteToolsMutation
 } = masterSettingsApi

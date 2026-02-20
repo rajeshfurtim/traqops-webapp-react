@@ -1,185 +1,371 @@
-import { useState, useEffect } from 'react'
-import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Space, Button as AntButton, Tag, Popconfirm, Tooltip } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
-import { mockApi } from '../../services/api'
-import { getPageTitle, APP_CONFIG } from '../../config/constants'
-import MasterEditModal from '../../components/MasterEditModal'
+import { useState } from "react"
+import { Box, Card, CardContent } from "@mui/material"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, TreeSelect, Spin, Tag } from "antd"
+import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
+import { useGetToolsListQuery, useAddToolsMutation, useDeleteToolsMutation, useGetLocationByIsStoreQuery } from '../../store/api/masterSettings.api'
+import { skipToken } from '@reduxjs/toolkit/query'
+import { useAuth } from '../../context/AuthContext'
+import { domainName } from '../../config/apiConfig'
+
+const { SHOW_PARENT } = TreeSelect;
 
 export default function ToolsMaster() {
-  const [loading, setLoading] = useState(true)
-  const [tools, setTools] = useState([])
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  const { user } = useAuth()
+  const clientId = user?.client?.id || user?.clientId
+  const [form] = Form.useForm()
+
+  const [current, setCurrent] = useState(1);
+  const [pageSize, setPagesize] = useState(25);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
 
-  useEffect(() => {
-    loadTools()
-  }, [])
+  const { data: toolsListData, isLoading: toolsListLoading, isFetching } = useGetToolsListQuery(clientId ? { clientId, pageNumber: 1, pageSize: 1000 } : skipToken)
+  const { data: locationList, isLoading: locationLoading } = useGetLocationByIsStoreQuery({ clientId, pageNumber: 1, pageSize: 1000 })
 
-  const loadTools = async () => {
-    try {
-      setLoading(true)
-      const response = await mockApi.getTools()
-      setTools(response.data.tools || [])
-    } catch (error) {
-      console.error('Error loading tools:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [addTools] = useAddToolsMutation();
+  const [deleteTools] = useDeleteToolsMutation();
 
   const columns = [
     {
-      title: 'Tool ID',
-      dataIndex: 'toolId',
-      key: 'toolId',
-      width: 120
+      title: 'S.No',
+      dataIndex: 'sno',
+      key: 'sno',
+      width: 80,
+      render: (_, __, index) => ((current - 1) * pageSize) + index + 1
     },
     {
-      title: 'Tool Name',
-      dataIndex: 'name',
-      key: 'name',
-      width: 200
-    },
-    {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-      width: 150
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status) => <Tag color={status === 'Available' ? 'green' : 'orange'}>{status}</Tag>
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: 150,
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+      width: 450,
       render: (_, record) => (
-        <Space>
-          <Tooltip title="Edit">
-            <AntButton 
-              type="text" 
-              icon={<EditOutlined />} 
-              onClick={() => handleEdit(record)}
-            />
-          </Tooltip>
-          <Popconfirm title="Delete this tool?" onConfirm={() => {}}>
-            <AntButton type="text" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {Array.isArray(record?.toolsLocationMapping) &&
+            record?.toolsLocationMapping.length > 0 ? (
+            record.toolsLocationMapping.map(loc => (
+              <Tag
+                key={loc.id}
+                style={{
+                  borderRadius: 25,
+                  padding: '4px 8px',
+                  fontSize: 13
+                }}
+              >
+                {loc?.location?.name}
+              </Tag>
+            ))
+          ) : (
+            '-'
+          )}
+        </div>
       )
-    }
+    },
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name'
+    },
+    {
+      title: 'Quantity',
+      dataIndex: 'quantity',
+      key: 'quantity'
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description'
+    },
   ]
 
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState(null);
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    const searchValue = value.toLowerCase().trim();
+
+    if (!searchValue) {
+      setFilteredData(null);
+      return;
+    }
+
+    const filtered = toolsListData?.data?.content?.filter((item) =>
+      `${item.name ?? ''} ${item?.description ?? ''} ${item?.quantity ?? ''}
+            ${item?.toolsLocationMapping?.map(loc => loc?.location?.name ?? '')?.join(' ') ?? ''}`
+        .toLowerCase()
+        .includes(searchValue)
+    );
+
+    setFilteredData(filtered);
+  };
+
   const handleAdd = () => {
-    setSelectedRecord(null)
-    setIsEditModalOpen(true)
+    setIsModalOpen(true)
   }
 
   const handleEdit = (record) => {
+    console.log('on edit:', record)
     setSelectedRecord(record)
-    setIsEditModalOpen(true)
+    setIsModalOpen(true)
+
+    form.setFieldsValue({
+      name: record?.name,
+      location: record?.toolsLocationMapping?.map(loc => loc?.location?.id) || null,
+      description: record?.description,
+      quantity: record?.quantity
+    });
   }
 
-  const handleCloseModal = () => {
-    setIsEditModalOpen(false)
-    setSelectedRecord(null)
+  const handleModalOk = async () => {
+    const values = await form.validateFields();
+    console.log('form values:', values);
+
+    const payload = {
+      ...(selectedRecord?.id && { id: selectedRecord.id }),
+
+      clientId,
+      domainName,
+      name: values.name,
+      description: values.description,
+      quantity: values.quantity,
+      toolsLocationMappingDtos: (values.location || []).map((locId) => ({
+        ...(selectedRecord?.toolsLocationMapping?.find(
+          (l) => l.location.id === locId
+        )?.id && {
+          id: selectedRecord.toolsLocationMapping.find(
+            (l) => l.location.id === locId
+          )?.id,
+        }),
+        locationId: locId,
+      })),
+    };
+
+    const cleanPayload = Object.fromEntries(
+      Object.entries(payload).filter(
+        ([_, value]) =>
+          value !== undefined &&
+          value !== null &&
+          !(Array.isArray(value) && value.length === 0)
+      )
+    );
+
+    console.log("Final Clean Payload:", cleanPayload);
+    handleSubmit(cleanPayload)
   }
 
-  const handleUpdateSuccess = () => {
-    loadTools()
-  }
-
-  const toolFields = [
-    {
-      name: 'toolId',
-      label: 'Tool ID',
-      type: 'input',
-      disabled: true,
-      rules: [{ required: true, message: 'Tool ID is required' }]
-    },
-    {
-      name: 'name',
-      label: 'Tool Name',
-      type: 'input',
-      rules: [{ required: true, message: 'Tool name is required' }]
-    },
-    {
-      name: 'category',
-      label: 'Category',
-      type: 'select',
-      options: [
-        { value: 'Hand Tools', label: 'Hand Tools' },
-        { value: 'Power Tools', label: 'Power Tools' },
-        { value: 'Measuring', label: 'Measuring' },
-        { value: 'Safety', label: 'Safety' }
-      ],
-      rules: [{ required: true, message: 'Category is required' }]
-    },
-    {
-      name: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'Available', label: 'Available' },
-        { value: 'In Use', label: 'In Use' }
-      ],
-      rules: [{ required: true, message: 'Status is required' }]
+  const handleSubmit = async (payload) => {
+    try {
+      const response = await addTools(payload).unwrap();
+      message.success(response?.message || "Tools saved successfully");
+    } catch (error) {
+      message.error(error?.data?.message || error?.data?.error || "Failed to save tools");
+    } finally {
+      handleModalCancel()
     }
-  ]
+  }
+
+  const handleModalCancel = () => {
+    form.resetFields();
+    setSelectedRecord(null);
+    setIsModalOpen(false);
+  }
+
+  const handleDelete = async () => {
+    try {
+      const queryString = selectedRowKeys
+        .map(id => `id=${id}`)
+        .join('&');
+      const response = await deleteTools(queryString).unwrap();
+      message.success(response?.message || "Tools deleted successfully");
+      setSelectedRowKeys([]);
+    } catch (error) {
+      message.error(error?.data?.message || error?.data?.error || "Failed to delete tools");
+    } finally {
+      handleModalCancel()
+    }
+  }
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    }
+  };
+
+  const treeDataLocation = [
+    {
+      title: "Select All Locations",
+      value: "all",
+      key: "all",
+      children: locationList?.data?.content?.map((loc) => ({
+        title: loc.name,
+        value: loc.id,
+        key: loc.id,
+      })),
+    },
+  ];
 
   return (
     <>
-      <Helmet>
-        <title>{getPageTitle('master-settings/tools')}</title>
-        <meta name="description" content={`${APP_CONFIG.name} - Tools Master Settings`} />
-      </Helmet>
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
-          Tools Master Settings
-        </Typography>
-
         <Card>
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-                Add Tool
-              </AntButton>
+              <Space>
+                <>
+                  {selectedRowKeys.length > 0 && (
+                    <>
+                      <Popconfirm
+                        title={`Are you sure you want to delete ${selectedRowKeys.length} selected tool(s)?`}
+                        onConfirm={handleDelete}
+                        okText="Confirm"
+                        cancelText="Cancel"
+                      >
+                        <AntButton danger icon={<DeleteOutlined />} style={{ color: '#ffff', backgroundColor: '#f73b3b' }}>
+                          ({selectedRowKeys.length})
+                        </AntButton>
+                      </Popconfirm>
+                    </>
+                  )}
+                </>
+                <Input
+                  placeholder="Search"
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={handleSearch}
+                  allowClear
+                  style={{ width: 250 }}
+                />
+                <AntButton type="primary" icon={<PlusOutlined />}
+                  onClick={handleAdd}
+                >
+                  Add
+                </AntButton>
+              </Space>
             </Box>
-            {loading ? (
+            {toolsListLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
+                <Spin />
               </Box>
             ) : (
               <Table
-                dataSource={tools}
+                dataSource={filteredData ?? toolsListData?.data?.content}
                 columns={columns}
+                rowSelection={{ type: 'checkbox', ...rowSelection }}
+                loading={toolsListLoading || isFetching}
                 rowKey="id"
-                pagination={{ pageSize: 20 }}
                 size="middle"
+                scroll={{ x: 'max-content' }}
+                onRow={(record) => ({
+                  onClick: () => handleEdit(record),
+                  style: { cursor: "pointer" },
+                })}
+                pagination={{
+                  position: ['bottomRight'],
+                  current: current,
+                  pageSize: pageSize,
+                  onChange: setCurrent,
+                  showSizeChanger: true,
+                  onShowSizeChange: (current, size) => {
+                    setPagesize(size);
+                    setCurrent(current);
+                  },
+                  pageSizeOptions: ['25', '50', '100'],
+                  showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                  className: "custom-pagination"
+                }}
               />
             )}
           </CardContent>
         </Card>
 
-        <MasterEditModal
-          open={isEditModalOpen}
-          record={selectedRecord}
-          onClose={handleCloseModal}
-          onSuccess={handleUpdateSuccess}
-          onCreate={mockApi.createTool}
-          onUpdate={mockApi.updateTool}
-          fields={toolFields}
-          title={selectedRecord ? 'Edit Tool' : 'Add Tool'}
-          successMessage={selectedRecord ? 'Tool updated successfully' : 'Tool created successfully'}
-        />
+        <Modal
+          title={selectedRecord ? "Edit Area" : "Add Area"}
+          open={isModalOpen}
+          onCancel={handleModalCancel}
+          footer={[
+
+            // Cancel Button
+            <AntButton key="cancel" onClick={handleModalCancel}>
+              Cancel
+            </AntButton>,
+
+            // Submit Button
+            <AntButton key="submit" type="primary" onClick={handleModalOk}>
+              Submit
+            </AntButton>,
+          ]}
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            style={{ marginTop: 24 }}
+          >
+            <Row gutter={16}>
+              <Col span={24}>
+                <Form.Item
+                  label="Location"
+                  name="location"
+                  rules={[{ required: true, message: 'Please select location!' }]}
+                >
+                  <TreeSelect
+                    style={{ width: "100%" }}
+                    dropdownStyle={{ maxHeight: 400, overflow: "auto" }}
+                    treeData={treeDataLocation}
+                    placeholder="Select Location"
+                    treeCheckable
+                    showCheckedStrategy={SHOW_PARENT}
+                    allowClear
+                    showSearch
+                    treeNodeFilterProp="title"
+                    maxTagCount={1}
+                    maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
+                    onChange={(newValue) => {
+                      if (newValue?.includes("all")) {
+                        form.setFieldsValue({
+                          location: locationList?.data?.content?.map((loc) => loc.id),
+                        });
+                      }
+                    }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item
+                  label="Name"
+                  name="name"
+                  rules={[{ required: true, message: 'Please enter name!' }]}
+                >
+                  <Input type="text" />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item
+                  label="Quantity"
+                  name="quantity"
+                  rules={[{ required: true, message: 'Please enter quantity!' }]}
+                >
+                  <Input type="number" />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item
+                  label="Description"
+                  name="description"
+                  rules={[{ required: false, message: 'Please enter description!' }]}
+                >
+                  <Input.TextArea rows={4} />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </Modal>
       </Box>
     </>
   )
 }
-
