@@ -33,6 +33,15 @@ export const masterSettingsApi = baseApi.injectEndpoints({
       providesTags: ['Location'],
     }),
 
+   getAllFrequency: build.query({
+      query: () =>({
+        url:`http://voltas.local.site:4200/unsecure/frequency/getallfrequency`,
+        // url:`${API_BASE_URL}/frequency/getallfrequency`,
+        method:'GET',
+      }),
+      providesTags:['Frequency'],
+    }),
+
     getLocationByIsStore: build.query({
       query: (params) => {
         const { clientId, pageNumber = 1, pageSize = 1000 } = params ?? {}
@@ -1057,6 +1066,7 @@ deleteCheckList: build.mutation({
 
 export const {
   useGetLocationListQuery,
+  useGetAllFrequencyQuery,
   useGetLocationByIsStoreQuery,
   useGetAllUserTypeQuery,
   useGetAllClientListQuery,
