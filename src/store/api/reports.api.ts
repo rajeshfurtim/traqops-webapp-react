@@ -90,9 +90,30 @@ export const reportsApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+    //daily Report Energy Consumption
+     getEnergyConsumptionReport: build.query({
+      query: (params) => {
+        const { fromdate,todate, locationId} = params
+        const queryParams = {
+          fromdate,
+          todate,
+          locationId
+          // clientId: clientId.toString(),
+          // ...(locationId !== undefined && locationId !== null && { locationId: locationId.toString() }),
+          // ...(userTypeId !== undefined && userTypeId !== null && { userTypeId: userTypeId.toString() }),
+        }
+
+        return {
+          url: `${API_BASE_URL}/voltas/report/energyconsumption/bylocation`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
 
   }),
   overrideExisting: false,
 })
 
-export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery, useGetConsolidateManpowerReportQuery } = reportsApi
+export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery, useGetConsolidateManpowerReportQuery,useGetEnergyConsumptionReportQuery } = reportsApi

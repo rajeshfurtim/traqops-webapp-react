@@ -43,7 +43,7 @@ export const exportToExcel = async (
 export const exportToPDF = async (
   columns,
   data,
-  filename = 'attendance-report'
+  filename 
 ) => {
   if (!data || data.length === 0) return
 
@@ -52,7 +52,7 @@ export const exportToPDF = async (
   const doc = new jsPDF('l', 'mm', 'a4') // landscape for wide tables
 
   doc.setFontSize(14)
-  doc.text('Daily Attendance Report', 14, 15)
+  doc.text(filename, 14, 15)
 
   autoTable(doc, {
     head: [headers],
