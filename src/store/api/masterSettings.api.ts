@@ -35,8 +35,8 @@ export const masterSettingsApi = baseApi.injectEndpoints({
 
    getAllFrequency: build.query({
       query: () =>({
-        url:`http://voltas.local.site:4200/unsecure/frequency/getallfrequency`,
-        // url:`${API_BASE_URL}/frequency/getallfrequency`,
+        // url:`http://voltas.local.site:4200/unsecure/frequency/getallfrequency`,
+         url:`/unsecure/frequency/getallfrequency`,
         method:'GET',
       }),
       providesTags:['Frequency'],

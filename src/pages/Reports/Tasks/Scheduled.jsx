@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Tag } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -10,59 +10,50 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetFrequencyCountQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle } from 'react-icons/fa'
-import { Height } from '@mui/icons-material'
+
 const { RangePicker } = DatePicker
 
 export default function ScheduledMaintenanceReports() {
 
   const [form] = Form.useForm()
   const { user } = useAuth()
-  // Fetch frequency and location options
+
   const { freqencyList, isLoading: frequencyLoading } = useGetFreqencyList()
   const { locations, loading: locationsLoading } = useGetLocationList()
-
-  const frequencyOptions = [
-    { id: -1, name: 'All Frequency' },
-    ...(Array.isArray(freqencyList) && freqencyList.length > 0
-      ? freqencyList.map((fre) => ({
-        id: fre?.id,
-        name: fre?.name || 'Unknown',
-      }))
-      : []),
-  ]
-
-  const locationOptions = [
-    { id: -1, name: 'All Locations' },
-    ...(Array.isArray(locations) && locations.length > 0
-      ? locations.map((loc) => ({
-        id: loc?.id,
-        name: loc?.name || 'Unknown',
-      }))
-      : []),
-  ]
 
   const [filters, setFilters] = useState({
     fromDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
     toDate: dayjs().format('YYYY-MM-DD'),
     locationId: '-1',
-    frequencyId: freqencyList.map((fre) => fre.id),
-  })
-  const clientId = user?.client?.id || user?.clientId
-  // API call with filters
-  const { data: reportData, isLoading } = useGetFrequencyCountQuery({ ...filters, clientId }, {
-    skip: !filters.fromDate || !filters.toDate,
+    frequencyId: '',
   })
 
-  const reports = reportData?.data || []
+  const clientId = user?.client?.id || user?.clientId
+
+  const { data: reportData, isLoading } =
+    useGetFrequencyCountQuery({ ...filters, clientId }, {
+      skip: !filters.fromDate || !filters.toDate,
+    })
+
+  const reports = (reportData?.data || []).map((item, index) => ({
+    id: item.frequencyId,
+    sno: index + 1,
+    location: item.locationName || 'ALL',
+    frequency: item.frequencyName,
+    open: item.openCount || 0,
+    completed: item.completedCount || 0,
+    verified: item.verifiedCount || 0,
+    total:
+      (item.openCount || 0) +
+      (item.completedCount || 0) +
+      (item.verifiedCount || 0),
+  }))
 
   const handleApplyFilters = (values) => {
     setFilters({
-      fromDate: values.dateRange ? values.dateRange[0].format('YYYY-MM-DD') : undefined,
-      toDate: values.dateRange ? values.dateRange[1].format('YYYY-MM-DD') : undefined,
+      fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
+      toDate: values.dateRange?.[1]?.format('YYYY-MM-DD'),
       locationId: values.location,
-      // values.location === -1
-      //   ? locations.map((loc) => loc.id) 
-      //   : values.location,
       frequencyId:
         values.frequencyId === -1
           ? freqencyList.map((fre) => fre.id)
@@ -80,71 +71,100 @@ export default function ScheduledMaintenanceReports() {
     })
   }
 
-  const getStatusColor = (status) => {
-    const colors = {
-      Completed: 'green',
-      Pending: 'orange',
-      Overdue: 'red',
-      'In Progress': 'blue',
-    }
-    return colors[status] || 'default'
-  }
-
-  const totalOpen = reports.reduce((sum, item) => sum + (item.openCount || 0), 0)
-  const totalCompleted = reports.reduce((sum, item) => sum + (item.completedCount || 0), 0)
-  const totalVerified = reports.reduce((sum, item) => sum + (item.verifiedCount || 0), 0)
+  const totalOpen = reports.reduce((sum, item) => sum + item.open, 0)
+  const totalCompleted = reports.reduce((sum, item) => sum + item.completed, 0)
+  const totalVerified = reports.reduce((sum, item) => sum + item.verified, 0)
   const totalTasks = totalOpen + totalCompleted + totalVerified
 
   const boxes = [
-    {
-      label: `TOTAL: ${totalTasks}`,
-      bgColor: '#2E8B57',
-      icon: <FaClipboardList size={40} color="white" />,
-    },
-    {
-      label: `OPEN : ${totalOpen}`,
-      bgColor: '#8A9EFF',
-      icon: <FaExternalLinkAlt size={40} color="white" />,
-    },
-    {
-      label: `COMPLETED : ${totalCompleted}`,
-      bgColor: '#555555',
-      icon: <FaCheckSquare size={40} color="white" />,
-    },
-    {
-      label: `VERIFIED : ${totalVerified}`,
-      bgColor: '#66CC33',
-      icon: <FaCheckCircle size={40} color="white" />,
-    },
+    { label: `TOTAL: ${totalTasks}`, bgColor: '#2E8B57', icon: <FaClipboardList size={40} color="white" /> },
+    { label: `OPEN : ${totalOpen}`, bgColor: '#8A9EFF', icon: <FaExternalLinkAlt size={40} color="white" /> },
+    { label: `COMPLETED : ${totalCompleted}`, bgColor: '#555555', icon: <FaCheckSquare size={40} color="white" /> },
+    { label: `VERIFIED : ${totalVerified}`, bgColor: '#66CC33', icon: <FaCheckCircle size={40} color="white" /> },
   ]
 
+  /* ---------------- STATUS PILL STYLES ---------------- */
+
+  const getStatusColor = (type, value) => {
+    if (value === 0) return '#bfbfbf'
+    const colors = {
+      open: '#ff4d6d',
+      completed: '#69b1ff',
+      verified: '#73d13d'
+    }
+    return colors[type]
+  }
+
+  const pillContainerStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: 8,
+    alignItems: 'center'
+  }
+
+  const pillStyle = {
+    display: 'flex',
+    borderRadius: 50,
+    overflow: 'hidden',
+    fontSize: 12,
+    fontWeight: 600,
+    border: '1px solid #d9d9d9',
+    transition: 'all 0.2s ease',
+    cursor: 'default',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.08)'
+  }
+
+  const countStyle = {
+    padding: '3px 8px',
+    backgroundColor: '#f5f5f5',
+    color: '#333'
+  }
+
+  /* ---------------- TABLE COLUMNS ---------------- */
+
   const columns = [
-    { title: 'Task ID', dataIndex: 'taskId', key: 'taskId', width: 120 },
-    { title: 'Task Name', dataIndex: 'taskName', key: 'taskName', width: 200 },
-    { title: 'Asset', dataIndex: 'asset', key: 'asset', width: 150 },
-    {
-      title: 'Scheduled Date',
-      dataIndex: 'scheduledDate',
-      key: 'scheduledDate',
-      width: 140,
-      render: (text) => dayjs(text).format('MMM DD, YYYY'),
-    },
-    {
-      title: 'Completed Date',
-      dataIndex: 'completedDate',
-      key: 'completedDate',
-      width: 140,
-      render: (text) => (text ? dayjs(text).format('MMM DD, YYYY') : '-'),
-    },
+    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 60, align: 'center' },
+    { title: 'Location', dataIndex: 'location', key: 'location', width: 200, align: 'center' },
+    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', width: 150, align: 'center' },
+
     {
       title: 'Status',
-      dataIndex: 'status',
       key: 'status',
-      width: 120,
-      render: (status) => <Tag color={getStatusColor(status)}>{status}</Tag>,
+      align: 'center',
+      render: (_, record) => {
+
+        const renderPill = (label, value, type) => {
+          const color = getStatusColor(type, value)
+
+          return (
+            <div
+              style={pillStyle}
+              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              <span style={{
+                backgroundColor: color,
+                color: 'white',
+                padding: '3px 8px'
+              }}>
+                {label}
+              </span>
+              <span style={countStyle}>{value}</span>
+            </div>
+          )
+        }
+
+        return (
+          <div style={pillContainerStyle}>
+            {renderPill('Open', record.open, 'open')}
+            {renderPill('Completed', record.completed, 'completed')}
+            {renderPill('Verified', record.verified, 'verified')}
+          </div>
+        )
+      }
     },
-    { title: 'Assigned To', dataIndex: 'assignedTo', key: 'assignedTo', width: 150 },
-    { title: 'Depot', dataIndex: 'depot', key: 'depot', width: 120 },
+
+    // { title: 'Total Tasks', dataIndex: 'total', key: 'total', width: 120, align: 'center' },
   ]
 
   return (
@@ -153,25 +173,23 @@ export default function ScheduledMaintenanceReports() {
         <title>{getPageTitle('reports/tasks/scheduled')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Scheduled Maintenance Reports`} />
       </Helmet>
+
       <Box>
         <Typography variant="h4" gutterBottom fontWeight="bold">
           Scheduled Maintenance Reports
         </Typography>
 
-        {/* Filter Form */}
+        {/* FILTER FORM */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Form
               form={form}
               layout="inline"
-              // onFinish={handleFilterChange}
               onFinish={handleApplyFilters}
-              style={{ marginBottom: 16 }}
               initialValues={{
                 dateRange: [dayjs().subtract(1, 'day'), dayjs()],
                 location: -1,
                 frequencyId: -1,
-
               }}
             >
               <Form.Item name="dateRange" label="Date Range">
@@ -179,30 +197,22 @@ export default function ScheduledMaintenanceReports() {
               </Form.Item>
 
               <Form.Item name="location" label="Location">
-                <Select
-                  placeholder="All Location"
-                  style={{ width: 230 }}
-                  allowClear
-                  loading={locationsLoading}
-                >
-                  {locationOptions.map((item) => (
-                    <Select.Option key={item.id} value={item.id}>
-                      {item.name}
+                <Select style={{ width: 230 }} allowClear loading={locationsLoading}>
+                  <Select.Option value={-1}>All Locations</Select.Option>
+                  {locations?.map(loc => (
+                    <Select.Option key={loc.id} value={loc.id}>
+                      {loc.name}
                     </Select.Option>
                   ))}
                 </Select>
               </Form.Item>
 
               <Form.Item name="frequencyId" label="Frequency">
-                <Select
-                  placeholder="All Frequencies"
-                  style={{ width: 180 }}
-                  allowClear
-                  loading={frequencyLoading}
-                >
-                  {frequencyOptions.map((item) => (
-                    <Select.Option key={item.id} value={item.id}>
-                      {item.name}
+                <Select style={{ width: 180 }} allowClear loading={frequencyLoading}>
+                  <Select.Option value={-1}>All Frequency</Select.Option>
+                  {freqencyList?.map(fre => (
+                    <Select.Option key={fre.id} value={fre.id}>
+                      {fre.name}
                     </Select.Option>
                   ))}
                 </Select>
@@ -220,69 +230,72 @@ export default function ScheduledMaintenanceReports() {
           </CardContent>
         </Card>
 
-        {/* Report Table */}
-        <Card>
+        {/* SUMMARY BOXES */}
+        {/* <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
+          {boxes.map((box, index) => (
+            <div key={index} style={{
+              backgroundColor: box.bgColor,
+              height: 100,
+              width: 350,
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: 30,
+              padding: '0 20px',
+              color: 'white',
+            }}>
+              <div style={{ marginRight: 20 }}>{box.icon}</div>
+              <div>
+                <div style={{ fontSize: 28, fontWeight: 'bold' }}>
+                  {box.label.split(':')[1]}
+                </div>
+                <div style={{ fontSize: 14 }}>
+                  {box.label.split(':')[0]}
+                </div>
+              </div>
+            </div>
+          ))}
+        </Box> */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+  {boxes.map((box, index) => (
+    <Box
+      key={index}
+      sx={{
+        backgroundColor: box.bgColor,
+        flex: '1 1 200px',       // responsive width
+        minWidth: 250,           // minimum width
+        display: 'flex',
+        alignItems: 'center',
+        borderRadius: 3,         // smooth corners
+        padding: '16px 24px',
+        color: 'white',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.12)', // subtle shadow
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        cursor: 'default',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+        },
+      }}
+    >
+      <Box sx={{ mr: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {box.icon}
+      </Box>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <Typography variant="h5" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
+          {box.label.split(':')[1].trim()}
+        </Typography>
+        <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
+          {box.label.split(':')[0].trim()}
+        </Typography>
+      </Box>
+    </Box>
+  ))}
+</Box>
+
+        {/* TABLE */}
+        <Card sx={{ mt: 2 }}>
           <CardContent>
-            {/* <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
-              {boxes.map((box, index) => (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: box.bgColor,
-                    height: box.height || 150, // fallback height
-                    width: box.width || 350, // fallback width
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 40,
-                    margin: 8,
-                    color: 'white',
-                  }}
-                >
-                  {box.icon}
-                  <span style={{ marginLeft: 8 }}>{box.label}</span>
-                </div>
-              ))}
-            </Box> */}
-            <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
-              {boxes.map((box, index) => (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: box.bgColor,
-                    height: 100, 
-                    width: 350,
-                    display: 'flex',
-                    alignItems: 'center', 
-                    justifyContent: 'flex-start', 
-                    borderRadius: 30,
-                    padding: '0 20px', 
-                    color: 'white',
-                  }}
-                >
-                  <div style={{ marginRight: 20, display: 'flex', alignItems: 'center' }}>
-                    {box.icon}
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 28, fontWeight: 'bold', lineHeight: 1.2 }}>
-                      {box.label.split(':')[1]}
-                    </span>
-                    <span style={{ fontSize: 16, fontWeight: 'bold', opacity: 0.8 }}>
-                      {box.label.split(':')[0]} 
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Space>
-                <AntButton icon={<FileExcelOutlined />}>Export Excel</AntButton>
-                <AntButton icon={<FilePdfOutlined />}>Export PDF</AntButton>
-              </Space>
-            </Box>
-
             {isLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
                 <CircularProgress />
@@ -293,6 +306,7 @@ export default function ScheduledMaintenanceReports() {
                 columns={columns}
                 rowKey="id"
                 pagination={{ pageSize: 20 }}
+                bordered
                 size="middle"
               />
             )}
