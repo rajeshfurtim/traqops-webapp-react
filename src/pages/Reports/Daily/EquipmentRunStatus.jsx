@@ -296,10 +296,10 @@ const getStatusCellStyle = (value) => ({
               </Form.Item>
             </Form>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-              <AntButton icon={<FileExcelOutlined />} onClick={handleExportExcel}>
+              <AntButton icon={<FileExcelOutlined />} onClick={handleExportExcel}  disabled={reportss.length === 0}>
                 Export Excel
               </AntButton >
-              <AntButton icon={<FilePdfOutlined />} onClick={handleExportPDF}>
+              <AntButton icon={<FilePdfOutlined />} onClick={handleExportPDF}  disabled={reportss.length === 0}>
                 Export PDF
               </AntButton>
             </Box>
