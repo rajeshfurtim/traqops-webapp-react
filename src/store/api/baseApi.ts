@@ -61,7 +61,11 @@ export const baseApi = createApi({
     'FaultCategory',
     'FaultSubCategory',
     'ExternalVendor',
-    'Priority'
+    'Priority',
+    'KPIsType',
+    'KPIsCategory',
+    'KPIs',
+    'Type'
   ],
   endpoints: () => ({}),
 })

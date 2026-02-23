@@ -1289,6 +1289,168 @@ deletePriority: build.mutation({
     error ? [] :["Priority"],
 }),
 
+getAllKPIsType: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getAllKPIsType')
+        }
+
+        return {
+          url: `${API_BASE_URL}/kpistype/getalltype`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['KPIsType'],
+    }),
+
+addKPIsType: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add kpis type");
+    }
+
+    return {
+      url: `${API_BASE_URL}/kpistype/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["KPIsType"], 
+}),
+
+deleteKPIsType: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/kpistype/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["KPIsType"],
+}),
+
+getAllKPIsCategory: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getAllKPIsCategory')
+        }
+
+        return {
+          url: `${API_BASE_URL}/kpiscategory/getallkpiscategory/byclient`,
+          method: 'GET',
+          params: {
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['KPIsCategory'],
+    }),
+
+addKPIsCategory: build.mutation({
+  query: (payload) => {
+    if (!payload?.domainName) {
+      throw new Error("domainName is required for add kpis category");
+    }
+
+    return {
+      url: `${API_BASE_URL}/kpiscategory/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["KPIsCategory"], 
+}),
+
+deleteKPIsCategory: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/kpiscategory/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["KPIsCategory"],
+}),
+
+getAllKPIsList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getAllKPIsList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/kpis/getallkpislist/byclient`,
+          method: 'GET',
+          params: {
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['KPIs'],
+    }),
+
+addKPIs: build.mutation({
+  query: (payload) => {
+    if (!payload?.domainName) {
+      throw new Error("domainName is required for add kpis category");
+    }
+
+    return {
+      url: `${API_BASE_URL}/kpis/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["KPIs"], 
+}),
+
+deleteKPIs: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/kpis/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["KPIs"],
+}),
+
+getAllTypeList: build.query({
+      query: () => {
+
+        return {
+          url: `http://voltas.local.site:4200/unsecure/type/getalltype`,
+          method: 'GET'
+        }
+      },
+      providesTags: ['Type'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -1368,5 +1530,15 @@ export const {
   useDeleteExternalVendorMutation,
   useGetAllPriorityListQuery,
   useAddPriorityMutation,
-  useDeletePriorityMutation
+  useDeletePriorityMutation,
+  useGetAllKPIsTypeQuery,
+  useAddKPIsTypeMutation,
+  useDeleteKPIsTypeMutation,
+  useGetAllKPIsCategoryQuery,
+  useAddKPIsCategoryMutation,
+  useDeleteKPIsCategoryMutation,
+  useGetAllKPIsListQuery,
+  useAddKPIsMutation,
+  useDeleteKPIsMutation,
+  useGetAllTypeListQuery
 } = masterSettingsApi
