@@ -57,7 +57,11 @@ export const baseApi = createApi({
     'InventoryCategory',
     'Tools',
     'CheckListType',
-    'ElementsCheckList'
+    'ElementsCheckList',
+    'FaultCategory',
+    'FaultSubCategory',
+    'ExternalVendor',
+    'Priority'
   ],
   endpoints: () => ({}),
 })

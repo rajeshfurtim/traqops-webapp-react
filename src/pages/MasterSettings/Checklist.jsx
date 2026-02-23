@@ -5,6 +5,7 @@ import { ScheduleOutlined, CheckSquareOutlined, AuditOutlined } from '@ant-desig
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import CheckListType from './CheckListMenuPages/CheckListType'
 import CheckList from './CheckListMenuPages/CheckList'
+import CheckListElements from './CheckListMenuPages/CheckListElements'
 
 export default function ChecklistMaster() {
 
@@ -28,7 +29,7 @@ export default function ChecklistMaster() {
     {
       key: '3',
       label: 'Check List Elements',
-      children: 'Check List Elements Content',
+      children: <CheckListElements />,
       icon: <AuditOutlined />,
     }
   ]

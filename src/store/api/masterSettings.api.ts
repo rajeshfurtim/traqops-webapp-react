@@ -1060,6 +1060,235 @@ deleteCheckList: build.mutation({
     error ? [] :["CheckList"],
 }),
 
+addCheckListElements: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add check list elements");
+    }
+
+    return {
+      url: `${API_BASE_URL}/elementschecklist/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["ElementsCheckList"], 
+}),
+
+deleteCheckListElements: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/delete/elementsChecklist/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["ElementsCheckList"],
+}),
+
+getFaultCategoryList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getFaultCategoryList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/faultcategory/getallfaultcategorylist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['FaultCategory'],
+    }),
+
+addFaultCategory: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add fault category");
+    }
+
+    return {
+      url: `${API_BASE_URL}/faultcategory/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["FaultCategory"], 
+}),
+
+deleteFaultCategory: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/faultcategory/delete/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["FaultCategory"],
+}),
+
+getFaultSubCategoryList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getFaultSubCategoryList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/faultsubcategory/getallfaultsubcategorylist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['FaultSubCategory'],
+    }),
+
+addFaultSubCategory: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add fault sub category");
+    }
+
+    return {
+      url: `${API_BASE_URL}/faultsubcategory/addorupdate/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["FaultSubCategory"], 
+}),
+
+deleteFaultSubCategory: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/faultsubcategory/delete/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["FaultSubCategory"],
+}),
+
+getExternalVendorList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getExternalVendorList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/externalvendor/getallvendorlist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['ExternalVendor'],
+    }),
+
+addExternalVendor: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add external vendor");
+    }
+
+    return {
+      url: `${API_BASE_URL}/add/externalvendor/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["ExternalVendor"], 
+}),
+
+deleteExternalVendor: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/externalvendor/deletebyid/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["ExternalVendor"],
+}),
+
+getAllPriorityList: build.query({
+      query: (params) => {
+        const {
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getExternalVendorList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/priority/getallprioritylist`,
+          method: 'GET',
+          params: {
+            domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['Priority'],
+    }),
+
+addPriority: build.mutation({
+  query: (payload) => {
+    if (!payload?.clientId) {
+      throw new Error("clientId is required for add priority");
+    }
+
+    return {
+      url: `${API_BASE_URL}/add/priority/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["Priority"], 
+}),
+
+deletePriority: build.mutation({
+  query: (queryString) => ({
+    url: `${API_BASE_URL}/priority/deletebyid/poov?${queryString}`,
+    method: "DELETE"
+  }),
+  invalidatesTags: (result, error) =>
+    error ? [] :["Priority"],
+}),
+
   }),
   overrideExisting: false,
 })
@@ -1125,5 +1354,19 @@ export const {
   useDeleteCheckListTypeMutation,
   useGetElementsCheckListQuery,
   useAddCheckListMutation,
-  useDeleteCheckListMutation
+  useDeleteCheckListMutation,
+  useAddCheckListElementsMutation,
+  useDeleteCheckListElementsMutation,
+  useGetFaultCategoryListQuery,
+  useAddFaultCategoryMutation,
+  useDeleteFaultCategoryMutation,
+  useGetFaultSubCategoryListQuery,
+  useAddFaultSubCategoryMutation,
+  useDeleteFaultSubCategoryMutation,
+  useGetExternalVendorListQuery,
+  useAddExternalVendorMutation,
+  useDeleteExternalVendorMutation,
+  useGetAllPriorityListQuery,
+  useAddPriorityMutation,
+  useDeletePriorityMutation
 } = masterSettingsApi
