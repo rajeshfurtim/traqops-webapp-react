@@ -25,12 +25,20 @@ import {
   FilePdfOutlined,
   SearchOutlined,
   ReloadOutlined,
-  PlusOutlined
+  PlusOutlined,
+  DeleteOutlined
 } from '@ant-design/icons'
+import { message } from 'antd'
 import dayjs from 'dayjs'
 import { mockApi } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
-import { useLazyGetIndentFilterQuery } from '../store/api/inventory.api'
+import {
+  useLazyGetIndentFilterQuery,
+  useGetInventoryCategoryListQuery,
+  useLazyGetInventoryByCategoryQuery,
+  useAddOrUpdateStockIndentInwardMutation,
+  useDeleteStockIndentMutation
+} from '../store/api/inventory.api'
 import { useGetLocationByIsStoreQuery } from '../store/api/masterSettings.api'
 
 const { Title, Text } = Typography
@@ -51,15 +59,31 @@ export default function Inventory() {
   const [form] = Form.useForm()
   const [filterForm] = Form.useForm()
 
+  const clientId = localStorage.getItem('clientId') || '1090'
+
   const [triggerGetIndentFilter, { data: indentFilterData, isLoading: indentFilterLoading }] =
     useLazyGetIndentFilterQuery()
 
-  const clientId = localStorage.getItem('clientId') || '1090'
+  const [triggerGetInventoryByCategory, { data: inventoryByCategoryData }] =
+    useLazyGetInventoryByCategoryQuery()
+
+  const [addOrUpdateStockIndentInward, { isLoading: submitInwardLoading }] =
+    useAddOrUpdateStockIndentInwardMutation()
+
+  const [deleteStockIndent] = useDeleteStockIndentMutation()
+
   const { data: locationByIsStoreData } = useGetLocationByIsStoreQuery(
     { clientId, pageNumber: 1, pageSize: 1000 },
     { skip: !clientId }
   )
   const locationOptions = locationByIsStoreData?.data?.content ?? []
+
+  const { data: inventoryCategoryData } = useGetInventoryCategoryListQuery(
+    { clientId, pageNumber: 1, pageSize: 1000 },
+    { skip: !clientId }
+  )
+  const inventoryCategoryOptions = inventoryCategoryData?.data?.content ?? []
+  const inventoryOptions = inventoryByCategoryData?.data ?? []
 
   const getIndentFilterParams = (page, pageSize) => {
     const values = filterForm.getFieldsValue()
@@ -89,19 +113,37 @@ export default function Inventory() {
   }, [filterForm])
 
   useEffect(() => {
-    if (indentFilterData != null) {
-      const items =
-        indentFilterData?.data?.content ||
-        indentFilterData?.data ||
-        indentFilterData?.items ||
-        []
-      const total =
-        indentFilterData?.data?.totalElements ||
-        indentFilterData?.total ||
-        items.length
-      setTableData(items)
-      setTablePagination((prev) => ({ ...prev, total }))
-    }
+    if (!indentFilterData) return
+
+    const rawItems =
+      indentFilterData?.data?.content ||
+      indentFilterData?.data ||
+      indentFilterData?.items ||
+      []
+
+    const mappedItems = rawItems.map((item) => ({
+      id: item.id,
+      date: item.date,
+      outwardRef: item.type === 'OUTWARD' ? item.outwardNumber : item.indentNumber,
+      location: item.location?.name || item.fromLocation?.name || '',
+      returnable: item.isReturnableFlag,
+      returnableDate: item.returnableDate || null,
+      expectedReturnTime: item.expectedReturnTime || null,
+      type: item.type,
+      toLocation: item.toLocation?.name || '',
+      outwardPassDate: item.outwardPassDateTime || item.inwardPassDateTime || '',
+      verifiedByName: item.verifiedByName || '',
+      verifiedAtDate: item.verifiedAt || '',
+      supplier: item.supplier || ''
+    }))
+
+    const total =
+      indentFilterData?.data?.totalElements ||
+      indentFilterData?.total ||
+      mappedItems.length
+
+    setTableData(mappedItems)
+    setTablePagination((prev) => ({ ...prev, total }))
   }, [indentFilterData])
 
   useEffect(() => {
@@ -159,9 +201,55 @@ export default function Inventory() {
   const handleSubmitModal = () => {
     form
       .validateFields()
-      .then((values) => {
-        // Placeholder: handle submit logic here
-        // console.log('Inventory Inward payload', { ...values, items })
+      .then(async (values) => {
+        if (activeTab === 'inventoryInward') {
+          const locationId = values.location
+          const indentNumber = values.inwardRef
+          const date = values.date ? values.date.format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
+          const fromType = values.fromType === 'supplier' ? 2 : 1
+
+          const statusId = 640
+
+          const inwardPassByName = values.inwardPassedBy
+          const inwardPassDateTime = values.inwardPassedDate
+            ? values.inwardPassedDate.format('YYYY-MM-DD[T]HH:mm')
+            : dayjs().format('YYYY-MM-DD[T]HH:mm')
+
+          const passByRemarks = values.passedByRemark
+
+          const isReturnableFlag = values.isReturnable ? 'Y' : 'N'
+
+          const payload = {
+            locationId,
+            indentNumber,
+            date,
+            fromType,
+            statusId,
+            inwardPassByName,
+            inwardPassDateTime,
+            passByRemarks,
+            supplier: values.supplier || null,
+            address: values.address || null,
+            reason: values.reason || null,
+            domainName,
+            clientId,
+            type: 'INWARD',
+            outwardReferenceNumber: null,
+            isReturnableFlag,
+            sequelNumber: '1',
+            stockIndentItemsDtos: items.map((item) => ({
+              inventoryId: item.inventoryId || item.key,
+              quantity: item.quantity,
+              inventoryCategoryId: item.inventoryCategoryId || values.inventoryCategory,
+              units: item.units
+            }))
+          }
+
+          await addOrUpdateStockIndentInward(payload).unwrap()
+
+          fetchTableData(1, tablePagination.pageSize)
+        }
+
         setIsModalOpen(false)
       })
       .catch(() => {})
@@ -169,25 +257,31 @@ export default function Inventory() {
 
   const handleAddItem = async () => {
     try {
-      const itemValues = await form.validateFields([
-        'inventoryCategory',
-        'inventory',
-        'quantity',
-        'units'
-      ])
+      const values = await form.validateFields(['location', 'inventoryCategory'])
+      const categoryId = values.inventoryCategory
+      const locationId = values.location
 
-      const newItem = {
-        key: `${items.length}-${Date.now()}`,
-        category: itemValues.inventoryCategory,
-        inventory: itemValues.inventory,
-        quantity: itemValues.quantity,
-        units: itemValues.units
-      }
+      const response = await triggerGetInventoryByCategory({
+        categoryId,
+        locationId
+      }).unwrap()
 
-      setItems((prev) => [...prev, newItem])
-      form.resetFields(['inventoryCategory', 'inventory', 'quantity', 'units'])
-    } catch {
-      // validation failed, do nothing
+      const apiItems = response?.data ?? []
+      const mappedItems = apiItems.map((inv) => ({
+        key: inv.id,
+        category: inv.inventoryCategory?.name || '',
+        inventory: inv.name,
+        quantity: inv.quantity,
+        units: inv.units,
+        inventoryId: inv.id,
+        inventoryCategoryId: inv.inventoryCategory?.id
+      }))
+
+      setItems(mappedItems)
+    } catch (error) {
+      // validation failed or API error
+      // eslint-disable-next-line no-console
+      console.error('Error loading inventory by category', error)
     }
   }
 
@@ -197,6 +291,19 @@ export default function Inventory() {
 
   const handleRemoveItem = (key) => {
     setItems((prev) => prev.filter((item) => item.key !== key))
+  }
+
+  const handleDeleteStockIndent = async (id) => {
+    try {
+      const response = await deleteStockIndent(id).unwrap()
+      const successMsg = response?.message || 'Stock Indent Deleted Successfully'
+      message.success(successMsg)
+      fetchTableData(tablePagination.current, tablePagination.pageSize)
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error deleting stock indent', error)
+      message.error('Failed to delete stock indent')
+    }
   }
 
   const getStockStatus = (item) => {
@@ -310,6 +417,19 @@ export default function Inventory() {
       key: 'supplier',
       width: 150,
       ellipsis: true
+    },
+    {
+      title: 'Action',
+      key: 'action',
+      width: 80,
+      render: (_, record) => (
+        <Button
+          type="text"
+          danger
+          icon={<DeleteOutlined />}
+          onClick={() => handleDeleteStockIndent(record.id)}
+        />
+      )
     }
   ]
 
@@ -438,7 +558,11 @@ export default function Inventory() {
                       name="location"
                       rules={[{ required: true, message: 'Please select location' }]}
                     >
-                      <Select placeholder="Select Location" showSearch optionFilterProp="label">
+                      <Select
+                        placeholder="Select Location"
+                        showSearch
+                        optionFilterProp="label"
+                      >
                         {locationOptions.map((loc) => (
                           <Select.Option key={loc.id} value={loc.id} label={loc.name}>
                             {loc.name}
@@ -1279,9 +1403,16 @@ export default function Inventory() {
                   name="inventoryCategory"
                   rules={[{ required: true, message: 'Please select Inventory Category' }]}
                 >
-                  <Select placeholder="Select Inventory Category">
-                    <Select.Option value="category1">Category 1</Select.Option>
-                    <Select.Option value="category2">Category 2</Select.Option>
+                  <Select
+                    placeholder="Select Inventory Category"
+                    showSearch
+                    optionFilterProp="label"
+                  >
+                    {inventoryCategoryOptions.map((cat) => (
+                      <Select.Option key={cat.id} value={cat.id} label={cat.name}>
+                        {cat.name}
+                      </Select.Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>
@@ -1291,9 +1422,16 @@ export default function Inventory() {
                   name="inventory"
                   rules={[{ required: true, message: 'Please select Inventory' }]}
                 >
-                  <Select placeholder="Select Inventory">
-                    <Select.Option value="inventory1">Inventory 1</Select.Option>
-                    <Select.Option value="inventory2">Inventory 2</Select.Option>
+                  <Select
+                    placeholder="Select Inventory"
+                    showSearch
+                    optionFilterProp="label"
+                  >
+                    {inventoryOptions.map((inv) => (
+                      <Select.Option key={inv.id} value={inv.id} label={inv.name}>
+                        {inv.name}
+                      </Select.Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>
@@ -1313,7 +1451,11 @@ export default function Inventory() {
                   rules={[{ required: true, message: 'Please select Units' }]}
                 >
                   <Select placeholder="Select Units">
-                    <Select.Option value="nos">Nos</Select.Option>
+                  <Select.Option value="Ltr">Ltr</Select.Option>
+                  <Select.Option value="Nos">Nos</Select.Option>
+                  <Select.Option value="cm">cm</Select.Option>
+                    <Select.Option value="Meter">Meter</Select.Option>
+                    <Select.Option value="mm">mm</Select.Option>
                     <Select.Option value="kg">Kg</Select.Option>
                   </Select>
                 </Form.Item>
