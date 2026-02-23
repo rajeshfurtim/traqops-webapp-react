@@ -32,7 +32,7 @@ export default function EnergyConsumption() {
       locationId: filters.location,
     },
     {
-      skip: !filters.startdate || !filters.enddate,refetchOnMountOrArgChange: true
+      skip: !filters.startdate || !filters.enddate,refetchOnMountOrArgChange: false
     }
   )
   // const loadings = isLoading || isFetching
@@ -149,6 +149,7 @@ export default function EnergyConsumption() {
 
   return tableDataArr
 }, [response, queryLoading])
+// console.log(reportss)
      const locationOptions = [
     { id: -1, name: 'All Locations' },
     ...(Array.isArray(locations) && locations.length > 0 ? locations.map(loc => ({
@@ -314,6 +315,16 @@ export default function EnergyConsumption() {
 
   return (
     <>
+     <style>
+    {`
+      .ant-table-wrapper .ant-table-thead > tr > th,
+      .ant-table-wrapper .ant-table-tbody > tr > td {
+        border: 1px solid #d9d9d9 !important;
+      }
+
+
+    `}
+  </style>
       <Helmet>
         <title>{getPageTitle('reports/daily/energy-consumption')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Energy Consumption Details`} />

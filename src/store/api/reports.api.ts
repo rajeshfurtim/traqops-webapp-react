@@ -111,9 +111,29 @@ export const reportsApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+     getEquipmentRunStatusReport: build.query({
+      query: (params) => {
+        const { fromdate,todate, locationId} = params
+        const queryParams = {
+          fromdate,
+          todate,
+          locationId
+          // clientId: clientId.toString(),
+          // ...(locationId !== undefined && locationId !== null && { locationId: locationId.toString() }),
+          // ...(userTypeId !== undefined && userTypeId !== null && { userTypeId: userTypeId.toString() }),
+        }
+
+        return {
+          url: `${API_BASE_URL}/voltas/report/equiprunstatus/bylocation`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
 
   }),
   overrideExisting: false,
 })
 
-export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery, useGetConsolidateManpowerReportQuery,useGetEnergyConsumptionReportQuery } = reportsApi
+export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery, useGetConsolidateManpowerReportQuery,useGetEnergyConsumptionReportQuery,useGetEquipmentRunStatusReportQuery } = reportsApi
