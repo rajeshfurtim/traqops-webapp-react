@@ -76,7 +76,6 @@ const chartData = (reportData?.data || [])
     },
   ])
 
- // ✅ Calculate totals per frequency
 const totalByFrequency = {}
 
 chartData.forEach((item) => {
@@ -91,7 +90,7 @@ const chartConfig = {
   xField: 'frequency',
   yField: 'value',
   seriesField: 'type',
-  colorField: 'type',   // 🔥 IMPORTANT (you missed this)
+  colorField: 'type',
   isStack: true,
   height: 400,
 
@@ -102,7 +101,6 @@ const chartConfig = {
     },
   },
 
-  // ✅ Safe fixed colors (no change even if order changes)
   scale: {
     color: {
       domain: ['Open', 'Completed', 'Verified'],
@@ -110,7 +108,6 @@ const chartConfig = {
     },
   },
 
-  // ✅ Hide zero labels
   label: {
     position: 'middle',
     formatter: (datum) => (datum.value > 0 ? datum.value : ''),
@@ -129,7 +126,6 @@ const chartConfig = {
     radius: [8, 8, 0, 0],
   },
 
-  // ✅ Total on top
   annotations: Object.keys(totalByFrequency).map((freq) => ({
     type: 'text',
     position: [freq, totalByFrequency[freq]],
@@ -259,7 +255,6 @@ const chartConfig = {
       }
     },
 
-    // { title: 'Total Tasks', dataIndex: 'total', key: 'total', width: 120, align: 'center' },
   ]
 
   return (
@@ -356,14 +351,14 @@ const chartConfig = {
       key={index}
       sx={{
         backgroundColor: box.bgColor,
-        flex: '1 1 200px',       // responsive width
-        minWidth: 250,           // minimum width
+        flex: '1 1 200px',      
+        minWidth: 250,          
         display: 'flex',
         alignItems: 'center',
-        borderRadius: 3,         // smooth corners
+        borderRadius: 3,        
         padding: '16px 24px',
         color: 'white',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.12)', // subtle shadow
+        boxShadow: '0 4px 12px rgba(0,0,0,0.12)', 
         transition: 'transform 0.2s, box-shadow 0.2s',
         cursor: 'default',
         '&:hover': {
