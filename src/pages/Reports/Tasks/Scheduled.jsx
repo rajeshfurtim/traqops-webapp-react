@@ -10,7 +10,8 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetFrequencyCountQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle } from 'react-icons/fa'
-
+import{ Column } from '@ant-design/plots'
+// npm install @ant-design/plots
 const { RangePicker } = DatePicker
 
 export default function ScheduledMaintenanceReports() {
@@ -48,6 +49,100 @@ export default function ScheduledMaintenanceReports() {
       (item.completedCount || 0) +
       (item.verifiedCount || 0),
   }))
+ /* ---------------- CHART DATA ---------------- */
+
+const chartData = (reportData?.data || [])
+  .filter(
+    (item) =>
+      item.openCount > 0 ||
+      item.completedCount > 0 ||
+      item.verifiedCount > 0
+  )
+  .flatMap((item) => [
+    {
+      frequency: item.frequencyName,
+      type: 'Open',
+      value: item.openCount || 0,
+    },
+    {
+      frequency: item.frequencyName,
+      type: 'Completed',
+      value: item.completedCount || 0,
+    },
+    {
+      frequency: item.frequencyName,
+      type: 'Verified',
+      value: item.verifiedCount || 0,
+    },
+  ])
+
+ // ✅ Calculate totals per frequency
+const totalByFrequency = {}
+
+chartData.forEach((item) => {
+  if (!totalByFrequency[item.frequency]) {
+    totalByFrequency[item.frequency] = 0
+  }
+  totalByFrequency[item.frequency] += item.value
+})
+
+const chartConfig = {
+  data: chartData,
+  xField: 'frequency',
+  yField: 'value',
+  seriesField: 'type',
+  colorField: 'type',   // 🔥 IMPORTANT (you missed this)
+  isStack: true,
+  height: 400,
+
+  animation: {
+    appear: {
+      animation: 'wave-in',
+      duration: 800,
+    },
+  },
+
+  // ✅ Safe fixed colors (no change even if order changes)
+  scale: {
+    color: {
+      domain: ['Open', 'Completed', 'Verified'],
+      range: ['#ff4d6d', '#69b1ff', '#73d13d'],
+    },
+  },
+
+  // ✅ Hide zero labels
+  label: {
+    position: 'middle',
+    formatter: (datum) => (datum.value > 0 ? datum.value : ''),
+    style: {
+      fill: '#fff',
+      fontSize: 12,
+      fontWeight: 600,
+    },
+  },
+
+  legend: {
+    position: 'top',
+  },
+
+  columnStyle: {
+    radius: [8, 8, 0, 0],
+  },
+
+  // ✅ Total on top
+  annotations: Object.keys(totalByFrequency).map((freq) => ({
+    type: 'text',
+    position: [freq, totalByFrequency[freq]],
+    content: String(totalByFrequency[freq]),
+    style: {
+      textAlign: 'center',
+      fontSize: 14,
+      fontWeight: 700,
+      fill: '#000',
+    },
+    offsetY: -12,
+  })),
+}
 
   const handleApplyFilters = (values) => {
     setFilters({
@@ -301,6 +396,12 @@ export default function ScheduledMaintenanceReports() {
                 <CircularProgress />
               </Box>
             ) : (
+              <>
+              <Card sx={{ mb: 3 }}>
+                <CardContent>
+                  <Column {...chartConfig} />
+                </CardContent>
+              </Card>
               <Table
                 dataSource={reports}
                 columns={columns}
@@ -309,6 +410,7 @@ export default function ScheduledMaintenanceReports() {
                 bordered
                 size="middle"
               />
+              </>
             )}
           </CardContent>
         </Card>
