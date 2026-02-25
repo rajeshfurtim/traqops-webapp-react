@@ -4,17 +4,20 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
 const prepareTableData = (columns, data) => {
-  const headers = columns
-    .filter(col => col.dataIndex) // ignore action columns
-    .map(col => col.title)
 
-  const rows = data.map(row =>
-    columns
-      .filter(col => col.dataIndex)
-      .map(col => {
-        const value = row[col.dataIndex]
-        return value !== undefined && value !== null ? value : '-'
-      })
+  const validColumns = columns.filter(col => col.title)
+
+  const headers = validColumns.map(col => col.title)
+
+  const rows = data.map((row, index) =>
+    validColumns.map(col => {
+
+      if (col.render) {
+        return col.render(row[col.dataIndex], row, index) || "-"
+      }
+
+      return row[col.dataIndex] || "-"
+    })
   )
 
   return { headers, rows }
@@ -43,7 +46,7 @@ export const exportToExcel = async (
 export const exportToPDF = async (
   columns,
   data,
-  filename 
+  filename
 ) => {
   if (!data || data.length === 0) return
 

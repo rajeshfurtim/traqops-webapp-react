@@ -1,38 +1,55 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Tag } from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, Tooltip, message, Spin } from 'antd'
+import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { mockApi } from '../../services/api'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
+import { useGetLocationByIsStoreQuery } from '../../store/api/masterSettings.api'
+import { useGetToolsReportQuery } from '../../store/api/reports.api'
+import { useAuth } from '../../context/AuthContext'
+import { exportToExcel, exportToPDF } from '../../utils/exportUtils'
+
+const { RangePicker } = DatePicker
 
 export default function ToolsReport() {
-  const [loading, setLoading] = useState(true)
-  const [reports, setReports] = useState([])
-  const [filters, setFilters] = useState({})
+
+  const { user } = useAuth()
+  const clientId = user?.client?.id || user?.clientId
   const [form] = Form.useForm()
 
-  useEffect(() => {
-    loadReports()
-  }, [filters])
+  const [current, setCurrent] = useState(1)
+  const [pageSize, setPagesize] = useState(25)
+  const [filters, setFilters] = useState({})
 
-  const loadReports = async () => {
-    try {
-      setLoading(true)
-      const response = await mockApi.getToolsReport(filters)
-      setReports(response.data.reports)
-    } catch (error) {
-      console.error('Error loading tools report:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: locationList, isLoading: locationLoading } = useGetLocationByIsStoreQuery({ clientId, pageNumber: 1, pageSize: 1000 })
+  const { data: toolsList, isLoading: toolsLoading, isFetching } =
+    useGetToolsReportQuery(
+      {
+        ...filters,
+        pn: 1,
+        ps: 1000
+      },
+      {
+        skip: !filters.locationId
+      }
+    )
+
+  useEffect(() => {
+    form.setFieldsValue({
+      date: [dayjs().startOf('month'), dayjs().endOf('month')],
+      location: 10339
+    })
+  }, [])
 
   const handleFilterChange = (values) => {
+    console.log('Filter values:', values)
     const newFilters = {}
-    if (values.depot) newFilters.depot = values.depot
-    if (values.returnStatus) newFilters.returnStatus = values.returnStatus
+    if (values.date) {
+      newFilters.fromDate = dayjs(values.date[0]).format('YYYY-MM-DD')
+      newFilters.toDate = dayjs(values.date[1]).format('YYYY-MM-DD')
+    }
+    if (values.location) newFilters.locationId = values.location
     setFilters(newFilters)
   }
 
@@ -41,72 +58,110 @@ export default function ToolsReport() {
     setFilters({})
   }
 
-  const getConditionColor = (condition) => {
-    const colors = {
-      'Excellent': 'success',
-      'Good': 'processing',
-      'Fair': 'warning',
-      'Poor': 'error'
-    }
-    return colors[condition] || 'default'
-  }
-
   const columns = [
     {
-      title: 'Tool ID',
-      dataIndex: 'toolId',
-      key: 'toolId',
-      width: 150
+      title: 'S.No',
+      dataIndex: 'sno',
+      key: 'sno',
+      width: 80,
+      render: (_, __, index) => ((current - 1) * pageSize) + index + 1
     },
     {
-      title: 'Tool Name',
-      dataIndex: 'toolName',
-      key: 'toolName',
-      width: 200
+      title: 'Location',
+      dataIndex: 'locationName',
+      key: 'locationName'
     },
     {
-      title: 'Issued To',
-      dataIndex: 'issuedTo',
-      key: 'issuedTo',
-      width: 150
+      title: 'Tools Name',
+      dataIndex: 'toolsName',
+      key: 'toolsName'
     },
     {
-      title: 'Issue Date',
-      dataIndex: 'issueDate',
-      key: 'issueDate',
-      width: 120,
-      render: (text) => dayjs(text).format('MMM DD, YYYY')
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      render: (_, record) => record.date ? dayjs(record.date).format('DD/MM/YYYY') : '-'
     },
     {
-      title: 'Condition',
-      dataIndex: 'condition',
-      key: 'condition',
-      width: 120,
-      render: (condition) => <Tag color={getConditionColor(condition)}>{condition}</Tag>
+      title: 'Required Quantity',
+      dataIndex: 'totalQuantity',
+      key: 'totalQuantity'
     },
     {
-      title: 'Return Status',
-      dataIndex: 'returnStatus',
-      key: 'returnStatus',
-      width: 150,
-      render: (status) => (
-        <Tag color={status === 'Returned' ? 'success' : 'warning'}>{status}</Tag>
-      )
+      title: 'Actual Quantity',
+      dataIndex: 'availableQuantity',
+      key: 'availableQuantity'
     },
     {
-      title: 'Expected Return',
-      dataIndex: 'expectedReturn',
-      key: 'expectedReturn',
-      width: 150,
-      render: (text) => text ? dayjs(text).format('MMM DD, YYYY') : '-'
-    },
-    {
-      title: 'Depot',
-      dataIndex: 'depot',
-      key: 'depot',
-      width: 120
+      title: 'Remarks',
+      dataIndex: 'remarks',
+      key: 'remarks'
     }
   ]
+
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState(null);
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    const searchValue = value.toLowerCase().trim();
+
+    if (!searchValue) {
+      setFilteredData(null);
+      return;
+    }
+
+    const filtered = toolsList?.data?.filter((item) =>
+      `${item.locationName ?? ''} ${item.toolsName ?? ''} ${item.remarks ?? ''}
+        ${item.date ? dayjs(item.date).format('DD/MM/YYYY') : ''} ${item.totalQuantity ?? ''} ${item.availableQuantity ?? ''}`
+        .toLowerCase()
+        .includes(searchValue)
+    );
+
+    setFilteredData(filtered);
+  };
+
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
+
+  const handleExportPDF = async () => {
+    try {
+      console.log("adhsgvuiav bjhav")
+      setExporting(prev => ({ ...prev, pdf: true }))
+
+      await exportToPDF(
+        columns,
+        toolsList?.data,
+        `tools-report-${dayjs(filters.fromDate).format('DD-MM-YYYY')}-${dayjs(filters.toDate).format('DD-MM-YYYY')}`
+      )
+
+      message.success('PDF exported successfully')
+    } catch (err) {
+      message.error('PDF export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
+    }
+  }
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(prev => ({ ...prev, excel: true }))
+
+      await exportToExcel(
+        columns,
+        toolsList?.data,
+        `tools-report-${dayjs(filters.fromDate).format('DD-MM-YYYY')}-${dayjs(filters.toDate).format('DD-MM-YYYY')}`
+      )
+
+      message.success('Excel exported successfully')
+    } catch (err) {
+      message.error('Excel export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
+    }
+  }
 
   return (
     <>
@@ -115,51 +170,118 @@ export default function ToolsReport() {
         <meta name="description" content={`${APP_CONFIG.name} - Tools Report`} />
       </Helmet>
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+        {/* <Typography variant="h4" gutterBottom fontWeight="bold">
           Tools Report
-        </Typography>
+        </Typography> */}
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Form form={form} layout="inline" onFinish={handleFilterChange} style={{ marginBottom: 16 }}>
-              <Form.Item name="depot" label="Depot">
-                <Select placeholder="Select Depot" allowClear style={{ width: 150 }}>
-                  <Select.Option value="Depot A">Depot A</Select.Option>
-                  <Select.Option value="Depot B">Depot B</Select.Option>
-                </Select>
-              </Form.Item>
-              <Form.Item name="returnStatus" label="Return Status">
-                <Select placeholder="Select Status" allowClear style={{ width: 150 }}>
-                  <Select.Option value="Returned">Returned</Select.Option>
-                  <Select.Option value="Not Returned">Not Returned</Select.Option>
-                </Select>
-              </Form.Item>
-              <Form.Item>
-                <Space>
-                  <AntButton type="primary" htmlType="submit">Filter</AntButton>
-                  <AntButton onClick={handleResetFilters}>Reset</AntButton>
-                </Space>
-              </Form.Item>
+              <Row gutter={8}>
+                <Col span={12}>
+                  <Form.Item
+                    label="Date"
+                    name="date"
+                    rules={[{ required: true, message: 'Please select date range!' }]}
+                  >
+                    <RangePicker style={{ width: '100%' }}
+                      disabledDate={(current) =>
+                        current && current > dayjs().endOf('day')
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={10}>
+                  <Form.Item
+                    label="Location"
+                    name="location"
+                    rules={[{ required: true, message: 'Please select location!' }]}
+                  >
+                    <Select
+                      placeholder="Select Location"
+                    >
+                      {locationList?.data?.content?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={2}>
+                  <Form.Item>
+                    <Space>
+                      <AntButton type="primary" htmlType="submit">Filter</AntButton>
+                      <AntButton onClick={handleResetFilters}>Reset</AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-              <AntButton icon={<FileExcelOutlined />} onClick={() => console.log('Export Excel')}>
-                Export Excel
-              </AntButton>
-              <AntButton icon={<FilePdfOutlined />} onClick={() => console.log('Export PDF')}>
-                Export PDF
-              </AntButton>
-            </Box>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent>
-            {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Space>
+                <Input
+                  placeholder="Search"
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={handleSearch}
+                  allowClear
+                  style={{ width: 250 }}
+                />
+                <Tooltip title="Export Excel">
+                  <AntButton
+                    type="primary"
+                    icon={<FileExcelOutlined />}
+                    onClick={handleExportExcel}
+                    disabled={toolsList?.data?.length === 0}
+                    style={{ backgroundColor: '#5bd71c', color: '#fff' }}
+                  >
+                  </AntButton>
+                </Tooltip>
+                <Tooltip title="Export PDF">
+                  <AntButton
+                    type="primary"
+                    icon={<FilePdfOutlined />}
+                    onClick={handleExportPDF}
+                    disabled={toolsList?.data?.length === 0}
+                    style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
+                  >
+                  </AntButton>
+                </Tooltip>
+              </Space>
+            </Box>
+            {toolsLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
+                <Spin />
               </Box>
             ) : (
-              <Table dataSource={reports} columns={columns} rowKey="id" pagination={{ pageSize: 10 }} size="middle" />
+              <Table
+                dataSource={filteredData ?? toolsList?.data}
+                columns={columns}
+                loading={toolsLoading || isFetching}
+                rowKey={(record, index) => record.toolsId + "_" + index}
+                size="middle"
+                scroll={{ x: 'max-content' }}
+                pagination={{
+                  position: ['bottomRight'],
+                  current: current,
+                  pageSize: pageSize,
+                  onChange: setCurrent,
+                  showSizeChanger: true,
+                  onShowSizeChange: (current, size) => {
+                    setPagesize(size);
+                    setCurrent(current);
+                  },
+                  pageSizeOptions: ['25', '50', '100'],
+                  showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                  className: "custom-pagination"
+                }}
+              />
             )}
           </CardContent>
         </Card>

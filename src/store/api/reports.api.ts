@@ -132,8 +132,37 @@ export const reportsApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+    getToolsReport: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId, pn, ps } = params
+
+        if (!locationId) {
+          throw new Error('LocationId is required for getToolsReport')
+        }
+
+        if (!fromDate || !toDate) {
+          throw new Error('From Date and To Date are required for getToolsReport')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/toolselements`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
 
-export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery, useGetConsolidateManpowerReportQuery,useGetEnergyConsumptionReportQuery,useGetEquipmentRunStatusReportQuery } = reportsApi
+export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery, useGetConsolidateManpowerReportQuery,useGetEnergyConsumptionReportQuery,useGetEquipmentRunStatusReportQuery, useGetToolsReportQuery } = reportsApi

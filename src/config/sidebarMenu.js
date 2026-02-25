@@ -199,6 +199,12 @@ export const sidebarMenuConfig = [
             path: '/reports/evaluation/penalty-details'
           }
         ]
+      },
+      {
+        key: '/reports/tools',
+        icon: 'ToolOutlined',
+        label: 'Tools Report',
+        path: '/reports/tools'
       }
     ]
   },
@@ -355,7 +361,7 @@ export const isPathAllowedForClient = (pathname, selectedClient, menuConfig = si
 // Helper function to get breadcrumbs from menu config
 export const getBreadcrumbsFromPath = (pathname, menuConfig = sidebarMenuConfig) => {
   const breadcrumbs = [{ label: 'Home', path: '/dashboard' }]
-  
+
   const findPath = (items, targetPath, currentPath = []) => {
     for (const item of items) {
       if (item.path === targetPath) {
@@ -368,7 +374,7 @@ export const getBreadcrumbsFromPath = (pathname, menuConfig = sidebarMenuConfig)
     }
     return null
   }
-  
+
   const pathItems = findPath(menuConfig, pathname)
   if (pathItems) {
     pathItems.forEach(item => {
@@ -377,6 +383,6 @@ export const getBreadcrumbsFromPath = (pathname, menuConfig = sidebarMenuConfig)
       }
     })
   }
-  
+
   return breadcrumbs
 }
