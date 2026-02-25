@@ -1,45 +1,50 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input } from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
-import { mockApi } from '../../../services/api'
+import { Box, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, Tooltip, message, Spin } from 'antd'
+import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
-
-const { RangePicker } = DatePicker
+import { useGetLocationByIsStoreQuery, useGetAllInventoryCategoryQuery } from '../../../store/api/masterSettings.api'
+import { useGetQuantityReportQuery } from '../../../store/api/reports.api'
+import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
+import { useAuth } from '../../../context/AuthContext'
 
 export default function QuantityReports() {
-  const [loading, setLoading] = useState(true)
-  const [reports, setReports] = useState([])
-  const [filters, setFilters] = useState({})
+
+  const { user } = useAuth()
+  const clientId = user?.client?.id || user?.clientId
   const [form] = Form.useForm()
 
-  useEffect(() => {
-    loadReports()
-  }, [filters])
+  const [current, setCurrent] = useState(1)
+  const [pageSize, setPagesize] = useState(25)
+  const [filters, setFilters] = useState({})
 
-  const loadReports = async () => {
-    try {
-      setLoading(true)
-      const response = await mockApi.getQuantityReports(filters)
-      setReports(response.data.reports || [])
-    } catch (error) {
-      console.error('Error loading quantity reports:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: inventoryCategoryList, isLoading: inventoryCategoryLoading } = useGetAllInventoryCategoryQuery({ clientId, pageNumber: 1, pageSize: 1000 })
+  const { data: locationList, isLoading: locationLoading } = useGetLocationByIsStoreQuery({ clientId, pageNumber: 1, pageSize: 1000 })
+  const { data: quantityReportData, isLoading: quantityReportLoading, isFetching } =
+    useGetQuantityReportQuery(
+      {
+        ...filters,
+        pn: 1,
+        ps: 1000
+      },
+      {
+        skip: !filters.locationId || !filters.InventoryCategoryId
+      }
+    )
+
+  useEffect(() => {
+    form.setFieldsValue({
+      location: 11496,
+      inventoryCategory: -1
+    })
+  }, [])
 
   const handleFilterChange = (values) => {
+    console.log('Filter values:', values)
     const newFilters = {}
-    if (values.dateRange && values.dateRange.length === 2) {
-      newFilters.dateFrom = values.dateRange[0].format('YYYY-MM-DD')
-      newFilters.dateTo = values.dateRange[1].format('YYYY-MM-DD')
-    }
-    if (values.location) newFilters.location = values.location
-    if (values.category) newFilters.category = values.category
-    if (values.asset) newFilters.asset = values.asset
+    if (values.location) newFilters.locationId = values.location
+    if (values.inventoryCategory) newFilters.InventoryCategoryId = values.inventoryCategory
     setFilters(newFilters)
   }
 
@@ -50,74 +55,113 @@ export default function QuantityReports() {
 
   const columns = [
     {
-      title: 'Item Code',
-      dataIndex: 'itemCode',
-      key: 'itemCode',
-      width: 120
-    },
-    {
-      title: 'Item Name',
-      dataIndex: 'itemName',
-      key: 'itemName',
-      width: 200
-    },
-    {
-      title: 'Category',
-      dataIndex: 'category',
-      key: 'category',
-      width: 150
+      title: 'S.No',
+      dataIndex: 'sno',
+      key: 'sno',
+      width: 80,
+      render: (_, __, index) => ((current - 1) * pageSize) + index + 1
     },
     {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
-      width: 150
+      render: (_, record) => record?.location?.name,
+      sorter: (a, b) => (a.location?.name ?? '').localeCompare(b.location?.name ?? '')
     },
     {
-      title: 'Current Quantity',
-      dataIndex: 'currentQuantity',
-      key: 'currentQuantity',
-      width: 140,
-      align: 'right'
+      title: 'Inventory Category',
+      dataIndex: 'inventoryCategory',
+      key: 'inventoryCategory',
+      render: (_, record) => record?.inventoryCategory?.name,
+      sorter: (a, b) => (a.inventoryCategory?.name ?? '').localeCompare(b.inventoryCategory?.name ?? '')
     },
     {
-      title: 'Minimum Quantity',
-      dataIndex: 'minimumQuantity',
-      key: 'minimumQuantity',
-      width: 140,
-      align: 'right'
+      title: 'Inventory',
+      dataIndex: 'name',
+      key: 'name',
+      sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
     },
     {
-      title: 'Maximum Quantity',
-      dataIndex: 'maximumQuantity',
-      key: 'maximumQuantity',
-      width: 140,
-      align: 'right'
+      title: 'Quantity',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      sorter: (a, b) => a?.quantity - b?.quantity
     },
     {
-      title: 'Unit',
-      dataIndex: 'unit',
-      key: 'unit',
-      width: 80
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (status) => {
-        const color = status === 'In Stock' ? 'green' : status === 'Low Stock' ? 'orange' : 'red'
-        return <span style={{ color }}>{status}</span>
-      }
-    },
-    {
-      title: 'Last Updated',
-      dataIndex: 'lastUpdated',
-      key: 'lastUpdated',
-      width: 140,
-      render: (text) => dayjs(text).format('MMM DD, YYYY')
+      title: 'Units',
+      dataIndex: 'units',
+      key: 'units',
+      sorter: (a, b) => (a?.units ?? '').localeCompare(b?.units ?? '')
     }
   ]
+
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState(null);
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    const searchValue = value.toLowerCase().trim();
+
+    if (!searchValue) {
+      setFilteredData(null);
+      return;
+    }
+
+    const filtered = quantityReportData?.data?.content?.filter((item) =>
+      `${item?.location?.name ?? ''} ${item?.inventoryCategory?.name ?? ''} ${item?.name ?? ''}
+        ${item?.quantity ?? ''} ${item?.units ?? ''}`
+        .toLowerCase()
+        .includes(searchValue)
+    );
+
+    setFilteredData(filtered);
+  };
+
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
+
+  const handleExportPDF = async () => {
+    try {
+      setExporting(prev => ({ ...prev, pdf: true }))
+      const locationName = locationList.data?.content?.filter(loc => loc.id === filters.locationId)
+      const categoryName = inventoryCategoryList.data?.content?.filter(loc => loc.id === filters.InventoryCategoryId)
+      console.log(locationName, categoryName)
+
+      await exportToPDF(
+        columns,
+        quantityReportData?.data?.content,
+        `quantity-report (Location: ${locationName[0]?.name ?? 'All'} / Type: ${categoryName[0]?.name ?? 'All'})`
+      )
+
+      message.success('PDF exported successfully')
+    } catch (err) {
+      message.error('PDF export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
+    }
+  }
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(prev => ({ ...prev, excel: true }))
+      const locationName = locationList.data?.content?.filter(loc => loc.id === filters.locationId)
+      const categoryName = inventoryCategoryList.data?.content?.filter(loc => loc.id === filters.InventoryCategoryId)
+
+      await exportToExcel(
+        columns,
+        quantityReportData?.data?.content,
+        `quantity-report (Location: ${locationName[0]?.name ?? 'All'} / Type: ${categoryName[0]?.name ?? 'All'})`
+      )
+
+      message.success('Excel exported successfully')
+    } catch (err) {
+      message.error('Excel export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
+    }
+  }
 
   return (
     <>
@@ -126,50 +170,62 @@ export default function QuantityReports() {
         <meta name="description" content={`${APP_CONFIG.name} - Quantity Reports`} />
       </Helmet>
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+        {/* <Typography variant="h4" gutterBottom fontWeight="bold">
           Quantity Reports
-        </Typography>
+        </Typography> */}
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Form
               form={form}
-              layout="inline"
+              layout="vertical"
               onFinish={handleFilterChange}
-              style={{ marginBottom: 16 }}
             >
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
-              </Form.Item>
-              <Form.Item name="location" label="Location">
-                <Select placeholder="All Locations" style={{ width: 150 }} allowClear>
-                  <Select.Option value="Warehouse A">Warehouse A</Select.Option>
-                  <Select.Option value="Warehouse B">Warehouse B</Select.Option>
-                  <Select.Option value="Depot A">Depot A</Select.Option>
-                  <Select.Option value="Depot B">Depot B</Select.Option>
-                </Select>
-              </Form.Item>
-              <Form.Item name="category" label="Category">
-                <Select placeholder="All Categories" style={{ width: 150 }} allowClear>
-                  <Select.Option value="Spare Parts">Spare Parts</Select.Option>
-                  <Select.Option value="Tools">Tools</Select.Option>
-                  <Select.Option value="Consumables">Consumables</Select.Option>
-                  <Select.Option value="Equipment">Equipment</Select.Option>
-                </Select>
-              </Form.Item>
-              <Form.Item name="asset" label="Asset">
-                <Input placeholder="Asset ID" style={{ width: 150 }} allowClear />
-              </Form.Item>
-              <Form.Item>
-                <Space>
-                  <AntButton type="primary" htmlType="submit">
-                    Apply Filters
-                  </AntButton>
-                  <AntButton onClick={handleResetFilters}>
-                    Reset
-                  </AntButton>
-                </Space>
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Location"
+                    name="location"
+                    rules={[{ required: true, message: 'Please select location!' }]}
+                  >
+                    <Select
+                      placeholder="Select Location"
+                    >
+                      {locationList?.data?.content?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Type"
+                    name="inventoryCategory"
+                    rules={[{ required: true, message: 'Please select type!' }]}
+                  >
+                    <Select
+                      placeholder="Select Type"
+                    >
+                      <Select.Option key={-1} value={-1}> All Type</Select.Option>
+                      {inventoryCategoryList?.data?.content?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={24} md={24} lg={6}>
+                  <Form.Item label=" ">
+                    <Space>
+                      <AntButton type="primary" htmlType="submit" loading={quantityReportLoading || isFetching}>Filter</AntButton>
+                      <AntButton onClick={handleResetFilters}>Reset</AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -178,21 +234,62 @@ export default function QuantityReports() {
           <CardContent>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Space>
-                <AntButton icon={<FileExcelOutlined />}>Export Excel</AntButton>
-                <AntButton icon={<FilePdfOutlined />}>Export PDF</AntButton>
+                <Input
+                  placeholder="Search"
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={handleSearch}
+                  allowClear
+                  style={{ width: 250 }}
+                />
+                <Tooltip title="Export Excel">
+                  <AntButton
+                    type="primary"
+                    icon={<FileExcelOutlined />}
+                    onClick={handleExportExcel}
+                    disabled={quantityReportData?.data?.content?.length === 0}
+                    style={{ backgroundColor: '#5bd71c', color: '#fff' }}
+                  >
+                  </AntButton>
+                </Tooltip>
+                <Tooltip title="Export PDF">
+                  <AntButton
+                    type="primary"
+                    icon={<FilePdfOutlined />}
+                    onClick={handleExportPDF}
+                    disabled={quantityReportData?.data?.content?.length === 0}
+                    style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
+                  >
+                  </AntButton>
+                </Tooltip>
               </Space>
             </Box>
-            {loading ? (
+            {quantityReportLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
+                <Spin />
               </Box>
             ) : (
               <Table
-                dataSource={reports}
+                dataSource={filteredData ?? quantityReportData?.data?.content}
                 columns={columns}
-                rowKey="id"
-                pagination={{ pageSize: 20 }}
+                loading={quantityReportLoading || isFetching}
+                rowKey={(record, index) => record.id + "_" + index}
                 size="middle"
+                scroll={{ x: 'max-content' }}
+                pagination={{
+                  position: ['bottomRight'],
+                  current: current,
+                  pageSize: pageSize,
+                  onChange: setCurrent,
+                  showSizeChanger: true,
+                  onShowSizeChange: (current, size) => {
+                    setPagesize(size);
+                    setCurrent(current);
+                  },
+                  pageSizeOptions: ['25', '50', '100'],
+                  showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                  className: "custom-pagination"
+                }}
               />
             )}
           </CardContent>
@@ -201,4 +298,3 @@ export default function QuantityReports() {
     </>
   )
 }
-

@@ -37,7 +37,7 @@ export default function ToolsReport() {
 
   useEffect(() => {
     form.setFieldsValue({
-      date: [dayjs().startOf('month'), dayjs().endOf('month')],
+      date: [dayjs().startOf('month'), dayjs()],
       location: 10339
     })
   }, [])
@@ -69,33 +69,39 @@ export default function ToolsReport() {
     {
       title: 'Location',
       dataIndex: 'locationName',
-      key: 'locationName'
+      key: 'locationName',
+      sorter: (a, b) => (a?.locationName ?? '').localeCompare(b?.locationName ?? '')
     },
     {
       title: 'Tools Name',
       dataIndex: 'toolsName',
-      key: 'toolsName'
+      key: 'toolsName',
+      sorter: (a, b) => (a?.toolsName ?? '').localeCompare(b?.toolsName ?? '')
     },
     {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
-      render: (_, record) => record.date ? dayjs(record.date).format('DD/MM/YYYY') : '-'
+      render: (_, record) => record.date ? dayjs(record.date).format('DD/MM/YYYY') : '-',
+      sorter: (a, b) => dayjs(a?.date).valueOf() - dayjs(b?.date).valueOf()
     },
     {
       title: 'Required Quantity',
       dataIndex: 'totalQuantity',
-      key: 'totalQuantity'
+      key: 'totalQuantity',
+      sorter: (a, b) => a?.totalQuantity - b?.totalQuantity
     },
     {
       title: 'Actual Quantity',
       dataIndex: 'availableQuantity',
-      key: 'availableQuantity'
+      key: 'availableQuantity',
+      sorter: (a, b) => a?.availableQuantity - b?.availableQuantity
     },
     {
       title: 'Remarks',
       dataIndex: 'remarks',
-      key: 'remarks'
+      key: 'remarks',
+      sorter: (a, b) => (a?.remarks ?? '').localeCompare(b?.remarks ?? '')
     }
   ]
 
@@ -130,11 +136,12 @@ export default function ToolsReport() {
     try {
       console.log("adhsgvuiav bjhav")
       setExporting(prev => ({ ...prev, pdf: true }))
+      const locationName = locationList.data?.content?.filter(loc => loc.id === filters.locationId)
 
       await exportToPDF(
         columns,
         toolsList?.data,
-        `tools-report-${dayjs(filters.fromDate).format('DD-MM-YYYY')}-${dayjs(filters.toDate).format('DD-MM-YYYY')}`
+        `tools-report (Date: ${dayjs(filters.fromDate).format('DD/MM/YYYY')} to ${dayjs(filters.toDate).format('DD/MM/YYYY')} - Location: ${locationName[0]?.name ?? 'All'})`
       )
 
       message.success('PDF exported successfully')
@@ -176,22 +183,23 @@ export default function ToolsReport() {
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Form form={form} layout="inline" onFinish={handleFilterChange} style={{ marginBottom: 16 }}>
-              <Row gutter={8}>
-                <Col span={12}>
+            <Form form={form} layout="vertical" onFinish={handleFilterChange}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item
                     label="Date"
                     name="date"
                     rules={[{ required: true, message: 'Please select date range!' }]}
                   >
                     <RangePicker style={{ width: '100%' }}
+                      format={'DD/MM/YYYY'}
                       disabledDate={(current) =>
                         current && current > dayjs().endOf('day')
                       }
                     />
                   </Form.Item>
                 </Col>
-                <Col span={10}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item
                     label="Location"
                     name="location"
@@ -208,8 +216,8 @@ export default function ToolsReport() {
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col span={2}>
-                  <Form.Item>
+                <Col xs={24} sm={24} md={24} lg={6}>
+                  <Form.Item label=" ">
                     <Space>
                       <AntButton type="primary" htmlType="submit">Filter</AntButton>
                       <AntButton onClick={handleResetFilters}>Reset</AntButton>

@@ -161,8 +161,72 @@ export const reportsApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+    getQuantityReport: build.query({
+      query: (params) => {
+        const { locationId, InventoryCategoryId, pn, ps } = params
+
+        if (!locationId) {
+          throw new Error('LocationId is required for getQuantityReport')
+        }
+
+        if (!InventoryCategoryId) {
+          throw new Error('InventoryCategoryId is required for getQuantityReport')
+        }
+
+        const queryParams = {
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
+          InventoryCategoryId: Array.isArray(InventoryCategoryId) ? InventoryCategoryId.join(',') : InventoryCategoryId?.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/quantityreports/bycategory/locationwise`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['QuantityReports'],
+    }),
+
+    getSpareUsageReport: build.query({
+      query: (params) => {
+        const { clientId, fromDate, toDate, locationId, inventoryId, pn, ps } = params
+
+        if (!clientId) {
+          throw new Error('clientId is required for getSpareUsageReport')
+        }
+
+        const queryParams = {
+          clientId: clientId.toString(),
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
+          inventoryId: Array.isArray(inventoryId) ? inventoryId.join(',') : inventoryId?.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/spareusagereport/getbyinward`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
 
-export const { useGetDailyLocationReportQuery, useGetMonthlyEmployeeReportQuery, useGetConsolidateManpowerReportQuery,useGetEnergyConsumptionReportQuery,useGetEquipmentRunStatusReportQuery, useGetToolsReportQuery } = reportsApi
+export const {
+  useGetDailyLocationReportQuery,
+  useGetMonthlyEmployeeReportQuery,
+  useGetConsolidateManpowerReportQuery,
+  useGetEnergyConsumptionReportQuery,
+  useGetEquipmentRunStatusReportQuery,
+  useGetToolsReportQuery,
+  useGetQuantityReportQuery,
+  useGetSpareUsageReportQuery
+} = reportsApi
