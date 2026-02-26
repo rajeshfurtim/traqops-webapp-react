@@ -216,6 +216,33 @@ export const reportsApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+    getAssetHistoryReport: build.query({
+      query: (params) => {
+        const { clientId, fromDate, toDate, locationId, assetsId, pn, ps } = params
+
+        if (!clientId) {
+          throw new Error('clientId is required for getAssetHistoryReport')
+        }
+
+        const queryParams = {
+          clientId: clientId.toString(),
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
+          assetsId: Array.isArray(assetsId) ? assetsId.join(',') : assetsId?.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/getassetmovements/byinwardoutward`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -228,5 +255,6 @@ export const {
   useGetEquipmentRunStatusReportQuery,
   useGetToolsReportQuery,
   useGetQuantityReportQuery,
-  useGetSpareUsageReportQuery
+  useGetSpareUsageReportQuery,
+  useGetAssetHistoryReportQuery
 } = reportsApi
