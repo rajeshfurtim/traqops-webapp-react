@@ -54,8 +54,66 @@ export const taskReportApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+
+
+    getLocationwiseSheduled: build.query({
+      query: (params) => {
+        const { clientId, locationId, pn, ps } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getLocationwiseSheduled')
+        }
+        if (!locationId) {
+          throw new Error('LocationId is required for getLocationwiseSheduled')
+        }
+
+        return {
+          url: `${API_BASE_URL}/assets/getassetsfilter/locationwise`,
+          method: 'GET',
+          params: {
+            locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
+            clientId: clientId.toString(),
+            ...(pn != null && { pn: pn.toString() }),
+            ...(ps != null && { ps: ps.toString() }),
+          },
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
+
+    getconsolitadeReport: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId } = params
+        if (!fromDate || !toDate) {
+          throw new Error('FromDate and ToDate are required for getconsolitadeReport')
+        } 
+        if (!locationId) {
+          throw new Error('LocationId is required for getconsolitadeReport')
+        }
+
+
+        return {
+          url: `${API_BASE_URL}/pmtask/consolidatereport/locationwise`,
+          method: 'GET',
+          params: {
+            fromDate,
+            toDate,
+            ...(locationId != null && { locationId: locationId.toString() }),
+          },
+        }
+      },
+      providesTags: ['Report'],
+    })
+
+
   }),
   overrideExisting: false,
 })
 
-export const { useGetFrequencyCountQuery, useGetLocationwiseQuery } = taskReportApi
+export const {
+  useGetFrequencyCountQuery,
+  useGetLocationwiseQuery,
+  useGetLocationwiseSheduledQuery,
+  useGetconsolitadeReportQuery
+} = taskReportApi
