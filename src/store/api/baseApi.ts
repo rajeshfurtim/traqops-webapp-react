@@ -66,7 +66,11 @@ export const baseApi = createApi({
     'KPIsCategory',
     'KPIs',
     'Type',
-    'QuantityReports'
+    'QuantityReports',
+    'PenaltyCategory',
+    'EvaluationPenaltys',
+    'EvaluationElementsPenaltys',
+    'Penalty'
   ],
   endpoints: () => ({}),
 })
