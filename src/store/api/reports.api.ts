@@ -309,6 +309,46 @@ export const reportsApi = baseApi.injectEndpoints({
         error ? [] :["EvaluationElementsPenaltys"], 
     }),
 
+    getInvoiceSummary: build.query({
+      query: (params) => {
+        const { clientId, kpiTypeId, pn, ps } = params
+
+        if (!clientId) {
+          throw new Error('clientId is required for getInvoiceSummary')
+        }
+
+        const queryParams = {
+         clientId: clientId.toString(),
+         kpiTypeId: kpiTypeId.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/getinvoice/bykpitypeid`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['InvoiceGenerate'],
+    }),
+
+    invoiceGenerate: build.mutation({
+      query: (payload) => {
+        if (!payload?.id) {
+          throw new Error("id is required for invoice generate");
+        }
+    
+        return {
+          url: `${API_BASE_URL}/invoice/generate/poov`,
+          method: "GET",
+          params: payload,
+        };
+      },
+      invalidatesTags: (result, error) =>
+        error ? [] :["InvoiceGenerate"], 
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -325,5 +365,7 @@ export const {
   useGetAssetHistoryReportQuery,
   useGetPenaltySummaryReportQuery,
   useGetEvaluationElementsPenaltysQuery,
-  useAddEvaluationPenaltyMutation
+  useAddEvaluationPenaltyMutation,
+  useGetInvoiceSummaryQuery,
+  useInvoiceGenerateMutation
 } = reportsApi
