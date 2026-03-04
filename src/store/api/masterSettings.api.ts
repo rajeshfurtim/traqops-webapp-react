@@ -1451,6 +1451,48 @@ getAllTypeList: build.query({
       providesTags: ['Type'],
     }),
 
+getPenaltyCategoryByKpiId: build.query({
+      query: (params) => {
+        const {
+          kpiTypeId
+        } = params
+
+        if (!kpiTypeId) {
+          throw new Error('kpiTypeId is required for getPenaltyCategoryByKpiId')
+        }
+
+        return {
+          url: `${API_BASE_URL}/getpenaltycategory/bykpitypeid`,
+          method: 'GET',
+          params: {
+            kpiTypeId: kpiTypeId?.toString() ?? '',
+          },
+        }
+      },
+      providesTags: ['PenaltyCategory'],
+    }),
+
+getPenaltyByCategoryId: build.query({
+      query: (params) => {
+        const {
+          penaltyCategoryId
+        } = params
+
+        if (!penaltyCategoryId) {
+          throw new Error('penaltyCategoryId is required for getPenaltyByCategoryId')
+        }
+
+        return {
+          url: `${API_BASE_URL}/getpenalty/bypenaltyCategory`,
+          method: 'GET',
+          params: {
+            penaltyCategoryId: penaltyCategoryId?.toString() ?? '',
+          },
+        }
+      },
+      providesTags: ['Penalty'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -1540,5 +1582,7 @@ export const {
   useGetAllKPIsListQuery,
   useAddKPIsMutation,
   useDeleteKPIsMutation,
-  useGetAllTypeListQuery
+  useGetAllTypeListQuery,
+  useGetPenaltyCategoryByKpiIdQuery,
+  useGetPenaltyByCategoryIdQuery
 } = masterSettingsApi

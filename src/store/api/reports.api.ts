@@ -216,6 +216,139 @@ export const reportsApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+    getAssetHistoryReport: build.query({
+      query: (params) => {
+        const { clientId, fromDate, toDate, locationId, assetsId, pn, ps } = params
+
+        if (!clientId) {
+          throw new Error('clientId is required for getAssetHistoryReport')
+        }
+
+        const queryParams = {
+          clientId: clientId.toString(),
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
+          assetsId: Array.isArray(assetsId) ? assetsId.join(',') : assetsId?.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/getassetmovements/byinwardoutward`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
+    getPenaltySummaryReport: build.query({
+      query: (params) => {
+        const { fromDate, toDate, kpiTypeId, penaltyCategoryId } = params
+
+        if (!kpiTypeId) {
+          throw new Error('kpiTypeId is required for getPenaltySummaryReport')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          kpiTypeId: Array.isArray(kpiTypeId) ? kpiTypeId.join(',') : kpiTypeId?.toString(),
+          penaltyCategoryId: Array.isArray(penaltyCategoryId) ? penaltyCategoryId.join(',') : penaltyCategoryId?.toString()
+        }
+
+        return {
+          url: `${API_BASE_URL}/evaluationpenaltys/getbykpitype`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['EvaluationPenaltys'],
+    }),
+
+    getEvaluationElementsPenaltys: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId, penaltyCategoryId, pn, ps } = params
+
+        if (!locationId) {
+          throw new Error('locationId is required for getEvaluationElementsPenaltys')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
+          penaltyCategoryId: Array.isArray(penaltyCategoryId) ? penaltyCategoryId.join(',') : penaltyCategoryId?.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/evaluationelementspenaltys/getbylocation`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['EvaluationElementsPenaltys'],
+    }),
+
+    addEvaluationPenalty: build.mutation({
+      query: (payload) => {
+        if (!payload?.locationId) {
+          throw new Error("locationId is required for add evaluation penalty");
+        }
+    
+        return {
+          url: `${API_BASE_URL}/evaluationpenaltyelements/addorupdate/poov`,
+          method: "POST",
+          body: payload,
+        };
+      },
+      invalidatesTags: (result, error) =>
+        error ? [] :["EvaluationElementsPenaltys"], 
+    }),
+
+    getInvoiceSummary: build.query({
+      query: (params) => {
+        const { clientId, kpiTypeId, pn, ps } = params
+
+        if (!clientId) {
+          throw new Error('clientId is required for getInvoiceSummary')
+        }
+
+        const queryParams = {
+         clientId: clientId.toString(),
+         kpiTypeId: kpiTypeId.toString(),
+          pn: pn,
+          ps: ps
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/getinvoice/bykpitypeid`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['InvoiceGenerate'],
+    }),
+
+    invoiceGenerate: build.mutation({
+      query: (payload) => {
+        if (!payload?.id) {
+          throw new Error("id is required for invoice generate");
+        }
+    
+        return {
+          url: `${API_BASE_URL}/invoice/generate/poov`,
+          method: "GET",
+          params: payload,
+        };
+      },
+      invalidatesTags: (result, error) =>
+        error ? [] :["InvoiceGenerate"], 
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -228,5 +361,11 @@ export const {
   useGetEquipmentRunStatusReportQuery,
   useGetToolsReportQuery,
   useGetQuantityReportQuery,
-  useGetSpareUsageReportQuery
+  useGetSpareUsageReportQuery,
+  useGetAssetHistoryReportQuery,
+  useGetPenaltySummaryReportQuery,
+  useGetEvaluationElementsPenaltysQuery,
+  useAddEvaluationPenaltyMutation,
+  useGetInvoiceSummaryQuery,
+  useInvoiceGenerateMutation
 } = reportsApi
