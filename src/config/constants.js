@@ -50,6 +50,7 @@ export const PAGE_TITLES = {
   'reports/tools': 'Tools Report',
   'reports/maintenance-checklist': 'Maintenance Checklist',
   'reports/operation-checklist': 'Operation Checklist',
+  'reports/operation-checklist/chiller-monitoring': 'Chiller Monitoring',
   'reports/history-cards': 'History Cards',
   'reports/evaluation-penalty': 'Evaluation & Penalty',
   'reports/cmrl-app': 'CMRL App Reports',

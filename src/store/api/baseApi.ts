@@ -71,7 +71,9 @@ export const baseApi = createApi({
     'EvaluationPenaltys',
     'EvaluationElementsPenaltys',
     'Penalty',
-    'InvoiceGenerate'
+    'InvoiceGenerate',
+    'AssetsList',
+    'Voltas'
   ],
   endpoints: () => ({}),
 })
