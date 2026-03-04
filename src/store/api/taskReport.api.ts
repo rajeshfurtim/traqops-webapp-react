@@ -104,6 +104,29 @@ export const taskReportApi = baseApi.injectEndpoints({
         }
       },
       providesTags: ['Report'],
+    }),
+
+    getCmReportSummary: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId } = params
+        if (!fromDate || !toDate) {
+          throw new Error('FromDate and ToDate are required for getCmReportSummary')
+        }
+        if (!locationId) {
+          throw new Error('LocationId is required for getCmReportSummary')
+        }
+
+        return {
+          url: `${API_BASE_URL}/breakdown/summaryreport/bylocation`,
+          method: 'GET',
+          params: {
+            fromDate,
+            toDate,
+            ...(locationId != null && { locationId: locationId.toString() }),
+          },
+        }
+      },
+      providesTags: ['Report'],
     })
 
 
@@ -115,5 +138,6 @@ export const {
   useGetFrequencyCountQuery,
   useGetLocationwiseQuery,
   useGetLocationwiseSheduledQuery,
-  useGetconsolitadeReportQuery
+  useGetconsolitadeReportQuery,
+  useGetCmReportSummaryQuery
 } = taskReportApi
