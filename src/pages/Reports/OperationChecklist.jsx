@@ -16,11 +16,11 @@ export default function OperationChecklist() {
     },
     {
       title: '2. Shift Starting Checklist VAC & TVS - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      path: '/reports/operation-checklist/shift-starting'
     },
     {
       title: '3. Critical Room Temp monitoring - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      path: '/reports/operation-checklist/critical-temp'
     },
     {
       title: '4. Daily Closing Reading Checklist and Consumption - Operation',
@@ -51,7 +51,7 @@ export default function OperationChecklist() {
       path: '/reports/operation-checklist/chiller-monitoring'
     },
     {
-      title: '11. DAILY ELECTRICAL PANEL MONITORING - Operation',
+      title: '11. Daily Electrical Panel Monitoring - Operation',
       path: '/reports/operation-checklist/chiller-monitoring'
     }
   ]

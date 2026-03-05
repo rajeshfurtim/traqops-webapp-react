@@ -220,10 +220,22 @@ export const sidebarMenuConfig = [
         children: [
           {
             key: '/reports/operation-checklist/chiller-monitoring',
-            icon: 'BarChartOutlined',
+            icon: 'UnorderedListOutlined',
             label: 'Chiller Monitoring',
             path: '/reports/operation-checklist/chiller-monitoring'
-          }
+          },
+          {
+            key: '/reports/operation-checklist/shift-starting',
+            icon: 'UnorderedListOutlined',
+            label: 'Shift Starting',
+            path: '/reports/operation-checklist/shift-starting'
+          },
+          {
+            key: '/reports/operation-checklist/critical-temp',
+            icon: 'UnorderedListOutlined',
+            label: 'Critical Room Temp',
+            path: '/reports/operation-checklist/critical-temp'
+          },
         ]
       }
     ]

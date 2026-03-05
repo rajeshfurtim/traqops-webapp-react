@@ -52,6 +52,8 @@ import ToolsReport from '../pages/Reports/ToolsReport'
 import MaintenanceChecklist from '../pages/Reports/MaintenanceChecklist'
 import OperationChecklist from '../pages/Reports/OperationChecklist'
 import ChillerMonitoring from '../pages/Reports/OperationChecklistPages/ChillerMonitoring'
+import ShiftStarting from '../pages/Reports/OperationChecklistPages/ShiftStarting'
+import CriticalRoomTemp from '../pages/Reports/OperationChecklistPages/CriticalRoomTemp'
 import HistoryCards from '../pages/Reports/HistoryCards'
 import EvaluationPenalty from '../pages/Reports/EvaluationPenalty'
 import CmrlAppReports from '../pages/Reports/CmrlAppReports'
@@ -145,6 +147,8 @@ function App() {
               <Route path="reports/maintenance-checklist" element={<MaintenanceChecklist />} />
               <Route path="reports/operation-checklist" element={<OperationChecklist />} />
               <Route path="reports/operation-checklist/chiller-monitoring" element={<ChillerMonitoring />} />
+              <Route path="reports/operation-checklist/shift-starting" element={<ShiftStarting />} />
+              <Route path="reports/operation-checklist/critical-temp" element={<CriticalRoomTemp />} />
               <Route path="reports/history-cards" element={<HistoryCards />} />
               <Route path="reports/evaluation-penalty" element={<EvaluationPenalty />} />
               <Route path="reports/cmrl-app" element={<CmrlAppReports />} />
