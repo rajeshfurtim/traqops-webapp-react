@@ -17,6 +17,7 @@ export const PAGE_TITLES = {
   'reports/daily': 'Daily Reports',
   'reports/daily/energy-consumption': 'Energy Consumption Details',
   'reports/daily/equipment-run-status': 'Equipment Run Status',
+  'reports/daily/Tvs-Status': 'Tvs Status',
   'reports/daily/chiller-run-hour': 'Chiller Run Hour',
   'reports/daily/temperature-run-status': 'Temperature Run Status',
   // Attendance Reports

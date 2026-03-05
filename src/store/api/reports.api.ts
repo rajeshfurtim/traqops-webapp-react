@@ -151,6 +151,26 @@ export const reportsApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+     getTvsStatusReport: build.query({
+      query: (params) => {
+        const { fromdate,todate, locationId} = params
+        const queryParams = {
+          fromdate,
+          todate,
+          locationId
+          // clientId: clientId.toString(),
+          // ...(locationId !== undefined && locationId !== null && { locationId: locationId.toString() }),
+          // ...(userTypeId !== undefined && userTypeId !== null && { userTypeId: userTypeId.toString() }),
+        }
+
+        return {
+          url: `${API_BASE_URL}/voltas/report/tvsstatus/bylocation`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
 
     getToolsReport: build.query({
       query: (params) => {
@@ -380,6 +400,7 @@ export const {
   useGetEnergyConsumptionReportQuery,
   useGetEquipmentRunStatusReportQuery,
   useGetTemperatureRunStatusReportQuery,
+  useGetTvsStatusReportQuery,
   useGetToolsReportQuery,
   useGetQuantityReportQuery,
   useGetSpareUsageReportQuery,

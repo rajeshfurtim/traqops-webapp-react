@@ -6,18 +6,18 @@ import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { mockApi } from '../../../services/api'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants';
-import { useGetTemperatureRunStatusReportQuery } from '../../../store/api/reports.api';
+import { useGetTvsStatusReportQuery } from '../../../store/api/reports.api';
 import { useGetLocationList } from '../../../hooks/useGetLocationList';
 import { exportToExcel,exportToPDF } from '../../../utils/exportUtils';
 const { RangePicker } = DatePicker
 
-export default function TemperatureRunStatus() {
+export default function TvsStatus() {
   const [loading, setLoading] = useState(true)
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState({})
   const [form] = Form.useForm()
    const { locations, loading: locationsLoading } = useGetLocationList();
-   const { data: response, isLoading: queryLoading,isFetching, error: queryError,}=useGetTemperatureRunStatusReportQuery(
+   const { data: response, isLoading: queryLoading,isFetching, error: queryError,}=useGetTvsStatusReportQuery(
        {
          fromdate:filters.startdate,
          todate: filters.enddate,
@@ -40,7 +40,7 @@ export default function TemperatureRunStatus() {
       const response = await mockApi.getTemperatureRunStatus(filters)
       setReports(response.data.reports)
     } catch (error) {
-      console.error('Error loading temperature run status:', error)
+      console.error('Error loading Tvs Status:', error)
     } finally {
       setLoading(false)
     }
@@ -105,7 +105,7 @@ export default function TemperatureRunStatus() {
       const formattedEndDate2 = endDate?.format("YYYY-MM-DD");
       const location1 = values.location;
       const locationName=locationOptions.find((x)=>x.id==location1)
-          const title=`Temperature Run Status-${formattedStartDate1}-TO-${formattedEndDate2}-${(location1 =='-1'?'ALL':locationName.name)}`
+          const title=`Tvs Status-${formattedStartDate1}-TO-${formattedEndDate2}-${(location1 =='-1'?'ALL':locationName.name)}`
         try {
           setExporting(prev => ({ ...prev, pdf: true }))
       
@@ -130,7 +130,7 @@ export default function TemperatureRunStatus() {
       const formattedEndDate2 = endDate?.format("YYYY-MM-DD");
       const location1 = values.location;
       const locationName=locationOptions.find((x)=>x.id==location1)
-        const title=`Temperature Run Status-${formattedStartDate1}-TO-${formattedEndDate2}-${(location1 =='-1'?'ALL':locationName.name)}`
+        const title=`Tvs Status-${formattedStartDate1}-TO-${formattedEndDate2}-${(location1 =='-1'?'ALL':locationName.name)}`
           try {
             setExporting(prev => ({ ...prev, excel: true }))
         
@@ -161,17 +161,10 @@ export default function TemperatureRunStatus() {
       key: 'date',
       width: 120,
     },
-     { dataIndex: "scr",key:'scr', title: "SCR" },
-      { dataIndex: "upsRoom",key:'upsRoom',  title: "UPS Room" },
-      { dataIndex: "ser",key:'serscr', title: "SER" },
-      { dataIndex: "cer",key:'cer', title: "CER" },
-      { dataIndex: "transformerRoom",key:'transformerRoom', title: "Transformer Room" },
-      { dataIndex: "lowVoltageRoom",key:'lowVoltageRoom', title: "Low Voltage Room" },
-      { dataIndex: "mediumVoltageRoom",key:'mediumVoltageRoom', title: "Medium Voltage Room" },
-      { dataIndex: "platformLhs",key:'platformLhs', title: "Platform (LHS)" },
-      { dataIndex: "platformRhs",key:'platformRhs', title: "Platform (RHS)" },
-      { dataIndex: "concourseLhs",key:'concourseLhs', title: "Concourse (LHS)" },
-      { dataIndex: "concourseRhs",key:'concourseRhs', title: "Concourse (RHS)" }
+     { dataIndex: "status",key:'status', title: "TVS MODE : NORMAL MODE SUCCESS/UNSUCCESS)" },
+      { dataIndex: "dnline",key:'dnline',  title: "TEF DNLIN" },
+      { dataIndex: "upline",key:'upline', title: "TEF UPLINE" },
+     
   ]
    const handleResetFilters = () => {
     form.resetFields()
@@ -192,10 +185,10 @@ export default function TemperatureRunStatus() {
   </style> */}
       <Helmet>
         <title>{getPageTitle('reports/daily/temperature-run-status')}</title>
-        <meta name="description" content={`${APP_CONFIG.name} - Temperature Run Status`} />
+        <meta name="description" content={`${APP_CONFIG.name} - Tvs Status`} />
       </Helmet>
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">Temperature Run Status</Typography>
+        <Typography variant="h4" gutterBottom fontWeight="bold">Tvs Status</Typography>
         <Card sx={{ mb: 3 }}>
            <CardContent>
                      <Form  initialValues={{
@@ -264,4 +257,5 @@ export default function TemperatureRunStatus() {
     </>
   )
 }
+
 

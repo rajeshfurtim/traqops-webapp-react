@@ -14,7 +14,8 @@ import Inventory from '../pages/Inventory'
 import ReportsIndex from '../pages/Reports/index'
 // Daily Reports
 import DailyReportsIndex from '../pages/Reports/Daily/index'
-import EnergyConsumption from '../pages/Reports/Daily/EnergyConsumption'
+import EnergyConsumption from '../pages/Reports/Daily/EnergyConsumption';
+import TvsStatus from '../pages/Reports/Daily/TvsStatus';
 import EquipmentRunStatus from '../pages/Reports/Daily/EquipmentRunStatus'
 import ChillerRunHour from '../pages/Reports/Daily/ChillerRunHour'
 import TemperatureRunStatus from '../pages/Reports/Daily/TemperatureRunStatus'
@@ -102,6 +103,7 @@ function App() {
               <Route path="reports/daily" element={<DailyReportsIndex />} />
               <Route path="reports/daily/energy-consumption" element={<EnergyConsumption />} />
               <Route path="reports/daily/equipment-run-status" element={<EquipmentRunStatus />} />
+              <Route path="reports/daily/Tvs-status" element={<TvsStatus />} />
               <Route path="reports/daily/chiller-run-hour" element={<ChillerRunHour />} />
               <Route path="reports/daily/temperature-run-status" element={<TemperatureRunStatus />} />
               {/* Attendance Reports nested routes */}

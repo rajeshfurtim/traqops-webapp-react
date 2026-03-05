@@ -52,6 +52,12 @@ export const sidebarMenuConfig = [
             path: '/reports/daily/energy-consumption'
           },
           {
+            key: '/reports/daily/Tvs-Status',
+            icon: 'ThunderboltOutlined',
+            label: 'Tvs Status',
+            path: '/reports/daily/Tvs-Status'
+          },
+          {
             key: '/reports/daily/equipment-run-status',
             icon: 'DesktopOutlined',
             label: 'Equipment Run Status',

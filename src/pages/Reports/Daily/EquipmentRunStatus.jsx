@@ -232,7 +232,7 @@ const getStatusCellStyle = (value) => ({
 
   return (
     <>
-    <style>
+    {/* <style>
     {`
       .ant-table-wrapper .ant-table-thead > tr > th,
       .ant-table-wrapper .ant-table-tbody > tr > td {
@@ -241,7 +241,7 @@ const getStatusCellStyle = (value) => ({
 
 
     `}
-  </style>
+  </style> */}
 
       <Helmet>
         <title>{getPageTitle('reports/daily/equipment-run-status')}</title>

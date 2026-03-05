@@ -315,7 +315,7 @@ export default function EnergyConsumption() {
 
   return (
     <>
-     <style>
+     {/* <style>
     {`
       .ant-table-wrapper .ant-table-thead > tr > th,
       .ant-table-wrapper .ant-table-tbody > tr > td {
@@ -324,7 +324,7 @@ export default function EnergyConsumption() {
 
 
     `}
-  </style>
+  </style> */}
       <Helmet>
         <title>{getPageTitle('reports/daily/energy-consumption')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Energy Consumption Details`} />

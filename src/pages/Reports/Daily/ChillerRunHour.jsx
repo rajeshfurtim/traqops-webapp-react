@@ -202,7 +202,7 @@ export default function ChillerRunHour() {
 
   return (
     <>
-     <style>
+     {/* <style>
     {`
       .ant-table-wrapper .ant-table-thead > tr > th,
       .ant-table-wrapper .ant-table-tbody > tr > td {
@@ -211,7 +211,7 @@ export default function ChillerRunHour() {
 
 
     `}
-  </style>
+  </style> */}
       <Helmet>
         <title>{getPageTitle('reports/daily/chiller-run-hour')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Chiller Run Hour`} />
