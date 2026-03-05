@@ -205,6 +205,20 @@ export const sidebarMenuConfig = [
         icon: 'ToolOutlined',
         label: 'Tools Report',
         path: '/reports/tools'
+      },
+      {
+        key: '/reports/operation-checklist',
+        icon: 'UnorderedListOutlined',
+        label: 'Operation Checklists',
+        path: '/reports/operation-checklist',
+        children: [
+          {
+            key: '/reports/operation-checklist/chiller-monitoring',
+            icon: 'BarChartOutlined',
+            label: 'Chiller Monitoring',
+            path: '/reports/operation-checklist/chiller-monitoring'
+          }
+        ]
       }
     ]
   },

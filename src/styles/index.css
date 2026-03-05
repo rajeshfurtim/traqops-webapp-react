@@ -68,3 +68,8 @@ body {
 .ant-input::-moz-placeholder {
   color: #8c8c8c !important;
 }
+
+.checklist-item:hover {
+  background-color: #f5f5f5;
+   color: #4096ff;
+}

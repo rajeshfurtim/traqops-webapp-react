@@ -50,6 +50,7 @@ import InventoryReport from '../pages/Reports/InventoryReport'
 import ToolsReport from '../pages/Reports/ToolsReport'
 import MaintenanceChecklist from '../pages/Reports/MaintenanceChecklist'
 import OperationChecklist from '../pages/Reports/OperationChecklist'
+import ChillerMonitoring from '../pages/Reports/OperationChecklistPages/ChillerMonitoring'
 import HistoryCards from '../pages/Reports/HistoryCards'
 import EvaluationPenalty from '../pages/Reports/EvaluationPenalty'
 import CmrlAppReports from '../pages/Reports/CmrlAppReports'
@@ -79,90 +80,91 @@ function App() {
         <ClientProvider>
           <PageTitle />
           <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="corrective-maintenance" element={<CorrectiveMaintenance />} />
-          <Route path="scheduled-maintenance" element={<ScheduledMaintenance />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="reports" element={<ReportsIndex />} />
-          {/* Daily Reports nested routes */}
-          <Route path="reports/daily" element={<DailyReportsIndex />} />
-          <Route path="reports/daily/energy-consumption" element={<EnergyConsumption />} />
-          <Route path="reports/daily/equipment-run-status" element={<EquipmentRunStatus />} />
-          <Route path="reports/daily/chiller-run-hour" element={<ChillerRunHour />} />
-          <Route path="reports/daily/temperature-run-status" element={<TemperatureRunStatus />} />
-          {/* Attendance Reports nested routes */}
-          <Route path="reports/attendance/daily" element={<DailyAttendanceReport />} />
-          <Route path="reports/attendance/monthly" element={<MonthlyAttendanceReport />} />
-          <Route path="reports/attendance/monthly-employee" element={<MonthlyEmployeeAttendanceReport />} />
-          <Route path="reports/attendance/monthly-daily" element={<MonthlyDailyAttendanceReport />} />
-          <Route path="reports/attendance/timesheet" element={<TimesheetReport />} />
-          <Route path="reports/attendance/consolidated-manpower" element={<ConsolidatedManpowerReport />} />
-          {/* Task Reports nested routes */}
-          <Route path="reports/tasks" element={<TasksIndex />} />
-          <Route path="reports/tasks/scheduled" element={<ScheduledMaintenanceReports />} />
-          <Route path="reports/tasks/scheduled-details" element={<ScheduledMaintenanceDetailsReports />} />
-          <Route path="reports/tasks/scheduled-consolidated" element={<ConsolidatedScheduledMaintenanceReport />} />
-          <Route path="reports/tasks/corrective" element={<CorrectiveMaintenanceReports />} />
-          <Route path="reports/tasks/corrective-details" element={<CorrectiveMaintenanceDetailsReports />} />
-          {/* Catch-all for task reports - redirect to scheduled */}
-          <Route path="reports/tasks/*" element={<Navigate to="/reports/tasks/scheduled" replace />} />
-          {/* Inventory Reports nested routes */}
-          <Route path="reports/inventory" element={<InventoryReportsIndex />} />
-          <Route path="reports/inventory/quantity" element={<QuantityReports />} />
-          <Route path="reports/inventory/spare-usage" element={<SpareUsageReports />} />
-          <Route path="reports/inventory/asset-history" element={<AssetHistoryReports />} />
-          {/* Catch-all for inventory reports - redirect to quantity */}
-          <Route path="reports/inventory/*" element={<Navigate to="/reports/inventory/quantity" replace />} />
-          {/* Evaluation Reports nested routes */}
-          <Route path="reports/evaluation" element={<EvaluationReportsIndex />} />
-          <Route path="reports/evaluation/penalty-summary" element={<PenaltySummary />} />
-          <Route path="reports/evaluation/penalty-details" element={<PenaltyDetails />} />
-          {/* Catch-all for evaluation reports - redirect to penalty-summary */}
-          <Route path="reports/evaluation/*" element={<Navigate to="/reports/evaluation/penalty-summary" replace />} />
-          {/* Legacy report routes (backward compatibility) */}
-          <Route path="reports/daily-old" element={<DailyReports />} />
-          <Route path="reports/attendance" element={<AttendanceReport />} />
-          <Route path="reports/tasks-old" element={<TaskReport />} />
-          <Route path="reports/audit" element={<AuditReport />} />
-          <Route path="reports/inventory-old" element={<InventoryReport />} />
-          <Route path="reports/tools" element={<ToolsReport />} />
-          <Route path="reports/maintenance-checklist" element={<MaintenanceChecklist />} />
-          <Route path="reports/operation-checklist" element={<OperationChecklist />} />
-          <Route path="reports/history-cards" element={<HistoryCards />} />
-          <Route path="reports/evaluation-penalty" element={<EvaluationPenalty />} />
-          <Route path="reports/cmrl-app" element={<CmrlAppReports />} />
-          <Route path="invoices" element={<Invoices />} />
-          <Route path="documents" element={<Documents />} />
-          {/* Master Settings nested routes */}
-          <Route path="master-settings" element={<MasterSettingsIndex />} />
-          <Route path="master-settings/user" element={<UserMaster />} />
-          <Route path="master-settings/location" element={<LocationMaster />} />
-          <Route path="master-settings/shifts" element={<ShiftsMaster />} />
-          <Route path="master-settings/assets" element={<AssetsMaster />} />
-          <Route path="master-settings/inventory" element={<InventoryMaster />} />
-          <Route path="master-settings/tools" element={<ToolsMaster />} />
-          <Route path="master-settings/checklist" element={<ChecklistMaster />} />
-          <Route path="master-settings/cm-configuration" element={<CMConfiguration />} />
-          <Route path="master-settings/kpis" element={<KPIsMaster />} />
-          {/* Catch-all for master settings - redirect to user */}
-          <Route path="master-settings/*" element={<Navigate to="/master-settings/user" replace />} />
-          {/* Legacy master settings (backward compatibility) */}
-          <Route path="master-settings-old" element={<MasterSettings />} />
-        </Route>
-      </Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="corrective-maintenance" element={<CorrectiveMaintenance />} />
+              <Route path="scheduled-maintenance" element={<ScheduledMaintenance />} />
+              <Route path="inventory" element={<Inventory />} />
+              <Route path="reports" element={<ReportsIndex />} />
+              {/* Daily Reports nested routes */}
+              <Route path="reports/daily" element={<DailyReportsIndex />} />
+              <Route path="reports/daily/energy-consumption" element={<EnergyConsumption />} />
+              <Route path="reports/daily/equipment-run-status" element={<EquipmentRunStatus />} />
+              <Route path="reports/daily/chiller-run-hour" element={<ChillerRunHour />} />
+              <Route path="reports/daily/temperature-run-status" element={<TemperatureRunStatus />} />
+              {/* Attendance Reports nested routes */}
+              <Route path="reports/attendance/daily" element={<DailyAttendanceReport />} />
+              <Route path="reports/attendance/monthly" element={<MonthlyAttendanceReport />} />
+              <Route path="reports/attendance/monthly-employee" element={<MonthlyEmployeeAttendanceReport />} />
+              <Route path="reports/attendance/monthly-daily" element={<MonthlyDailyAttendanceReport />} />
+              <Route path="reports/attendance/timesheet" element={<TimesheetReport />} />
+              <Route path="reports/attendance/consolidated-manpower" element={<ConsolidatedManpowerReport />} />
+              {/* Task Reports nested routes */}
+              <Route path="reports/tasks" element={<TasksIndex />} />
+              <Route path="reports/tasks/scheduled" element={<ScheduledMaintenanceReports />} />
+              <Route path="reports/tasks/scheduled-details" element={<ScheduledMaintenanceDetailsReports />} />
+              <Route path="reports/tasks/scheduled-consolidated" element={<ConsolidatedScheduledMaintenanceReport />} />
+              <Route path="reports/tasks/corrective" element={<CorrectiveMaintenanceReports />} />
+              <Route path="reports/tasks/corrective-details" element={<CorrectiveMaintenanceDetailsReports />} />
+              {/* Catch-all for task reports - redirect to scheduled */}
+              <Route path="reports/tasks/*" element={<Navigate to="/reports/tasks/scheduled" replace />} />
+              {/* Inventory Reports nested routes */}
+              <Route path="reports/inventory" element={<InventoryReportsIndex />} />
+              <Route path="reports/inventory/quantity" element={<QuantityReports />} />
+              <Route path="reports/inventory/spare-usage" element={<SpareUsageReports />} />
+              <Route path="reports/inventory/asset-history" element={<AssetHistoryReports />} />
+              {/* Catch-all for inventory reports - redirect to quantity */}
+              <Route path="reports/inventory/*" element={<Navigate to="/reports/inventory/quantity" replace />} />
+              {/* Evaluation Reports nested routes */}
+              <Route path="reports/evaluation" element={<EvaluationReportsIndex />} />
+              <Route path="reports/evaluation/penalty-summary" element={<PenaltySummary />} />
+              <Route path="reports/evaluation/penalty-details" element={<PenaltyDetails />} />
+              {/* Catch-all for evaluation reports - redirect to penalty-summary */}
+              <Route path="reports/evaluation/*" element={<Navigate to="/reports/evaluation/penalty-summary" replace />} />
+              {/* Legacy report routes (backward compatibility) */}
+              <Route path="reports/daily-old" element={<DailyReports />} />
+              <Route path="reports/attendance" element={<AttendanceReport />} />
+              <Route path="reports/tasks-old" element={<TaskReport />} />
+              <Route path="reports/audit" element={<AuditReport />} />
+              <Route path="reports/inventory-old" element={<InventoryReport />} />
+              <Route path="reports/tools" element={<ToolsReport />} />
+              <Route path="reports/maintenance-checklist" element={<MaintenanceChecklist />} />
+              <Route path="reports/operation-checklist" element={<OperationChecklist />} />
+              <Route path="reports/operation-checklist/chiller-monitoring" element={<ChillerMonitoring />} />
+              <Route path="reports/history-cards" element={<HistoryCards />} />
+              <Route path="reports/evaluation-penalty" element={<EvaluationPenalty />} />
+              <Route path="reports/cmrl-app" element={<CmrlAppReports />} />
+              <Route path="invoices" element={<Invoices />} />
+              <Route path="documents" element={<Documents />} />
+              {/* Master Settings nested routes */}
+              <Route path="master-settings" element={<MasterSettingsIndex />} />
+              <Route path="master-settings/user" element={<UserMaster />} />
+              <Route path="master-settings/location" element={<LocationMaster />} />
+              <Route path="master-settings/shifts" element={<ShiftsMaster />} />
+              <Route path="master-settings/assets" element={<AssetsMaster />} />
+              <Route path="master-settings/inventory" element={<InventoryMaster />} />
+              <Route path="master-settings/tools" element={<ToolsMaster />} />
+              <Route path="master-settings/checklist" element={<ChecklistMaster />} />
+              <Route path="master-settings/cm-configuration" element={<CMConfiguration />} />
+              <Route path="master-settings/kpis" element={<KPIsMaster />} />
+              {/* Catch-all for master settings - redirect to user */}
+              <Route path="master-settings/*" element={<Navigate to="/master-settings/user" replace />} />
+              {/* Legacy master settings (backward compatibility) */}
+              <Route path="master-settings-old" element={<MasterSettings />} />
+            </Route>
+          </Routes>
         </ClientProvider>
       </AuthProvider>
     </ErrorBoundary>
