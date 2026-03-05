@@ -10,7 +10,7 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetFrequencyCountQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle } from 'react-icons/fa'
-import{ Column } from '@ant-design/plots'
+import { Column } from '@ant-design/plots'
 // npm install @ant-design/plots
 const { RangePicker } = DatePicker
 
@@ -49,96 +49,104 @@ export default function ScheduledMaintenanceReports() {
       (item.completedCount || 0) +
       (item.verifiedCount || 0),
   }))
- /* ---------------- CHART DATA ---------------- */
+  /* ---------------- CHART DATA ---------------- */
 
-const chartData = (reportData?.data || [])
-  .filter(
-    (item) =>
-      item.openCount > 0 ||
-      item.completedCount > 0 ||
-      item.verifiedCount > 0
-  )
-  .flatMap((item) => [
-    {
-      frequency: item.frequencyName,
-      type: 'Open',
-      value: item.openCount || 0,
-    },
-    {
-      frequency: item.frequencyName,
-      type: 'Completed',
-      value: item.completedCount || 0,
-    },
-    {
-      frequency: item.frequencyName,
-      type: 'Verified',
-      value: item.verifiedCount || 0,
-    },
-  ])
+  const chartData = (reportData?.data || [])
+    .filter(
+      (item) =>
+        item.openCount > 0 ||
+        item.completedCount > 0 ||
+        item.verifiedCount > 0
+    )
+    .flatMap((item) => [
+      {
+        frequency: item.frequencyName,
+        type: 'Open',
+        value: item.openCount || 0,
+      },
+      {
+        frequency: item.frequencyName,
+        type: 'Completed',
+        value: item.completedCount || 0,
+      },
+      {
+        frequency: item.frequencyName,
+        type: 'Verified',
+        value: item.verifiedCount || 0,
+      },
+    ])
 
-const totalByFrequency = {}
+  const totalByFrequency = {}
 
-chartData.forEach((item) => {
-  if (!totalByFrequency[item.frequency]) {
-    totalByFrequency[item.frequency] = 0
+  chartData.forEach((item) => {
+    if (!totalByFrequency[item.frequency]) {
+      totalByFrequency[item.frequency] = 0
+    }
+    totalByFrequency[item.frequency] += item.value
+  })
+
+  const chartConfig = {
+    data: chartData,
+    xField: 'frequency',
+    yField: 'value',
+    seriesField: 'type',
+    colorField: 'type',
+    isStack: true,
+    height: 400,
+
+    animation: {
+      appear: {
+        animation: 'wave-in',
+        duration: 800,
+      },
+    },
+    axis: {
+      x: {
+        title: 'Frequency', // X axis title
+      },
+      y: {
+        title: 'Count', // Y axis title
+      },
+    },
+
+    scale: {
+      color: {
+        domain: ['Open', 'Completed', 'Verified'],
+        range: ['#ff4d6d', '#69b1ff', '#73d13d'],
+      },
+    },
+
+    label: {
+      position: 'middle',
+      formatter: (datum) => (datum.value > 0 ? datum.value : ''),
+      style: {
+        fill: '#fff',
+        fontSize: 12,
+        fontWeight: 600,
+      },
+    },
+
+    legend: {
+      position: 'top',
+    },
+
+    columnStyle: {
+      radius: [8, 8, 0, 0],
+    },
+
+    annotations: Object.keys(totalByFrequency).map((freq) => ({
+      type: 'text',
+      position: [freq, totalByFrequency[freq]],
+      content: String(totalByFrequency[freq]),
+      style: {
+        textAlign: 'center',
+        fontSize: 14,
+        fontWeight: 700,
+        fill: '#000',
+      },
+      offsetY: -12,
+    })),
   }
-  totalByFrequency[item.frequency] += item.value
-})
-
-const chartConfig = {
-  data: chartData,
-  xField: 'frequency',
-  yField: 'value',
-  seriesField: 'type',
-  colorField: 'type',
-  isStack: true,
-  height: 400,
-
-  animation: {
-    appear: {
-      animation: 'wave-in',
-      duration: 800,
-    },
-  },
-
-  scale: {
-    color: {
-      domain: ['Open', 'Completed', 'Verified'],
-      range: ['#ff4d6d', '#69b1ff', '#73d13d'],
-    },
-  },
-
-  label: {
-    position: 'middle',
-    formatter: (datum) => (datum.value > 0 ? datum.value : ''),
-    style: {
-      fill: '#fff',
-      fontSize: 12,
-      fontWeight: 600,
-    },
-  },
-
-  legend: {
-    position: 'top',
-  },
-
-  columnStyle: {
-    radius: [8, 8, 0, 0],
-  },
-
-  annotations: Object.keys(totalByFrequency).map((freq) => ({
-    type: 'text',
-    position: [freq, totalByFrequency[freq]],
-    content: String(totalByFrequency[freq]),
-    style: {
-      textAlign: 'center',
-      fontSize: 14,
-      fontWeight: 700,
-      fill: '#000',
-    },
-    offsetY: -12,
-  })),
-}
 
   const handleApplyFilters = (values) => {
     setFilters({
@@ -202,13 +210,15 @@ const chartConfig = {
     border: '1px solid #d9d9d9',
     transition: 'all 0.2s ease',
     cursor: 'default',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.08)'
+    boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+    width: '120px'
   }
 
   const countStyle = {
     padding: '3px 8px',
     backgroundColor: '#f5f5f5',
-    color: '#333'
+    color: '#333',
+    width: '40px'
   }
 
   /* ---------------- TABLE COLUMNS ---------------- */
@@ -346,42 +356,42 @@ const chartConfig = {
           ))}
         </Box> */}
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-  {boxes.map((box, index) => (
-    <Box
-      key={index}
-      sx={{
-        backgroundColor: box.bgColor,
-        flex: '1 1 200px',      
-        minWidth: 250,          
-        display: 'flex',
-        alignItems: 'center',
-        borderRadius: 3,        
-        padding: '16px 24px',
-        color: 'white',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.12)', 
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        cursor: 'default',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-        },
-      }}
-    >
-      <Box sx={{ mr: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {box.icon}
-      </Box>
+          {boxes.map((box, index) => (
+            <Box
+              key={index}
+              sx={{
+                backgroundColor: box.bgColor,
+                flex: '1 1 200px',
+                minWidth: 250,
+                display: 'flex',
+                alignItems: 'center',
+                borderRadius: 40,
+                padding: '16px 24px',
+                color: 'white',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                cursor: 'default',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                },
+              }}
+            >
+              <Box sx={{ mr: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {box.icon}
+              </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <Typography variant="h5" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
-          {box.label.split(':')[1].trim()}
-        </Typography>
-        <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
-          {box.label.split(':')[0].trim()}
-        </Typography>
-      </Box>
-    </Box>
-  ))}
-</Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Typography variant="h5" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
+                  {box.label.split(':')[1].trim()}
+                </Typography>
+                <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
+                  {box.label.split(':')[0].trim()}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </Box>
 
         {/* TABLE */}
         <Card sx={{ mt: 2 }}>
@@ -392,19 +402,19 @@ const chartConfig = {
               </Box>
             ) : (
               <>
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Column {...chartConfig} />
-                </CardContent>
-              </Card>
-              <Table
-                dataSource={reports}
-                columns={columns}
-                rowKey="id"
-                pagination={{ pageSize: 20 }}
-                bordered
-                size="middle"
-              />
+                <Card sx={{ mb: 3 }}>
+                  <CardContent>
+                    <Column {...chartConfig} />
+                  </CardContent>
+                </Card>
+                <Table
+                  dataSource={reports}
+                  columns={columns}
+                  rowKey="id"
+                  pagination={{ pageSize: 20 }}
+                  bordered
+                  size="middle"
+                />
               </>
             )}
           </CardContent>
