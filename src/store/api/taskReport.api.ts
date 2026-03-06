@@ -171,7 +171,8 @@ export const taskReportApi = baseApi.injectEndpoints({
             clientId: clientId.toString(),
           },
       }
-    }
+    },
+    providesTags: ['Report'],
     })
 
 }),

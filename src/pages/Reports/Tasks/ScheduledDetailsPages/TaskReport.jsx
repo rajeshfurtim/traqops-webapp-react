@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Children } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
 import { Table, Form, Select, DatePicker, Button as AntButton, Empty, Spin, Descriptions, Space } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../../config/constants'
 import { useGetLocationList } from '../../../../hooks/useGetLocationList'
-import { useGettaskReportSummarycmQuery } from '../../../../store/api/taskReport.api'
 import { useGetbyfrequencyQuery } from '../../../../store/api/taskReport.api'
+import useGetFreqencyList from '../../../../hooks/useGetFrequencyList'
 import { useAuth } from '../../../../context/AuthContext'
 import { useLocation } from 'react-router-dom'
 
@@ -16,7 +16,7 @@ export default function TaskReport() {
   const [form] = Form.useForm()
   const { user } = useAuth()
   const { locations, loading: locationsLoading } = useGetLocationList()
-  const { freqencyList, isLoading: frequencyLoading } = useGetbyfrequencyQuery()
+  const { freqencyList, isLoading: frequencyLoading } = useGetFreqencyList()
 
   const [filters, setFilters] = useState({})
   const [shouldFetch, setShouldFetch] = useState(false)
@@ -63,34 +63,24 @@ export default function TaskReport() {
     { skip: !filters.fromDate || !filters.toDate || !filters.locationId || !shouldFetch }
   )
 
-  const reports = (reportData?.data?.content || []).map((item, index) => {
-    const remark = item.breakDownRemarks?.[0] || {}
+  const reports = (reportData?.data || []).map((item, index) => {
+    const remark = item.scheduledCheckListDtos?.[0] || {}
     return {
       index,
       sno: index + 1,
       raw: item,
-      createdname: item.location?.code || "-",
-      date: item.createdAt || "-",
-      location: item.location?.name || "-",
-      faultid: item.cmKey || "-",
-      system: item.systemName || "-",
-      ptwno: remark.ptwNo || "-",
-      Equipment: item.category?.name || "-",
-      itemcode: item.assets?.itemCode || "-",
-      faultcategory: item.faultCategory?.name || "-",
-      faultsubcategory: item.faultSubCategory?.name || "-",
-      status: item.status?.name || "-",
-      assignedto: item.assignedTo?.firstName || "-",
-      workdoneremark: remark.remarks || "-",
-      completedby: remark.completedBy?.firstName || "-",
-      completeddate: remark.createdAt || "-",
-      completedremark: remark.remarks || "-",
-      verifyby: remark.verifiedBy || "-",
-      verifieddate: "-",
-      verifiedremark: "-",
-      closingdate: item.updatedAt || "-",
-      remarks: remark.remarks || "-",
-      duration: item.duration || "0"
+      task: item.taskName || "-",
+      location: item.locationName || "-",
+      startdate: item.startDate,
+      enddate: item.endDate,
+      category: item.categoryName || '-',
+      checklist: remark.checkListName || '-',
+      status: item.taskStatus,
+      notlive: item.notLiveCount || 0,
+      open: item.openCount || 0,
+      completed: item.completedCount || 0,
+      verified: item.verifiedCount || 0
+
     }
   })
 
@@ -116,12 +106,37 @@ export default function TaskReport() {
 
   const columns = [
     { title: 'S.No', dataIndex: 'sno', key: 'sno', ...getColumnSearchProps('sno') },
-    { title: 'Created Name', dataIndex: 'createdname', key: 'createdname', ...getColumnSearchProps('createdname') },
-    { title: 'Date', dataIndex: 'date', key: 'date', ...getColumnSearchProps('date') },
+    { title: 'Task', dataIndex: 'task', key: 'task', ...getColumnSearchProps('task') },
     { title: 'Location', dataIndex: 'location', key: 'location', ...getColumnSearchProps('location') },
-    { title: 'Fault ID', dataIndex: 'faultid', key: 'faultid', ...getColumnSearchProps('faultid') },
-    { title: 'System.No', dataIndex: 'system', key: 'system', ...getColumnSearchProps('system') },
-    { title: 'Status', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status') }
+    { title: 'Start Date', dataIndex: 'startdate', key: 'date', ...getColumnSearchProps('startdate') },
+    { title: 'End Date', dataIndex: 'enddate', key: 'enddate', ...getColumnSearchProps('enddate') },
+    { title: 'Category', dataIndex: 'category', key: 'category', ...getColumnSearchProps('category') },
+    { title: 'Status', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status') },
+    {
+      title: 'Asset Status',
+      children: [
+        {
+          title:'Not Live',
+          dataIndex:'notlive',
+          key:'notlive'
+        },
+        {
+          title: 'Open',
+          dataIndex: 'open',
+          key: 'open'
+        },
+        {
+          title: 'Completed',
+          dataIndex: 'completed',
+          key: 'completed'
+        },
+        {
+          title:'Verified',
+          dataIndex: 'verified',
+          key: 'verified'
+        }
+      ]
+    },
   ]
 
   const expandedRowRender = record => (
@@ -161,6 +176,7 @@ export default function TaskReport() {
               <Form.Item name="dateRange" label="Date Range"><RangePicker /></Form.Item>
               <Form.Item name="location" label="Location">
                 <Select style={{ width: 230 }} allowClear loading={locationsLoading}>
+                  <Select.Option value={-1}>All Location</Select.Option>
                   {locations?.map(loc => <Select.Option key={loc.id} value={loc.id}>{loc.name}</Select.Option>)}
                 </Select>
               </Form.Item>
@@ -193,13 +209,13 @@ export default function TaskReport() {
           </CardContent>
         </Card>
 
-        {/* <Card>
+        <Card>
           <CardContent>
             {!shouldFetch ? <Empty description="Please apply filters to view the report" /> :
               queryLoading ? <Box display="flex" justifyContent="center" p={4}><Spin /></Box> :
-                // <Table dataSource={reports} columns={columns} rowKey={(record, index) => index} expandable={{ expandedRowRender }} pagination={{ pageSize: 20 }} scroll={{ x: 'max-content', y: 450 }} />}
+                <Table dataSource={reports} columns={columns} rowKey={(record, index) => index} expandable={{ expandedRowRender }} pagination={{ pageSize: 20 }} scroll={{ x: 'max-content', y: 450 }} bordered/>}
           </CardContent>
-        </Card> */}
+        </Card>
       </Box>
     </>
   )
