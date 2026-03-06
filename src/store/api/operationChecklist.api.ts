@@ -53,11 +53,69 @@ export const operationChecklistsApi = baseApi.injectEndpoints({
               providesTags: ['Voltas'],
             }),
 
+        getDailyChecksChecklist: build.query({
+              query: (params) => {
+                const {
+                  fromDate,
+                  toDate,
+                  locationId,
+                  assetId,
+                  checklistId
+                } = params
+        
+                if (!checklistId) {
+                  throw new Error('ChecklistId is required for getDailyChecksChecklist')
+                }
+        
+                return {
+                  url: `${API_BASE_URL}/voltas/report/operational/bydates`,
+                  method: 'GET',
+                  params: {
+                    fromDate: fromDate,
+                    toDate: toDate,
+                    locationId: locationId.toString(),
+                    assetId: assetId.toString(),
+                    checklistId: checklistId.toString()
+                  },
+                }
+              },
+              providesTags: ['Voltas'],
+            }),
+
+        getDailyChecksChecklistByCategory: build.query({
+              query: (params) => {
+                const {
+                  date,
+                  locationId,
+                  assetCategoryId,
+                  checklistId
+                } = params
+        
+                if (!checklistId) {
+                  throw new Error('ChecklistId is required for getDailyChecksChecklistByCategory')
+                }
+        
+                return {
+                  url: `${API_BASE_URL}/voltas/report/operational/bycategory`,
+                  method: 'GET',
+                  params: {
+                    date: date,
+                    locationId: locationId.toString(),
+                    assetCategoryId: assetCategoryId.toString(),
+                    checklistId: checklistId.toString()
+                  },
+                }
+              },
+              providesTags: ['Voltas'],
+            }),
+
         }),
   overrideExisting: false,
     })
 
 export const {
       useGetAssetListLocationWiseQuery,
-      useGetChillerMonitoringChecklistQuery
+      useGetChillerMonitoringChecklistQuery,
+      useGetDailyChecksChecklistQuery,
+      useGetDailyChecksChecklistByCategoryQuery
     } = operationChecklistsApi

@@ -54,6 +54,8 @@ export const PAGE_TITLES = {
   'reports/operation-checklist/chiller-monitoring': 'Chiller Monitoring',
   'reports/operation-checklist/shift-starting': 'Shift Starting',
   'reports/operation-checklist/critical-temp': 'Critical Room Temp',
+  'reports/operation-checklist/closing-reading': 'Daily Closing Reading',
+  'reports/operation-checklist/water-cooled-chillers': 'Water Cooled Chillers',
   'reports/history-cards': 'History Cards',
   'reports/evaluation-penalty': 'Evaluation & Penalty',
   'reports/cmrl-app': 'CMRL App Reports',

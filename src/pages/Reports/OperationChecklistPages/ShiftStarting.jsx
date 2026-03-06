@@ -2,12 +2,13 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
 import { Form, Select, Space, Button as AntButton, Row, Col, DatePicker, Table, Spin, Tooltip } from 'antd'
-import { FilePdfOutlined } from '@ant-design/icons'
+import { FilePdfOutlined, StepBackwardOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery } from '../../../store/api/masterSettings.api'
 import { useGetAssetListLocationWiseQuery, useGetChillerMonitoringChecklistQuery } from '../../../store/api/operationChecklist.api'
 import { useAuth } from '../../../context/AuthContext'
-import { useReactToPrint } from "react-to-print";
+import { useReactToPrint } from "react-to-print"
+import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 
 export default function ShiftStarting() {
@@ -15,7 +16,8 @@ export default function ShiftStarting() {
     const { user } = useAuth()
     const clientId = user?.client?.id || user?.clientId
     const [form] = Form.useForm()
-    const printRef = useRef(null);
+    const printRef = useRef(null)
+    const navigate = useNavigate()
 
     const [filters, setFilters] = useState({})
     const selectedAssetId = filters.assetId;
@@ -379,6 +381,15 @@ export default function ShiftStarting() {
                                         onClick={handlePrint}
                                         disabled={checklistData?.data?.data?.length === 0}
                                         style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
+                                    >
+                                    </AntButton>
+                                </Tooltip>
+                                <Tooltip title="Back">
+                                    <AntButton
+                                        type="primary"
+                                        icon={<StepBackwardOutlined />}
+                                        onClick={() => navigate('/reports/operation-checklist')}
+                                        style={{ backgroundColor: 'rgb(99, 156, 210)', color: '#fff' }}
                                     >
                                     </AntButton>
                                 </Tooltip>

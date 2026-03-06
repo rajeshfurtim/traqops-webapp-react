@@ -1,17 +1,19 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
 import { Form, Select, Space, Button as AntButton, Row, Col, DatePicker, Table, Spin, Tooltip } from 'antd'
 import { FilePdfOutlined, StepBackwardOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery } from '../../../store/api/masterSettings.api'
-import { useGetAssetListLocationWiseQuery, useGetChillerMonitoringChecklistQuery } from '../../../store/api/operationChecklist.api'
+import { useGetAssetListLocationWiseQuery, useGetDailyChecksChecklistQuery } from '../../../store/api/operationChecklist.api'
 import { useAuth } from '../../../context/AuthContext'
 import { useReactToPrint } from "react-to-print"
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
 
-export default function CriticalRoomTemp() {
+const { RangePicker } = DatePicker
+
+export default function DailyClosingReading() {
 
     const { user } = useAuth()
     const clientId = user?.client?.id || user?.clientId
@@ -23,12 +25,12 @@ export default function CriticalRoomTemp() {
     const [selectedLocationId, setSelectedLocationId] = useState(null)
 
     const { data: locationList, isLoading: locationLoading } = useGetLocationListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
-    const { data: assetList, isLoading: assetsLoading, isFetching: assetsFetching } = useGetAssetListLocationWiseQuery({ locationId: selectedLocationId, categoryId: 314394 }, { skip: !selectedLocationId })
+    const { data: assetList, isLoading: assetsLoading, isFetching: assetsFetching } = useGetAssetListLocationWiseQuery({ locationId: selectedLocationId, categoryId: 612662 }, { skip: !selectedLocationId })
     const { data: checklistData, isLoading: checklistLoading, isFetching } =
-        useGetChillerMonitoringChecklistQuery(
+        useGetDailyChecksChecklistQuery(
             {
                 ...filters,
-                checklistId: 314373
+                checklistId: 612543
             },
             {
                 skip: !filters.locationId || !filters.assetId
@@ -39,7 +41,7 @@ export default function CriticalRoomTemp() {
 
     useEffect(() => {
         form.setFieldsValue({
-            date: dayjs(),
+            date: [dayjs().startOf('week'), dayjs()],
         })
     }, [])
 
@@ -51,7 +53,10 @@ export default function CriticalRoomTemp() {
     const handleFilterChange = (values) => {
         console.log('Filter values:', values)
         const newFilters = {}
-        if (values.date) newFilters.date = dayjs(values.date).format('YYYY-MM-DD')
+        if (values.date) {
+            newFilters.fromDate = dayjs(values.date[0]).format('YYYY-MM-DD')
+            newFilters.toDate = dayjs(values.date[1]).format('YYYY-MM-DD')
+        }
         if (values.location) newFilters.locationId = values.location
         if (assetList?.data[0]?.assetId) newFilters.assetId = assetList?.data[0]?.assetId
         setFilters(newFilters)
@@ -71,96 +76,82 @@ export default function CriticalRoomTemp() {
         return locationList?.data?.content?.find(l => l.id === filters.locationId)?.name || "-";
     };
 
-    // Checklist Logic
     const getTaskName = (task) => {
-        const time = dayjs(task.startDate).format("HH:00");
-        if (task.name?.includes("WBT")) return `${time} (WBT)`;
-        if (task.name?.includes("DBT")) return `${time} (DBT)`;
-        return time;
+        return dayjs(task.startDate).format("DD/MM/YY");
     };
 
     const displayValue = (data, task) => {
-        const element = data?.elementData?.[task?.id];
-        if (!element) return "-";
+        const entry = data.elementData?.[task.id];
 
-        const type = data?.clElement?.dataEntryType;
+        if (!entry) return "-";
 
-        if (type === "NUMERIC VALUE") return element.value ?? "-";
-        if (type === "TEXT") return element.textContent ?? "-";
-        if (type === "CHECKBOX") return element.textContent ?? "-";
+        const type = data.clElement?.dataEntryType;
+
+        if (type === "NUMERIC VALUE") return entry.value || "-";
+        if (type === "TEXT") return entry.textContent || "-";
+        if (type === "CHECKBOX") return entry.textContent || "-";
 
         return "-";
     };
 
     const displayValue1 = (data, task) => {
-        return data?.elementData?.[task?.id]?.remark ?? "-";
+        return data.elementData?.[task.id]?.remark || "-";
+    };
+
+    const getPerfomedBy = (task) => {
+        if (!task.pmAssets?.length) return "-";
+
+        const asset = task.pmAssets.find(
+            (a) => a.assets.id === filters.assetId
+        );
+
+        return asset?.performedBy || "-";
     };
 
     const getStatusValues = (task, type) => {
-        if (!task?.pmAssets?.length) return "-";
+        const asset = task.pmAssets?.find(
+            (a) => a.assets.id === filters.assetId
+        );
 
-        for (const asset of task.pmAssets) {
-            if (asset.assets.id === filters.assetId) {
-                const statuses = asset.pmAssetStatus || [];
-                for (const status of statuses) {
-                    if (status.status.name === type) {
-                        return `${status.userInfo.userName} / ${dayjs(
-                            status.createdAt
-                        ).format("DD/MM/YY HH:mm")}`;
-                    }
-                }
+        const statuses = asset?.pmAssetStatus || [];
+
+        for (let status of statuses) {
+            if (status.status.name === type) {
+                return `${status.userInfo.userName} / ${dayjs(status.createdAt).format(
+                    "DD/MM/YY HH:mm"
+                )}`;
             }
         }
+
         return "-";
     };
 
     const getStatusRemarks = (task, type) => {
-        if (!task?.pmAssets?.length) return "-";
+        const statuses = task.pmAssets?.[0]?.pmAssetStatus || [];
 
-        for (const asset of task.pmAssets) {
-            if (asset.assets.id === filters.assetId) {
-                const statuses = asset.pmAssetStatus || [];
-                for (const status of statuses) {
-                    if (status.status.name === type) {
-                        return status.Remarks ?? "-";
-                    }
-                }
+        for (let status of statuses) {
+            if (status.status.name === type) {
+                return status.Remarks || "-";
             }
         }
+
         return "-";
     };
 
-    const getVerifiedBymaintaner = (task) => {
-        if (!task?.pmAssets?.length) return "-";
+    const getVerifiedByMaintainer = (task) => {
+        const asset = task.pmAssets?.find(
+            (a) => a.assets.id === filters.assetId
+        );
 
-        for (const asset of task.pmAssets) {
-            if (asset.assets.id === filters.assetId) {
-                return asset.verifiedBy ?? "-";
-            }
-        }
-        return "-";
-    };
-
-    const getPerfomedBy = (task) => {
-        if (!task?.pmAssets?.length) return "-";
-
-        for (const asset of task.pmAssets) {
-            if (asset.assets.id === filters.assetId) {
-                return asset.performedBy ?? "-";
-            }
-        }
-        return "-";
+        return asset?.verifiedBy || "-";
     };
 
     const getOverallremarks = (task) => {
-        if (!task?.pmAssets?.length) return "-";
+        const asset = task.pmAssets?.find(
+            (a) => a.assets.id === filters.assetId
+        );
 
-        for (const asset of task.pmAssets) {
-            if (asset.assets.id === filters.assetId) {
-                return asset.pmAssetStatus?.[0]?.remarks ?? "-";
-            }
-        }
-        return "-";
+        return asset?.pmAssetStatus?.[0]?.remarks || "-";
     };
 
     const buildColumns = () => {
@@ -169,80 +160,80 @@ export default function CriticalRoomTemp() {
         const taskColumns = result.tasks
             .filter((task) => task.pmAssets?.length > 0)
             .map((task) => ({
-                title: `${getTaskName(task)} - ${task.status?.name}`,
+                title: (
+                    <div style={{ textAlign: "center" }}>
+                        {getTaskName(task)}
+                        <div>{task.status?.name}</div>
+                    </div>
+                ),
                 children: [
                     {
                         title: "Value",
-                        render: (record) =>
-                            record.isFooter
-                                ? renderFooterValue(record, task)
-                                : displayValue(record, task),
+                        align: "center",
+                        render: (_, record) => {
+                            if (record.isFooter) {
+                                if (record.isFooter === "performed")
+                                    return getPerfomedBy(task);
+
+                                if (record.isFooter === "completed")
+                                    return getStatusValues(task, "COMPLETED");
+
+                                if (record.isFooter === "verifiedMaintainer")
+                                    return getVerifiedByMaintainer(task);
+
+                                if (record.isFooter === "verified")
+                                    return getStatusValues(task, "VERIFIED");
+
+                                return "";
+                            }
+
+                            return displayValue(record, task);
+                        },
                     },
                     {
                         title: "Remarks",
-                        render: (record) =>
-                            record.isFooter
-                                ? renderFooterRemarks(record, task)
-                                : displayValue1(record, task),
+                        align: "center",
+                        render: (_, record) => {
+                            if (record.isFooter) {
+                                if (record.isFooter === "completed")
+                                    return getStatusRemarks(task, "COMPLETED");
+
+                                if (record.isFooter === "verified")
+                                    return getStatusRemarks(task, "VERIFIED");
+
+                                if (record.isFooter === "overall")
+                                    return getOverallremarks(task);
+
+                                return "";
+                            }
+
+                            return displayValue1(record, task);
+                        },
                     },
                 ],
             }));
 
         return [
             {
-                title: "S.No",
-                render: (_, __, index) =>
-                    __.isFooter ? "" : index + 1,
-                width: 70,
+                title: "Sl.No",
+                render: (_, __, index) => (__.isFooter ? "" : index + 1),
+                width: 80,
             },
             {
                 title: "Equipment Name",
-                render: (record) =>
-                    record.isFooter ? record.footerTitle : record.clElement?.name,
+                render: (_, record) => {
+                    if (record.isFooter === "performed") return "Perfomed By Operator";
+                    if (record.isFooter === "completed") return "Completed By / Date";
+                    if (record.isFooter === "verifiedMaintainer")
+                        return "Verified By Maintainers";
+                    if (record.isFooter === "verified") return "Verified By / Date";
+                    if (record.isFooter === "overall") return "Overall Remarks";
+
+                    return record.clElement?.name;
+                },
                 width: 250,
             },
             ...taskColumns,
-        ];
-    };
-
-    const renderFooterValue = (record, task) => {
-        switch (record.isFooter) {
-            case "performed":
-                return getPerfomedBy(task);
-            case "completed":
-                return getStatusValues(task, "COMPLETED");
-            case "verifiedMaintainer":
-                return getVerifiedBymaintaner(task);
-            case "verified":
-                return getStatusValues(task, "VERIFIED");
-            case "overall":
-                return getOverallremarks(task);
-            default:
-                return "";
-        }
-    };
-
-    const renderFooterRemarks = (record, task) => {
-        switch (record.isFooter) {
-            case "completed":
-                return getStatusRemarks(task, "COMPLETED");
-            case "verified":
-                return getStatusRemarks(task, "VERIFIED");
-            default:
-                return "";
-        }
-    };
-
-    const buildDataSource = () => {
-        if (!result?.data) return [];
-
-        return [
-            ...result.data,
-            { isFooter: "performed", footerTitle: "Perfomed By Operator" },
-            { isFooter: "completed", footerTitle: "Completed By / Date" },
-            { isFooter: "verifiedMaintainer", footerTitle: "Verified By Maintaners" },
-            { isFooter: "verified", footerTitle: "Verified By / Date" },
-            { isFooter: "overall", footerTitle: "Overall Remarks" },
         ];
     };
 
@@ -253,8 +244,8 @@ export default function CriticalRoomTemp() {
     return (
         <>
             <Helmet>
-                <title>{getPageTitle('reports/operation-checklist/critical-temp')}</title>
-                <meta name="description" content={`${APP_CONFIG.name} - Critical Room Temp`} />
+                <title>{getPageTitle('reports/operation-checklist/closing-reading')}</title>
+                <meta name="description" content={`${APP_CONFIG.name} - Daily Closing Reading`} />
             </Helmet>
             <Box>
                 {/* <Typography variant="h4" gutterBottom fontWeight="bold">
@@ -276,7 +267,7 @@ export default function CriticalRoomTemp() {
                                         name="date"
                                         rules={[{ required: true, message: 'Please select date!' }]}
                                     >
-                                        <DatePicker
+                                        <RangePicker
                                             style={{ width: "100%" }}
                                             format={'DD/MM/YYYY'}
                                             disabledDate={(current) =>
@@ -361,36 +352,47 @@ export default function CriticalRoomTemp() {
                                 {checklistData?.data && (
                                     <>
                                         <div ref={printRef}>
-
-                                            {/* HEADER TABLE */}
                                             <Box sx={{ mb: 2 }}>
                                                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                                     <tbody>
                                                         <tr style={{ height: "100px", backgroundColor: "#fff" }}>
-                                                            <th colSpan={3} style={{ border: "1px solid #ddd" }}>
+                                                            <th colSpan={6} style={{ textAlign: "left", border: "1px solid #ddd" }}>
                                                                 <div style={{ display: "flex", alignItems: "center" }}>
-                                                                    <img src="/assets/voltas_logo.png" width={60} height={60} />
-                                                                    <div style={{ marginLeft: 10 }}>
-                                                                        Doc no: <b>UG/VAC & TVS/CAMS/003</b>
+                                                                    <img
+                                                                        src="/assets/voltas_logo.png"
+                                                                        alt="logo"
+                                                                        width={60}
+                                                                        height={60}
+                                                                        style={{ marginRight: 10 }}
+                                                                    />
+
+                                                                    <div>
+                                                                        <div>Doc no: UG/VAC & TVS/CAMS/004</div>
+                                                                        <div>Asset: {getAssetName()}</div>
                                                                     </div>
                                                                 </div>
                                                             </th>
 
-                                                            <th colSpan={9} style={{ textAlign: "center", border: "1px solid #ddd" }}>
+                                                            <th colSpan={12} style={{ textAlign: "center", border: "1px solid #ddd" }}>
                                                                 <h3 style={{ margin: 0 }}>
-                                                                    <b>CRITICAL EQUIPMENT ROOM TEMPERATURE CHECKLIST</b>
+                                                                    DAILY CLOSING READING CHECKLIST
                                                                 </h3>
                                                             </th>
 
-                                                            <th colSpan={4} style={{ border: "1px solid #ddd" }}>
-                                                                <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                                                                    <img src="/assets/cmrl.png" width={60} height={60} />
-                                                                    <div style={{ marginLeft: 15 }}>
+                                                            <th colSpan={6} style={{ textAlign: "right", border: "1px solid #ddd" }}>
+                                                                <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+                                                                    <img
+                                                                        src="/assets/cmrl.png"
+                                                                        alt="logo"
+                                                                        width={60}
+                                                                        height={60}
+                                                                        style={{ marginRight: 15 }}
+                                                                    />
+
+                                                                    <div style={{ textAlign: "left" }}>
+                                                                        <div>Station: {getLocationName()}</div>
                                                                         <div>
-                                                                            Station: <b>{getLocationName()}</b>
-                                                                        </div>
-                                                                        <div>
-                                                                            Date: <b>{dayjs(filters.date).format("DD/MM/YY")}</b>
+                                                                            Date: {dayjs(filters.date[0]).format("DD/MM/YYYY")}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -401,14 +403,21 @@ export default function CriticalRoomTemp() {
                                             </Box>
 
                                             <Table
+                                                columns={buildColumns()}
+                                                dataSource={[
+                                                    ...(result?.data || []),
+                                                    { isFooter: "performed" },
+                                                    { isFooter: "completed" },
+                                                    { isFooter: "verifiedMaintainer" },
+                                                    { isFooter: "verified" },
+                                                    { isFooter: "overall" },
+                                                ]}
+                                                rowKey={(record, index) =>
+                                                    record.isFooter ? `footer-${record.isFooter}` : record.id || index
+                                                }
                                                 bordered
                                                 pagination={false}
                                                 scroll={{ x: "max-content" }}
-                                                columns={buildColumns()}
-                                                dataSource={buildDataSource()}
-                                                rowKey={(record, index) =>
-                                                    record.isFooter ? `footer-${record.isFooter}` : index
-                                                }
                                             />
                                         </div>
                                     </>

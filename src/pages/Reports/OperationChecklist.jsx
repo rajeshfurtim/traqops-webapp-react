@@ -24,11 +24,11 @@ export default function OperationChecklist() {
     },
     {
       title: '4. Daily Closing Reading Checklist and Consumption - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      path: '/reports/operation-checklist/closing-reading'
     },
     {
       title: '5. Daily Checks for Water Cooled Chillers - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      path: '/reports/operation-checklist/water-cooled-chillers'
     },
     {
       title: '6. Daily Checks for Pumps - Operation',
