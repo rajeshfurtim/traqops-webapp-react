@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton } from 'antd'
+import { Box, Typography, Card, CardContent, CircularProgress, Grid } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -10,9 +10,17 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetFrequencyCountQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle } from 'react-icons/fa'
-import { Column } from '@ant-design/plots'
 import { useNavigate } from 'react-router-dom'
-// npm install @ant-design/plots
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts'
 
 const { RangePicker } = DatePicker
 
@@ -43,9 +51,9 @@ export default function ScheduledMaintenanceReports() {
     id: item.frequencyId,
     sno: index + 1,
     location: item.locationName || 'ALL',
-    locationId: item.locationName || 'ALL', 
+    locationId: item.locationId ?? -1, 
     frequency: item.frequencyName,
-    frequencyId: item.frequencyId,
+    frequencyId: item.frequencyId ?? -1,
     open: item.openCount || 0,
     completed: item.completedCount || 0,
     verified: item.verifiedCount || 0,
@@ -54,125 +62,34 @@ export default function ScheduledMaintenanceReports() {
       (item.completedCount || 0) +
       (item.verifiedCount || 0),
   }))
-  /* ---------------- CHART DATA ---------------- */
+  /* ---------------- CHART DATA (Recharts stacked) ---------------- */
 
-  const chartData = (reportData?.data || [])
+  const rechartsStackData = (reportData?.data || [])
     .filter(
       (item) =>
         item.openCount > 0 ||
         item.completedCount > 0 ||
         item.verifiedCount > 0
     )
-    .flatMap((item) => [
-      {
-        frequency: item.frequencyName,
-        type: 'Open',
-        value: item.openCount || 0,
+    .map((item) => ({
+      frequency: item.frequencyName,
+      open: item.openCount || 0,
+      completed: item.completedCount || 0,
+      verified: item.verifiedCount || 0,
+    }))
+
+  const handleChartBarClick = (payload, statusType) => {
+    if (!payload?.frequency) return
+    navigate('/reports/tasks/ScheduledDetailsPages/TaskReport', {
+      state: {
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+        locationId: filters.locationId,
+        frequencyId: payload.frequency,
+        statusType,
       },
-      {
-        frequency: item.frequencyName,
-        type: 'Completed',
-        value: item.completedCount || 0,
-      },
-      {
-        frequency: item.frequencyName,
-        type: 'Verified',
-        value: item.verifiedCount || 0,
-      },
-    ])
-
-  const totalByFrequency = {}
-
-  chartData.forEach((item) => {
-    if (!totalByFrequency[item.frequency]) {
-      totalByFrequency[item.frequency] = 0
-    }
-    totalByFrequency[item.frequency] += item.value
-  })
-
-  const chartConfig = {
-    data: chartData,
-    xField: 'frequency',
-    yField: 'value',
-    seriesField: 'type',
-    colorField: 'type',
-    isStack: true,
-    height: 400,
-
-    onEvent: (chart, event) => {
-      if (event.type === 'element:click') {
-
-        const data = event.data?.data
-        console.log("Clicked Data:", data)
-
-        if (!data) return
-
-        navigate('/Reports/Tasks/ScheduledDetailsPages/taskReport', {
-          state: {
-            fromDate: filters.fromDate,
-            toDate: filters.toDate,
-            locationId: filters.locationId,
-            frequencyId: data.frequency,
-            statusType: data.type
-          }
-        })
-      }
-    },
-    animation: {
-      appear: {
-        animation: 'wave-in',
-        duration: 800,
-      },
-    },
-
-    axis: {
-      x: {
-        title: 'Frequency',
-      },
-      y: {
-        title: 'Count',
-      },
-    },
-
-    scale: {
-      color: {
-        domain: ['Open', 'Completed', 'Verified'],
-        range: ['#ff4d6d', '#69b1ff', '#73d13d'],
-      },
-    },
-
-    label: {
-      position: 'middle',
-      formatter: (datum) => (datum.value > 0 ? datum.value : ''),
-      style: {
-        fill: '#fff',
-        fontSize: 12,
-        fontWeight: 600,
-      },
-    },
-
-    legend: {
-      position: 'top',
-    },
-
-    columnStyle: {
-      radius: [8, 8, 0, 0],
-    },
-
-    annotations: Object.keys(totalByFrequency).map((freq) => ({
-      type: 'text',
-      position: [freq, totalByFrequency[freq]],
-      content: String(totalByFrequency[freq]),
-      style: {
-        textAlign: 'center',
-        fontSize: 14,
-        fontWeight: 700,
-        fill: '#000',
-      },
-      offsetY: -12,
-    })),
+    })
   }
-
   const handleApplyFilters = (values) => {
     setFilters({
       fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
@@ -201,10 +118,34 @@ export default function ScheduledMaintenanceReports() {
   const totalTasks = totalOpen + totalCompleted + totalVerified
 
   const boxes = [
-    { label: `TOTAL: ${totalTasks}`, bgColor: '#2E8B57', icon: <FaClipboardList size={40} color="white" /> },
-    { label: `OPEN : ${totalOpen}`, bgColor: '#8A9EFF', icon: <FaExternalLinkAlt size={40} color="white" /> },
-    { label: `COMPLETED : ${totalCompleted}`, bgColor: '#555555', icon: <FaCheckSquare size={40} color="white" /> },
-    { label: `VERIFIED : ${totalVerified}`, bgColor: '#66CC33', icon: <FaCheckCircle size={40} color="white" /> },
+    {
+      key: 'total',
+      label: 'Total Tasks',
+      value: totalTasks,
+      color: '#1677ff',
+      icon: <FaClipboardList size={32} color="#1677ff" />,
+    },
+    {
+      key: 'open',
+      label: 'Open',
+      value: totalOpen,
+      color: '#fa8c16',
+      icon: <FaExternalLinkAlt size={32} color="#fa8c16" />,
+    },
+    {
+      key: 'completed',
+      label: 'Completed',
+      value: totalCompleted,
+      color: '#52c41a',
+      icon: <FaCheckSquare size={32} color="#52c41a" />,
+    },
+    {
+      key: 'verified',
+      label: 'Verified',
+      value: totalVerified,
+      color: '#13c2c2',
+      icon: <FaCheckCircle size={32} color="#13c2c2" />,
+    },
   ]
 
   /* ---------------- STATUS PILL STYLES ---------------- */
@@ -222,13 +163,15 @@ export default function ScheduledMaintenanceReports() {
   const pillContainerStyle = {
     display: 'flex',
     justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
-    alignItems: 'center'
   }
 
   const pillStyle = {
     display: 'flex',
-    borderRadius: 50,
+    alignItems: 'stretch',
+    borderRadius: 999,
     overflow: 'hidden',
     fontSize: 12,
     fontWeight: 600,
@@ -236,14 +179,18 @@ export default function ScheduledMaintenanceReports() {
     transition: 'all 0.2s ease',
     cursor: 'default',
     boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-    width: '120px'
+    minWidth: 96,
+    maxWidth: '100%',
+    flex: '1 1 90px',
   }
 
   const countStyle = {
     padding: '3px 8px',
     backgroundColor: '#f5f5f5',
     color: '#333',
-    width: '40px'
+    minWidth: 32,
+    textAlign: 'center',
+    flexShrink: 0,
   }
 
   /* ---------------- TABLE COLUMNS ---------------- */
@@ -268,7 +215,7 @@ export default function ScheduledMaintenanceReports() {
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               onClick={() => {
-                navigate('/Reports/Tasks/ScheduledDetailsPages/taskReport', {
+                navigate('/reports/tasks/ScheduledDetailsPages/TaskReport', {
                   state: {
                     fromDate: filters.fromDate,
                     toDate: filters.toDate,
@@ -321,7 +268,7 @@ export default function ScheduledMaintenanceReports() {
           <CardContent>
             <Form
               form={form}
-              layout="inline"
+              layout="vertical"
               onFinish={handleApplyFilters}
               initialValues={{
                 dateRange: [dayjs().subtract(1, 'day'), dayjs()],
@@ -329,106 +276,126 @@ export default function ScheduledMaintenanceReports() {
                 frequencyId: -1,
               }}
             >
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="dateRange" label="Date Range">
+                    <RangePicker style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="location" label="Location">
-                <Select style={{ width: 230 }} allowClear loading={locationsLoading}>
-                  <Select.Option value={-1}>All Locations</Select.Option>
-                  {locations?.map(loc => (
-                    <Select.Option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location">
+                    <Select
+                      style={{ width: '100%' }}
+                      allowClear
+                      loading={locationsLoading}
+                    >
+                      <Select.Option value={-1}>All Locations</Select.Option>
+                      {locations?.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="frequencyId" label="Frequency">
-                <Select style={{ width: 180 }} allowClear loading={frequencyLoading}>
-                  <Select.Option value={-1}>All Frequency</Select.Option>
-                  {freqencyList?.map(fre => (
-                    <Select.Option key={fre.id} value={fre.id}>
-                      {fre.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="frequencyId" label="Frequency">
+                    <Select
+                      style={{ width: '100%' }}
+                      allowClear
+                      loading={frequencyLoading}
+                    >
+                      <Select.Option value={-1}>All Frequency</Select.Option>
+                      {freqencyList?.map((fre) => (
+                        <Select.Option key={fre.id} value={fre.id}>
+                          {fre.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item>
-                <Space>
-                  <AntButton type="primary" htmlType="submit">
-                    Apply Filters
-                  </AntButton>
-                  <AntButton onClick={handleResetFilters}>Reset</AntButton>
-                </Space>
-              </Form.Item>
+                <Col
+                  xs={24}
+                  sm={12}
+                  md={8}
+                  lg={6}
+                  style={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton type="primary" htmlType="submit">
+                        Apply Filters
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>Reset</AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
 
-        {/* SUMMARY BOXES */}
-        {/* <Box sx={{ display: 'flex', gap: 2, p: 1 }}>
-          {boxes.map((box, index) => (
-            <div key={index} style={{
-              backgroundColor: box.bgColor,
-              height: 100,
-              width: 350,
-              display: 'flex',
-              alignItems: 'center',
-              borderRadius: 30,
-              padding: '0 20px',
-              color: 'white',
-            }}>
-              <div style={{ marginRight: 20 }}>{box.icon}</div>
-              <div>
-                <div style={{ fontSize: 28, fontWeight: 'bold' }}>
-                  {box.label.split(':')[1]}
-                </div>
-                <div style={{ fontSize: 14 }}>
-                  {box.label.split(':')[0]}
-                </div>
-              </div>
-            </div>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {boxes.map((box) => (
+            <Grid item xs={12} sm={6} md={3} key={box.key}>
+              <Card
+                sx={{
+                  height: '100%',
+                  borderRadius: 3,
+                  border: `1px solid ${box.color}`,
+                  backgroundColor: `${box.color}0f`, // light tint based on border color
+                  boxShadow: '0 4px 14px rgba(15, 23, 42, 0.06)',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.18)',
+                  },
+                }}
+              >
+                <CardContent
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: '50%',
+                      backgroundColor: `${box.color}1a`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {box.icon}
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}
+                    >
+                      {box.label}
+                    </Typography>
+                    <Typography
+                      variant="h5"
+                      fontWeight="bold"
+                      sx={{ color: box.color, mt: 0.5 }}
+                    >
+                      {box.value}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
           ))}
-        </Box> */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-          {boxes.map((box, index) => (
-            <Box
-              key={index}
-              sx={{
-                backgroundColor: box.bgColor,
-                flex: '1 1 200px',
-                minWidth: 250,
-                display: 'flex',
-                alignItems: 'center',
-                borderRadius: 40,
-                padding: '16px 24px',
-                color: 'white',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                cursor: 'default',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-                },
-              }}
-            >
-              <Box sx={{ mr: 3, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {box.icon}
-              </Box>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <Typography variant="h5" fontWeight="bold" sx={{ lineHeight: 1.2 }}>
-                  {box.label.split(':')[1].trim()}
-                </Typography>
-                <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
-                  {box.label.split(':')[0].trim()}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
+        </Grid>
 
         {/* TABLE */}
         <Card sx={{ mt: 2 }}>
@@ -441,7 +408,63 @@ export default function ScheduledMaintenanceReports() {
               <>
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
-                    <Column {...chartConfig} />
+                    <Box
+                      sx={{
+                        width: '100%',
+                        height: 400,
+                        outline: 'none',
+                        '&:focus': { outline: 'none' },
+                        '& *': { outline: 'none' },
+                        '& *:focus': { outline: 'none' },
+                        '& .recharts-layer': { outline: 'none' },
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={rechartsStackData}
+                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="frequency" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar
+                            dataKey="open"
+                            stackId="a"
+                            fill="#ff4d6d"
+                            stroke="none"
+                            name="Open"
+                            cursor="pointer"
+                            onClick={(data) => handleChartBarClick(data, 'Open')}
+                            radius={[0, 0, 0, 0]}
+                            activeBar={{ stroke: 'none' }}
+                          />
+                          <Bar
+                            dataKey="completed"
+                            stackId="a"
+                            fill="#69b1ff"
+                            stroke="none"
+                            name="Completed"
+                            cursor="pointer"
+                            onClick={(data) => handleChartBarClick(data, 'Completed')}
+                            radius={[0, 0, 0, 0]}
+                            activeBar={{ stroke: 'none' }}
+                          />
+                          <Bar
+                            dataKey="verified"
+                            stackId="a"
+                            fill="#73d13d"
+                            stroke="none"
+                            name="Verified"
+                            cursor="pointer"
+                            onClick={(data) => handleChartBarClick(data, 'Verified')}
+                            radius={[4, 4, 0, 0]}
+                            activeBar={{ stroke: 'none' }}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </Box>
                   </CardContent>
                 </Card>
                 <Table
