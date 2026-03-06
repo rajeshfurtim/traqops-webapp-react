@@ -1,3 +1,4 @@
+import { PartyModeSharp } from '@mui/icons-material'
 import { baseApi, API_BASE_URL } from './baseApi'
 
 export const taskReportApi = baseApi.injectEndpoints({
@@ -87,7 +88,7 @@ export const taskReportApi = baseApi.injectEndpoints({
         const { fromDate, toDate, locationId } = params
         if (!fromDate || !toDate) {
           throw new Error('FromDate and ToDate are required for getconsolitadeReport')
-        } 
+        }
         if (!locationId) {
           throw new Error('LocationId is required for getconsolitadeReport')
         }
@@ -130,7 +131,7 @@ export const taskReportApi = baseApi.injectEndpoints({
     }),
     gettaskReportSummarycm: build.query({
       query: (params) => {
-        const {fromDate, toDate, locationId, statusId, pn, ps, clientId} = params
+        const { fromDate, toDate, locationId, statusId, pn, ps, clientId } = params
         if (!fromDate || !toDate) {
           throw new Error('FromDate and ToDate are required for gettaskReportSummary')
         }
@@ -153,7 +154,27 @@ export const taskReportApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
-  }),
+    getbyfrequency: build.query({
+      query: (params) => {
+        const { fromDate,toDate,locationId,statusId,frequencyId,pn,ps,clientId} = params
+      return{
+         url: `${API_BASE_URL}/reports/pmtask/getlocation/byfrequency`,
+          method: 'GET',
+          params: {
+            fromDate,
+            toDate,
+            ...(locationId != null && { locationId: locationId.toString() }),
+            ...(statusId != null && { statusId: statusId.toString() }),
+            ...(frequencyId != null && { frequencyId: frequencyId.toString()}),
+            ...(pn != null && { pn: pn.toString() }),
+            ...(ps != null && { ps: ps.toString() }),
+            clientId: clientId.toString(),
+          },
+      }
+    }
+    })
+
+}),
   overrideExisting: false,
 })
 
@@ -163,5 +184,6 @@ export const {
   useGetLocationwiseSheduledQuery,
   useGetconsolitadeReportQuery,
   useGetCmReportSummaryQuery,
-  useGettaskReportSummarycmQuery
+  useGettaskReportSummarycmQuery,
+  useGetbyfrequencyQuery,
 } = taskReportApi

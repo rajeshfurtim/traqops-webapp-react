@@ -11,7 +11,9 @@ import { useGetFrequencyCountQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle } from 'react-icons/fa'
 import { Column } from '@ant-design/plots'
+import { useNavigate } from 'react-router-dom'
 // npm install @ant-design/plots
+
 const { RangePicker } = DatePicker
 
 export default function ScheduledMaintenanceReports() {
@@ -28,6 +30,7 @@ export default function ScheduledMaintenanceReports() {
     locationId: '-1',
     frequencyId: '',
   })
+  const navigate = useNavigate()
 
   const clientId = user?.client?.id || user?.clientId
 
@@ -40,7 +43,9 @@ export default function ScheduledMaintenanceReports() {
     id: item.frequencyId,
     sno: index + 1,
     location: item.locationName || 'ALL',
+    locationId: item.locationName || 'ALL', 
     frequency: item.frequencyName,
+    frequencyId: item.frequencyId,
     open: item.openCount || 0,
     completed: item.completedCount || 0,
     verified: item.verifiedCount || 0,
@@ -94,18 +99,38 @@ export default function ScheduledMaintenanceReports() {
     isStack: true,
     height: 400,
 
+    onEvent: (chart, event) => {
+      if (event.type === 'element:click') {
+
+        const data = event.data?.data
+        console.log("Clicked Data:", data)
+
+        if (!data) return
+
+        navigate('/Reports/Tasks/ScheduledDetailsPages/taskReport', {
+          state: {
+            fromDate: filters.fromDate,
+            toDate: filters.toDate,
+            locationId: filters.locationId,
+            frequencyId: data.frequency,
+            statusType: data.type
+          }
+        })
+      }
+    },
     animation: {
       appear: {
         animation: 'wave-in',
         duration: 800,
       },
     },
+
     axis: {
       x: {
-        title: 'Frequency', // X axis title
+        title: 'Frequency',
       },
       y: {
-        title: 'Count', // Y axis title
+        title: 'Count',
       },
     },
 
@@ -239,10 +264,22 @@ export default function ScheduledMaintenanceReports() {
 
           return (
             <div
-              style={pillStyle}
+              style={{ ...pillStyle, cursor: 'pointer' }}
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              onClick={() => {
+                navigate('/Reports/Tasks/ScheduledDetailsPages/taskReport', {
+                  state: {
+                    fromDate: filters.fromDate,
+                    toDate: filters.toDate,
+                    locationId: record.locationId,  // now defined
+                    frequencyId: record.frequencyId, // now defined
+                    statusType: type,
+                  }
+                })
+              }}
             >
+
               <span style={{
                 backgroundColor: color,
                 color: 'white',

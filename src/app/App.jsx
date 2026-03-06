@@ -33,6 +33,7 @@ import ScheduledMaintenanceDetailsReports from '../pages/Reports/Tasks/Scheduled
 import ConsolidatedScheduledMaintenanceReport from '../pages/Reports/Tasks/ScheduledConsolidated'
 import CorrectiveMaintenanceReports from '../pages/Reports/Tasks/Corrective'
 import CorrectiveMaintenanceDetailsReports from '../pages/Reports/Tasks/CorrectiveDetails'
+import TaskReport from '../pages/Reports/Tasks/ScheduledDetailsPages/taskReport'
 // Inventory Reports
 import InventoryReportsIndex from '../pages/Reports/Inventory/index'
 import QuantityReports from '../pages/Reports/Inventory/Quantity'
@@ -45,7 +46,6 @@ import PenaltyDetails from '../pages/Reports/Evaluation/PenaltyDetails'
 // Legacy reports (keep for backward compatibility)
 import DailyReports from '../pages/Reports/DailyReports'
 import AttendanceReport from '../pages/Reports/AttendanceReport'
-import TaskReport from '../pages/Reports/TaskReport'
 import AuditReport from '../pages/Reports/AuditReport'
 import InventoryReport from '../pages/Reports/InventoryReport'
 import ToolsReport from '../pages/Reports/ToolsReport'
@@ -122,6 +122,7 @@ function App() {
               <Route path="reports/tasks/scheduled-consolidated" element={<ConsolidatedScheduledMaintenanceReport />} />
               <Route path="reports/tasks/corrective" element={<CorrectiveMaintenanceReports />} />
               <Route path="reports/tasks/corrective-details" element={<CorrectiveMaintenanceDetailsReports />} />
+              <Route path='reports/tasks/ScheduledDetailsPages/TaskReport' element={<TaskReport />} />
               {/* Catch-all for task reports - redirect to scheduled */}
               <Route path="reports/tasks/*" element={<Navigate to="/reports/tasks/scheduled" replace />} />
               {/* Inventory Reports nested routes */}
@@ -140,7 +141,6 @@ function App() {
               {/* Legacy report routes (backward compatibility) */}
               <Route path="reports/daily-old" element={<DailyReports />} />
               <Route path="reports/attendance" element={<AttendanceReport />} />
-              <Route path="reports/tasks-old" element={<TaskReport />} />
               <Route path="reports/audit" element={<AuditReport />} />
               <Route path="reports/inventory-old" element={<InventoryReport />} />
               <Route path="reports/tools" element={<ToolsReport />} />
