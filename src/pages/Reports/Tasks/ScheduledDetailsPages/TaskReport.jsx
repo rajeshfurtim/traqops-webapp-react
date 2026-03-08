@@ -1,7 +1,7 @@
 import { useState, useEffect, Children } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, DatePicker, Button as AntButton, Empty, Spin, Descriptions, Space } from 'antd'
+import { Table, Form, Select, DatePicker, Button as AntButton, Empty, Spin, Descriptions, Space, Row, Col } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../../config/constants'
 import { useGetLocationList } from '../../../../hooks/useGetLocationList'
@@ -116,9 +116,9 @@ export default function TaskReport() {
       title: 'Asset Status',
       children: [
         {
-          title:'Not Live',
-          dataIndex:'notlive',
-          key:'notlive'
+          title: 'Not Live',
+          dataIndex: 'notlive',
+          key: 'notlive'
         },
         {
           title: 'Open',
@@ -131,7 +131,7 @@ export default function TaskReport() {
           key: 'completed'
         },
         {
-          title:'Verified',
+          title: 'Verified',
           dataIndex: 'verified',
           key: 'verified'
         }
@@ -172,39 +172,64 @@ export default function TaskReport() {
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Form form={form} layout="inline" onFinish={handleApplyFilters}>
-              <Form.Item name="dateRange" label="Date Range"><RangePicker /></Form.Item>
-              <Form.Item name="location" label="Location">
-                <Select style={{ width: 230 }} allowClear loading={locationsLoading}>
-                  <Select.Option value={-1}>All Location</Select.Option>
-                  {locations?.map(loc => <Select.Option key={loc.id} value={loc.id}>{loc.name}</Select.Option>)}
-                </Select>
-              </Form.Item>
-              <Form.Item name="frequencyId" label="Frequency">
-                <Select style={{ width: 180 }} allowClear loading={frequencyLoading}>
-                  <Select.Option value={-1}>All Frequency</Select.Option>
-                  {freqencyList?.map(fre => (
-                    <Select.Option key={fre.id} value={fre.id}>
-                      {fre.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+            <Form form={form} layout="vertical" onFinish={handleApplyFilters}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="dateRange" label="Date Range">
+                    <RangePicker style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="statusId" label="Status">
-                <Select style={{ width: 180 }} allowClear>
-                  <Select.Option value={-1}>All Status</Select.Option>
-                  <Select.Option value={640}>Open</Select.Option>
-                  <Select.Option value={631}>Completed</Select.Option>
-                  <Select.Option value={15}>Verified</Select.Option>
-                </Select>
-              </Form.Item>
-              <Form.Item>
-                <Space>
-                  <AntButton type="primary" htmlType="submit" loading={queryLoading}>Apply Filters</AntButton>
-                  <AntButton htmlType="button" onClick={() => form.resetFields()}>Reset</AntButton>
-                </Space>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location">
+                    <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
+                      <Select.Option value={-1}>All Location</Select.Option>
+                      {locations?.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="frequencyId" label="Frequency">
+                    <Select style={{ width: '100%' }} allowClear loading={frequencyLoading}>
+                      <Select.Option value={-1}>All Frequency</Select.Option>
+                      {freqencyList?.map((fre) => (
+                        <Select.Option key={fre.id} value={fre.id}>
+                          {fre.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="statusId" label="Status">
+                    <Select style={{ width: '100%' }} allowClear>
+                      <Select.Option value={-1}>All Status</Select.Option>
+                      <Select.Option value={640}>Open</Select.Option>
+                      <Select.Option value={631}>Completed</Select.Option>
+                      <Select.Option value={15}>Verified</Select.Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
+                        Apply Filters
+                      </AntButton>
+                      <AntButton htmlType="button" onClick={() => form.resetFields()}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -213,7 +238,7 @@ export default function TaskReport() {
           <CardContent>
             {!shouldFetch ? <Empty description="Please apply filters to view the report" /> :
               queryLoading ? <Box display="flex" justifyContent="center" p={4}><Spin /></Box> :
-                <Table dataSource={reports} columns={columns} rowKey={(record, index) => index} expandable={{ expandedRowRender }} pagination={{ pageSize: 20 }} scroll={{ x: 'max-content', y: 450 }} bordered/>}
+                <Table dataSource={reports} columns={columns} rowKey={(record, index) => index} expandable={{ expandedRowRender }} pagination={{ pageSize: 20 }} scroll={{ x: 'max-content', y: 450 }} bordered />}
           </CardContent>
         </Card>
       </Box>

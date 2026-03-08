@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme, alpha } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin, Row, Col } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
@@ -144,7 +144,7 @@ export default function ScheduledMaintenanceReports() {
     },
     scale: {
       color: {
-        domain: ['Open','Work Done', 'Completed', 'Verified', 'Overdue'],
+        domain: ['Open', 'Work Done', 'Completed', 'Verified', 'Overdue'],
         range: ['#ff4d6d', '#5cdbd3', '#595959', '#73d13d', '#ffa940'],
       },
     },
@@ -202,7 +202,7 @@ export default function ScheduledMaintenanceReports() {
         const renderPill = (label, value, type) => {
           const color = getStatusColor(type, value)
           return (
-            <div style={pillStyle} onMouseEnter={e => e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform='scale(1)'}>
+            <div style={pillStyle} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
               <span style={{ backgroundColor: color, color: 'white', padding: '3px 8px' }}>{label}</span>
               <span style={countStyle}>{value}</span>
             </div>
@@ -239,29 +239,46 @@ export default function ScheduledMaintenanceReports() {
           <CardContent>
             <Form
               form={form}
-              layout="inline"
+              layout="vertical" 
               onFinish={handleApplyFilters}
-              initialValues={{ dateRange: [dayjs().subtract(1, 'day'), dayjs()], location: -1 }}
+              initialValues={{
+                dateRange: [dayjs().subtract(1, 'day'), dayjs()],
+                location: -1,
+              }}
             >
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="dateRange" label="Date Range">
+                    <RangePicker style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="location" label="Location">
-                <Select style={{ width: 230 }} allowClear loading={locationsLoading}>
-                  <Select.Option value={-1}>All Locations</Select.Option>
-                  {locations.map((loc) => (
-                    <Select.Option key={loc.id} value={loc.id}>{loc.name}</Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location">
+                    <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
+                      <Select.Option value={-1}>All Locations</Select.Option>
+                      {locations.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item>
-                <Space>
-                  <AntButton type="primary" htmlType="submit">Apply Filters</AntButton>
-                  <AntButton onClick={handleResetFilters}>Reset</AntButton>
-                </Space>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton type="primary" htmlType="submit">
+                        Apply Filters
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>

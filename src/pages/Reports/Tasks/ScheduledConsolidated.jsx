@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useAuth } from '../../../context/AuthContext'
@@ -108,47 +108,47 @@ export default function ConsolidatedScheduledMaintenanceReport() {
           !filters.locationId
       }
     )
-  console.log('Consolidated Report Data:', reportData) 
-  
+  console.log('Consolidated Report Data:', reportData)
+
   const monthname = dayjs().month(Number(filters.fromDate?.split('-')[1]) - 1).format('MMMM').toUpperCase();
 
   const reports = (reportData?.data?.content || []).map((item, index) => {
-  const consolidatedItem = consolidatedReporstData?.data?.content?.[index] || {};
-  console.log('sdlbvahfc', consolidatedReporstData?.data)
+    const consolidatedItem = consolidatedReporstData?.data?.content?.[index] || {};
+    console.log('sdlbvahfc', consolidatedReporstData?.data)
 
-  return {
-    key: index, 
-    sno: index + 1,
-    equipmentname: item.assetName,
-    equipmentCode: item.itemCode,
-    locationName: item.locationName,
-    frequency: `${consolidatedItem[monthname]?.frequency || "-"}`,
-    preventiveMaintenance: consolidatedItem[monthname]?.preventiveMaintenance || "-",
-    ptwNo: consolidatedItem[monthname]?.ptwNo || "-",
-    performedByMaintainer: consolidatedItem[monthname]?.performedByMaintainer || "-",
-    verifiedByEngineer: consolidatedItem[monthname]?.verifiedByEngineer || "-",
-    remarks: consolidatedItem[monthname]?.remarks || "-",
-    pte: consolidatedItem.pte || "-",
-  };
-});
+    return {
+      key: index,
+      sno: index + 1,
+      equipmentname: item.assetName,
+      equipmentCode: item.itemCode,
+      locationName: item.locationName,
+      frequency: `${consolidatedItem[monthname]?.frequency || "-"}`,
+      preventiveMaintenance: consolidatedItem[monthname]?.preventiveMaintenance || "-",
+      ptwNo: consolidatedItem[monthname]?.ptwNo || "-",
+      performedByMaintainer: consolidatedItem[monthname]?.performedByMaintainer || "-",
+      verifiedByEngineer: consolidatedItem[monthname]?.verifiedByEngineer || "-",
+      remarks: consolidatedItem[monthname]?.remarks || "-",
+      pte: consolidatedItem.pte || "-",
+    };
+  });
 
-const columns = [
-  { title: "S.NO", width: 30, dataIndex: "sno", key: "sno" },
-  { title: "Equipment Name", dataIndex: "equipmentname", key: "equipmentname", width: 60 },
-  { title: "Equipment Code", dataIndex: "equipmentCode", key: "equipmentCode", width: 60 },
-  { title: "Location", dataIndex: "locationName", key: "locationName", width: 100 },
-  {
-    title: monthname,
-    children: [
-      { title: "Frequency (M/Q/H/A)", dataIndex: "frequency", key: `${monthname}-frequency`, width: 60 },
-      { title: "PREVENTIVE MAINTENANCE", dataIndex: "preventiveMaintenance", key: `${monthname}-preventiveMaintenance`, width: 60 },
-      { title: "PTW NO", dataIndex: "ptwNo", key: `${monthname}-ptwNo`, width: 60 },
-      { title: "PERFORMED BY MAINTAINER", dataIndex: "performedByMaintainer", key: `${monthname}-performedByMaintainer`, width: 60 },
-      { title: "VERIFIED BY ENGINEER", dataIndex: "verifiedByEngineer", key: `${monthname}-verifiedByEngineer`, width: 60 },
-      { title: "REMARKS", dataIndex: "remarks", key: `${monthname}-remarks`, width: 60 },
-    ],
-  }
-]
+  const columns = [
+    { title: "S.NO", width: 30, dataIndex: "sno", key: "sno" },
+    { title: "Equipment Name", dataIndex: "equipmentname", key: "equipmentname", width: 60 },
+    { title: "Equipment Code", dataIndex: "equipmentCode", key: "equipmentCode", width: 60 },
+    { title: "Location", dataIndex: "locationName", key: "locationName", width: 100 },
+    {
+      title: monthname,
+      children: [
+        { title: "Frequency (M/Q/H/A)", dataIndex: "frequency", key: `${monthname}-frequency`, width: 60 },
+        { title: "PREVENTIVE MAINTENANCE", dataIndex: "preventiveMaintenance", key: `${monthname}-preventiveMaintenance`, width: 60 },
+        { title: "PTW NO", dataIndex: "ptwNo", key: `${monthname}-ptwNo`, width: 60 },
+        { title: "PERFORMED BY MAINTAINER", dataIndex: "performedByMaintainer", key: `${monthname}-performedByMaintainer`, width: 60 },
+        { title: "VERIFIED BY ENGINEER", dataIndex: "verifiedByEngineer", key: `${monthname}-verifiedByEngineer`, width: 60 },
+        { title: "REMARKS", dataIndex: "remarks", key: `${monthname}-remarks`, width: 60 },
+      ],
+    }
+  ]
   return (
     <>
       <Helmet>
@@ -169,37 +169,45 @@ const columns = [
           <CardContent>
             <Form
               form={form}
-              layout="inline"
+              layout="vertical"
               onFinish={handleFilterChange}
             >
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="dateRange" label="Date Range">
+                    <RangePicker style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="location" label="Location">
-                <Select
-                  style={{ width: 230 }}
-                  allowClear
-                  loading={locationsLoading}
-                >
-                  {locations?.map(loc => (
-                    <Select.Option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location">
+                    <Select
+                      style={{ width: '100%' }}
+                      allowClear
+                      loading={locationsLoading}
+                    >
+                      {locations?.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item>
-                <Space>
-                  <AntButton type="primary" htmlType="submit">
-                    Apply Filters
-                  </AntButton>
-                  <AntButton onClick={handleReset}>
-                    Reset
-                  </AntButton>
-                </Space>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton type="primary" htmlType="submit">
+                        Apply Filters
+                      </AntButton>
+                      <AntButton onClick={handleReset}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>

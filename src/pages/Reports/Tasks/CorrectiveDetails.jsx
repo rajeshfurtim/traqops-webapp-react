@@ -129,15 +129,15 @@ export default function ScheduledMaintenanceDetailsReports() {
 
 
   const expandedRowRender = (record) => (
-  <Descriptions bordered size="small" column={2}>
-    <Descriptions.Item label="Fault Category">
-      {record.raw?.faultCategory?.name || "-"}
-    </Descriptions.Item>
-    <Descriptions.Item label="Fault Subcategory">
-      {record.raw?.faultSubCategory?.name || "-"}
-    </Descriptions.Item>
-  </Descriptions>
-)
+    <Descriptions bordered size="small" column={2}>
+      <Descriptions.Item label="Fault Category">
+        {record.raw?.faultCategory?.name || "-"}
+      </Descriptions.Item>
+      <Descriptions.Item label="Fault Subcategory">
+        {record.raw?.faultSubCategory?.name || "-"}
+      </Descriptions.Item>
+    </Descriptions>
+  )
 
 
   const handleApplyFilters = (values) => {
@@ -181,20 +181,16 @@ export default function ScheduledMaintenanceDetailsReports() {
                 statusId: -1,
               }}
             >
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={8} lg={6}>
+              <Row gutter={[16, 16]} align="bottom">
+                <Col xs={24} sm={12} md={6} lg={4}>
                   <Form.Item name="dateRange" label="Date Range">
                     <RangePicker style={{ width: '100%' }} />
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col xs={24} sm={12} md={6} lg={4}>
                   <Form.Item name="location" label="Location">
-                    <Select
-                      style={{ width: '100%' }}
-                      allowClear
-                      loading={locationsLoading}
-                    >
+                    <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
                       {locations?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
                           {loc.name}
@@ -204,7 +200,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col xs={24} sm={12} md={6} lg={4}>
                   <Form.Item name="system" label="System">
                     <Select style={{ width: '100%' }} allowClear>
                       <Select.Option value={-1}>All</Select.Option>
@@ -214,39 +210,28 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col xs={24} sm={12} md={6} lg={4}>
                   <Form.Item name="statusId" label="Status">
                     <Select style={{ width: '100%' }} allowClear>
                       <Select.Option value={-1}>All</Select.Option>
                       <Select.Option value={640}>Open</Select.Option>
                       <Select.Option value={631}>Completed</Select.Option>
                       <Select.Option value={15}>Verified</Select.Option>
-                      {/* <Select.Option value={4}>Overdue</Select.Option> */}
                     </Select>
                   </Form.Item>
                 </Col>
 
-                <Col
-                  xs={24}
-                  sm={12}
-                  md={8}
-                  lg={6}
-                  style={{ display: 'flex', alignItems: 'flex-end' }}
-                >
-                  <Form.Item style={{ marginBottom: 0 }}>
+                <Col xs={24} sm={24} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }} className="filter-item">
                     <Space wrap>
-                      <AntButton
-                        type="primary"
-                        htmlType="submit"
-                        loading={queryLoading}
-                      >
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
                         Apply Filters
                       </AntButton>
                       <AntButton
                         htmlType="button"
                         onClick={() => {
-                          form.resetFields()
-                          setShouldFetch(false)
+                          form.resetFields();
+                          setShouldFetch(false);
                         }}
                       >
                         Reset

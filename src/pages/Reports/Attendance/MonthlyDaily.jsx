@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, Row, Col,Empty, Spin } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, Row, Col, Empty, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -143,14 +143,14 @@ export default function MonthlyDailyAttendanceReport() {
   }
 
   useEffect(() => {
-    if(queryLoading) return 
+    if (queryLoading) return
 
     if (response?.success && Array.isArray(response?.data)) {
       setReports(response.data.map(transformReportRow))
     } else {
       setReports([])
     }
-  }, [response,queryLoading])
+  }, [response, queryLoading])
 
   const getDateColumns = () => {
     if (!filters.fromDate || !filters.toDate) return []
@@ -199,57 +199,57 @@ export default function MonthlyDailyAttendanceReport() {
     return summary
   }
 
-   const [exporting, setExporting] = useState({ excel: false, pdf: false })
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
   const handleExportExcel = async () => {
-  try {
-    setExporting(prev => ({ ...prev, excel: true }))
+    try {
+      setExporting(prev => ({ ...prev, excel: true }))
 
-    await exportToExcel(
-      columns,            
-      filteredReports,    
-      `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
-    )
+      await exportToExcel(
+        columns,
+        filteredReports,
+        `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+      )
 
-    message.success('Excel exported successfully')
-  } catch (err) {
-    message.error('Excel export failed')
-  } finally {
-    setExporting(prev => ({ ...prev, excel: false }))
+      message.success('Excel exported successfully')
+    } catch (err) {
+      message.error('Excel export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
+    }
   }
-}
 
 
   const handleExportPDF = async () => {
-  try {
-    setExporting(prev => ({ ...prev, pdf: true }))
+    try {
+      setExporting(prev => ({ ...prev, pdf: true }))
 
-    await exportToPDF(
-      columns,            // ✅ same column order
-      filteredReports,
-      `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
-    )
+      await exportToPDF(
+        columns,            // ✅ same column order
+        filteredReports,
+        `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+      )
 
-    message.success('PDF exported successfully')
-  } catch (err) {
-    message.error('PDF export failed')
-  } finally {
-    setExporting(prev => ({ ...prev, pdf: false }))
+      message.success('PDF exported successfully')
+    } catch (err) {
+      message.error('PDF export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
+    }
   }
-}
 
-const handlereset = () => {
-  const today = dayjs()
+  const handlereset = () => {
+    const today = dayjs()
 
-  form.setFieldsValue({
-    dateRange: [today, today],
-    location: -1,
-    type: -1,
-  })
+    form.setFieldsValue({
+      dateRange: [today, today],
+      location: -1,
+      type: -1,
+    })
 
-  setReports([])
-  setShouldFetch(false)
-  setSearchText('')
-}
+    setReports([])
+    setShouldFetch(false)
+    setSearchText('')
+  }
 
 
   return (
@@ -270,48 +270,72 @@ const handlereset = () => {
         {/* FILTERS */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Form form={form} layout="inline" onFinish={handleFilterChange}>
-              <Form.Item
-                name="dateRange"
-                label="Date Range"
-              // rules={[{ required: true }]}
-              >
-                <RangePicker
-                  format="DD-MM-YYYY"
-                  disabledDate={(c) => c && c > dayjs().endOf('day')}
-                  allowClear={false}
-                />
-              </Form.Item>
-              <Form.Item name="location" label="Location" className='filter-item'>
-                <Select loading={locationsLoading} style={{width :180}}  placeholder="All Locations">
-                  {locationOptions.map(l => (
-                    <Select.Option key={l.id} value={l.id}>
-                      {l.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item name="type" label="User Type" className='filter-item'>
-                <Select loading={userTypesLoading} style={{ width: 150}}>
-                  {typeOptions.map(t => (
-                    <Select.Option key={t.id} value={t.id}>
-                      {t.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item>
-                <AntButton type="primary" htmlType="submit"  icon={<SearchOutlined />} loading={queryLoading}>
-                  Search
-                </AntButton>
-              </Form.Item>
-              <Form.Item>
-                <AntButton
-                  onClick={handlereset}
-                >
-                  Reset
-                </AntButton>
-              </Form.Item>
+            <Form form={form} layout="vertical" onFinish={handleFilterChange}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    name="dateRange"
+                    label="Date Range"
+                  // rules={[{ required: true }]}
+                  >
+                    <RangePicker
+                      format="DD-MM-YYYY"
+                      disabledDate={(c) => c && c > dayjs().endOf('day')}
+                      allowClear={false}
+                      style={{ width: '100%' }}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location" className="filter-item">
+                    <Select
+                      loading={locationsLoading}
+                      style={{ width: '100%' }}
+                      placeholder="All Locations"
+                    >
+                      {locationOptions.map((l) => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="type" label="User Type" className="filter-item">
+                    <Select
+                      loading={userTypesLoading}
+                      style={{ width: '100%' }}
+                    >
+                      {typeOptions.map((t) => (
+                        <Select.Option key={t.id} value={t.id}>
+                          {t.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton
+                        type="primary"
+                        htmlType="submit"
+                        icon={<SearchOutlined />}
+                        loading={queryLoading}
+                      >
+                        Search
+                      </AntButton>
+                      <AntButton onClick={handlereset}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -321,7 +345,7 @@ const handlereset = () => {
             {!shouldFetch ? (
               <Empty description="Click search to view data" />
             ) : queryLoading ? (
-               <Box display="flex" justifyContent="center" p={4}>
+              <Box display="flex" justifyContent="center" p={4}>
                 <Spin />
               </Box>
             ) : (
@@ -361,7 +385,7 @@ const handlereset = () => {
                       icon={<FileExcelOutlined />}
                       onClick={handleExportExcel}
                       disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                    // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
                     >Export Excel
                     </AntButton>
                     <AntButton
@@ -369,7 +393,7 @@ const handlereset = () => {
                       icon={<FilePdfOutlined />}
                       onClick={handleExportPDF}
                       disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                    // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
                     >Export PDF
                     </AntButton>
                   </Space>

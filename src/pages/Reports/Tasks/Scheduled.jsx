@@ -25,9 +25,9 @@ import {
 const { RangePicker } = DatePicker
 
 export default function ScheduledMaintenanceReports() {
-
   const [form] = Form.useForm()
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const { freqencyList, isLoading: frequencyLoading } = useGetFreqencyList()
   const { locations, loading: locationsLoading } = useGetLocationList()
@@ -38,7 +38,6 @@ export default function ScheduledMaintenanceReports() {
     locationId: '-1',
     frequencyId: '',
   })
-  const navigate = useNavigate()
 
   const clientId = user?.client?.id || user?.clientId
 
@@ -47,11 +46,12 @@ export default function ScheduledMaintenanceReports() {
       skip: !filters.fromDate || !filters.toDate,
     })
 
+  /* ---------------- TABLE DATA ---------------- */
   const reports = (reportData?.data || []).map((item, index) => ({
     id: item.frequencyId,
     sno: index + 1,
     location: item.locationName || 'ALL',
-    locationId: item.locationId ?? -1, 
+    locationId: item.locationId ?? -1,
     frequency: item.frequencyName,
     frequencyId: item.frequencyId ?? -1,
     open: item.openCount || 0,
@@ -62,8 +62,8 @@ export default function ScheduledMaintenanceReports() {
       (item.completedCount || 0) +
       (item.verifiedCount || 0),
   }))
-  /* ---------------- CHART DATA (Recharts stacked) ---------------- */
 
+  /* ---------------- CHART DATA ---------------- */
   const rechartsStackData = (reportData?.data || [])
     .filter(
       (item) =>
@@ -73,23 +73,67 @@ export default function ScheduledMaintenanceReports() {
     )
     .map((item) => ({
       frequency: item.frequencyName,
+      frequencyId: item.frequencyId,
       open: item.openCount || 0,
       completed: item.completedCount || 0,
       verified: item.verifiedCount || 0,
     }))
 
+  /* ---------------- CHART CLICK ---------------- */
   const handleChartBarClick = (payload, statusType) => {
-    if (!payload?.frequency) return
+    if (!payload?.frequencyId) return
+
     navigate('/reports/tasks/ScheduledDetailsPages/TaskReport', {
       state: {
         fromDate: filters.fromDate,
         toDate: filters.toDate,
         locationId: filters.locationId,
-        frequencyId: payload.frequency,
+        frequencyId: payload.frequencyId,
         statusType,
       },
     })
   }
+
+  /* ---------------- CUSTOM TOOLTIP ---------------- */
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null
+
+    const data = payload[0].payload
+
+    return (
+      <div
+        style={{
+          background: '#fff',
+          border: '1px solid #ddd',
+          padding: '10px 14px',
+          borderRadius: 8,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          fontSize: 13
+        }}
+      >
+        <strong>{label}</strong>
+
+        {payload.map((item) => (
+          <div
+            key={item.dataKey}
+            style={{
+              color: item.color,
+              cursor: 'pointer',
+              marginTop: 6,
+              fontWeight: 500
+            }}
+            onClick={() =>
+              handleChartBarClick(data, item.dataKey)
+            }
+          >
+            {item.name}: {item.value}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  /* ---------------- FILTER HANDLERS ---------------- */
   const handleApplyFilters = (values) => {
     setFilters({
       fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
@@ -112,6 +156,51 @@ export default function ScheduledMaintenanceReports() {
     })
   }
 
+  /* ---------------- STATUS PILL ---------------- */
+  const getStatusColor = (type, value) => {
+    if (value === 0) return '#bfbfbf'
+
+    const colors = {
+      open: '#ff4d6d',
+      completed: '#69b1ff',
+      verified: '#73d13d'
+    }
+
+    return colors[type]
+  }
+
+  const pillContainerStyle = {
+    display: 'flex',
+    justifyContent:'center',
+    alignItems: 'center',
+    gap: '20px',          
+    width: '100%',
+    flexWrap: 'nowrap'
+  }
+
+  const pillStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: '20px',
+    overflow: 'hidden',
+    fontSize: 12,
+    fontWeight: 600,
+    border: '1px solid #d9d9d9',
+    height: '26px',
+    minWidth: '90px'    
+  }
+
+  const countStyle = {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    color: '#333',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 8px'
+  }
+
+  /* ---------------- BOXES ---------------- */
   const totalOpen = reports.reduce((sum, item) => sum + item.open, 0)
   const totalCompleted = reports.reduce((sum, item) => sum + item.completed, 0)
   const totalVerified = reports.reduce((sum, item) => sum + item.verified, 0)
@@ -148,57 +237,11 @@ export default function ScheduledMaintenanceReports() {
     },
   ]
 
-  /* ---------------- STATUS PILL STYLES ---------------- */
-
-  const getStatusColor = (type, value) => {
-    if (value === 0) return '#bfbfbf'
-    const colors = {
-      open: '#ff4d6d',
-      completed: '#69b1ff',
-      verified: '#73d13d'
-    }
-    return colors[type]
-  }
-
-  const pillContainerStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  }
-
-  const pillStyle = {
-    display: 'flex',
-    alignItems: 'stretch',
-    borderRadius: 999,
-    overflow: 'hidden',
-    fontSize: 12,
-    fontWeight: 600,
-    border: '1px solid #d9d9d9',
-    transition: 'all 0.2s ease',
-    cursor: 'default',
-    boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
-    minWidth: 96,
-    maxWidth: '100%',
-    flex: '1 1 90px',
-  }
-
-  const countStyle = {
-    padding: '3px 8px',
-    backgroundColor: '#f5f5f5',
-    color: '#333',
-    minWidth: 32,
-    textAlign: 'center',
-    flexShrink: 0,
-  }
-
   /* ---------------- TABLE COLUMNS ---------------- */
-
   const columns = [
-    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 60, align: 'center' },
-    { title: 'Location', dataIndex: 'location', key: 'location', width: 200, align: 'center' },
-    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', width: 150, align: 'center' },
+    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 80, align: 'center' },
+    { title: 'Location', dataIndex: 'location', key: 'location', width: 350, align: 'center' },
+    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', width: 350, align: 'center' },
 
     {
       title: 'Status',
@@ -219,14 +262,13 @@ export default function ScheduledMaintenanceReports() {
                   state: {
                     fromDate: filters.fromDate,
                     toDate: filters.toDate,
-                    locationId: record.locationId,  // now defined
-                    frequencyId: record.frequencyId, // now defined
+                    locationId: record.locationId,
+                    frequencyId: record.frequencyId,
                     statusType: type,
                   }
                 })
               }}
             >
-
               <span style={{
                 backgroundColor: color,
                 color: 'white',
@@ -248,9 +290,9 @@ export default function ScheduledMaintenanceReports() {
         )
       }
     },
-
   ]
 
+  /* ---------------- RENDER ---------------- */
   return (
     <>
       <Helmet>
@@ -338,6 +380,7 @@ export default function ScheduledMaintenanceReports() {
           </CardContent>
         </Card>
 
+        {/* SUMMARY BOXES */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {boxes.map((box) => (
             <Grid item xs={12} sm={6} md={3} key={box.key}>
@@ -346,7 +389,7 @@ export default function ScheduledMaintenanceReports() {
                   height: '100%',
                   borderRadius: 3,
                   border: `1px solid ${box.color}`,
-                  backgroundColor: `${box.color}0f`, // light tint based on border color
+                  backgroundColor: `${box.color}0f`, 
                   boxShadow: '0 4px 14px rgba(15, 23, 42, 0.06)',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   '&:hover': {
@@ -397,7 +440,7 @@ export default function ScheduledMaintenanceReports() {
           ))}
         </Grid>
 
-        {/* TABLE */}
+        {/* TABLE + CHART */}
         <Card sx={{ mt: 2 }}>
           <CardContent>
             {isLoading ? (
@@ -406,67 +449,68 @@ export default function ScheduledMaintenanceReports() {
               </Box>
             ) : (
               <>
+                {/* CHART */}
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: 400,
-                        outline: 'none',
-                        '&:focus': { outline: 'none' },
-                        '& *': { outline: 'none' },
-                        '& *:focus': { outline: 'none' },
-                        '& .recharts-layer': { outline: 'none' },
-                      }}
-                    >
+                    <Box sx={{ width: '100%', height: 400 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                           data={rechartsStackData}
-                          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                          margin={{ top: 30, right: 30, left: 10, bottom: 10 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="frequency" />
-                          <YAxis />
-                          <Tooltip />
-                          <Legend />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="frequency" tick={{ fontSize: 12 }} />
+                          <YAxis tick={{ fontSize: 12 }} />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Legend wrapperStyle={{ paddingTop: 10 }} />
+
                           <Bar
                             dataKey="open"
                             stackId="a"
                             fill="#ff4d6d"
-                            stroke="none"
                             name="Open"
                             cursor="pointer"
-                            onClick={(data) => handleChartBarClick(data, 'Open')}
-                            radius={[0, 0, 0, 0]}
-                            activeBar={{ stroke: 'none' }}
+                            radius={[4, 4, 0, 0]}
+                            animationDuration={900}
+                            onClick={(data) =>
+                              handleChartBarClick(data.payload, 'open')
+                            }
+                            activeBar={{ fill: '#ff6b81', stroke: '#ff4d6d', strokeWidth: 2 }}
                           />
+
                           <Bar
                             dataKey="completed"
                             stackId="a"
                             fill="#69b1ff"
-                            stroke="none"
                             name="Completed"
                             cursor="pointer"
-                            onClick={(data) => handleChartBarClick(data, 'Completed')}
-                            radius={[0, 0, 0, 0]}
-                            activeBar={{ stroke: 'none' }}
+                            animationDuration={900}
+                            onClick={(data) =>
+                              handleChartBarClick(data.payload, 'completed')
+                            }
+                            activeBar={{ fill: '#91caff', stroke: '#69b1ff', strokeWidth: 2 }}
                           />
+
                           <Bar
                             dataKey="verified"
                             stackId="a"
                             fill="#73d13d"
-                            stroke="none"
                             name="Verified"
                             cursor="pointer"
-                            onClick={(data) => handleChartBarClick(data, 'Verified')}
                             radius={[4, 4, 0, 0]}
-                            activeBar={{ stroke: 'none' }}
+                            animationDuration={900}
+                            onClick={(data) =>
+                              handleChartBarClick(data.payload, 'verified')
+                            }
+                            activeBar={{ fill: '#95de64', stroke: '#73d13d', strokeWidth: 2 }}
                           />
                         </BarChart>
                       </ResponsiveContainer>
                     </Box>
                   </CardContent>
                 </Card>
+
+                {/* TABLE */}
                 <Table
                   dataSource={reports}
                   columns={columns}

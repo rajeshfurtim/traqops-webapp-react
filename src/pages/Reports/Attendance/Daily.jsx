@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Spin } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Spin, Col, Row } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetDailyLocationReportQuery } from '../../../store/api/reports.api'
@@ -102,7 +102,7 @@ export default function DailyAttendanceReport() {
   const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
 
   // RTK Query hook
-  const { data: response, isLoading: queryLoading, error: queryError,  } = useGetDailyLocationReportQuery(
+  const { data: response, isLoading: queryLoading, error: queryError, } = useGetDailyLocationReportQuery(
     {
       date: formattedDate,
       locationId: locationId,
@@ -155,28 +155,28 @@ export default function DailyAttendanceReport() {
 
 
   useEffect(() => {
-  if (queryLoading) return
+    if (queryLoading) return
 
-  if (response?.success && Array.isArray(response.data)) {
-    const mappedReports = response.data.map((item, index) => ({
-      id: item.id ?? `${item.employeeCode}-${index}`, // safer unique key
-      serialNo: index + 1,
-      date: item.createAt || formattedDate,
-      employeeName: item.userName || '-',
-      employeeId: item.employeeCode || '-',
-      location: item.locationName || '-',
-      userType: item.userTypeName || '-',
-      shift: item.shiftName || '-',
-      punchIn: item.inTime || '-',
-      punchOut: item.outTime || '-'
-    }))
+    if (response?.success && Array.isArray(response.data)) {
+      const mappedReports = response.data.map((item, index) => ({
+        id: item.id ?? `${item.employeeCode}-${index}`, // safer unique key
+        serialNo: index + 1,
+        date: item.createAt || formattedDate,
+        employeeName: item.userName || '-',
+        employeeId: item.employeeCode || '-',
+        location: item.locationName || '-',
+        userType: item.userTypeName || '-',
+        shift: item.shiftName || '-',
+        punchIn: item.inTime || '-',
+        punchOut: item.outTime || '-'
+      }))
 
-    setReports(mappedReports)
-  } else if (response && !response.success) {
-    message.error(response.message || 'Failed to load daily location report')
-    setReports([])
-  }
-}, [response, queryLoading, formattedDate])
+      setReports(mappedReports)
+    } else if (response && !response.success) {
+      message.error(response.message || 'Failed to load daily location report')
+      setReports([])
+    }
+  }, [response, queryLoading, formattedDate])
 
   const handleSearch = () => {
     if (!clientId) {
@@ -329,68 +329,77 @@ export default function DailyAttendanceReport() {
           <CardContent className="filter-content">
             <Form
               form={form}
-              layout="inline"
+              layout="vertical"
               initialValues={{
                 date: dayjs(),
                 location: 'All Locations',
-                type: 'All'
+                type: 'All',
               }}
-              // onFinish= {handleFilterChange}
               className="filter-form"
             >
-              <Form.Item name="date" label="Date" className="filter-item">
-                <DatePicker
-                  format="MMM DD, YYYY"
-                  style={{ width: 180 }}
-                  // onChange={(date) => handleFilterChange('date', date)}
-                  allowClear={false}
-                />
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="date" label="Date" className="filter-item">
+                    <DatePicker
+                      format="MMM DD, YYYY"
+                      style={{ width: '100%' }}
+                      allowClear={false}
+                    // onChange={(date) => handleFilterChange('date', date)}
+                    />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="location" label="Location" className="filter-item">
-                <Select
-                  placeholder="All Locations"
-                  style={{ width: 180 }}
-                  loading={locationsLoading}
-                  // onChange={(value) => handleFilterChange('location', value)}
-                >
-                  {locationOptions.map(location => (
-                    <Select.Option key={location.id} value={location.name}>
-                      {location.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location" className="filter-item">
+                    <Select
+                      placeholder="All Locations"
+                      style={{ width: '100%' }}
+                      loading={locationsLoading}
+                    // onChange={(value) => handleFilterChange('location', value)}
+                    >
+                      {locationOptions.map((location) => (
+                        <Select.Option key={location.id} value={location.name}>
+                          {location.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="type" label="Type" className="filter-item">
-                <Select
-                  style={{ width: 150 }}
-                  loading={userTypesLoading}
-                  // onChange={(value) => handleFilterChange('type', value)}
-                >
-                  {userTypeOptions.map(type => (
-                    <Select.Option key={type.id || 'all'} value={type.name}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="type" label="Type" className="filter-item">
+                    <Select
+                      style={{ width: '100%' }}
+                      loading={userTypesLoading}
+                    // onChange={(value) => handleFilterChange('type', value)}
+                    >
+                      {userTypeOptions.map((type) => (
+                        <Select.Option key={type.id || 'all'} value={type.name}>
+                          {type.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item className="filter-item">
-                <Space>
-                  <AntButton
-                    type="primary"
-                    icon={<SearchOutlined />}
-                    onClick={handleSearch}
-                    loading={queryLoading}
-                  >
-                    Search
-                  </AntButton>
-                  <AntButton onClick={handleResetFilters}>
-                    Reset
-                  </AntButton>
-                </Space>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }} className="filter-item">
+                    <Space wrap>
+                      <AntButton
+                        type="primary"
+                        icon={<SearchOutlined />}
+                        onClick={handleSearch}
+                        loading={queryLoading}
+                      >
+                        Search
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -402,90 +411,90 @@ export default function DailyAttendanceReport() {
             {!shouldFetch ? (
               <Empty description="Click Search to view data" />
             ) :
-            queryLoading ? (
-              <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
-                <Spin />
-              </Box>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    mb: 2,
-                    pb: 2,
-                    borderBottom: '1px solid #f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                  <Space style={{ marginLeft: 'auto' }} size={12}>
-                    <Input
-                      placeholder="Search"
-                      prefix={<SearchOutlined />}
-                      value={searchText}
-                      onChange={e => setSearchText(e.target.value)}
-                      allowClear
-                      style={{ width: 250 }}
-                    />
-                    <AntButton
-                      type="default"
-                      icon={<FileExcelOutlined />}
-                      onClick={handleExportExcel}
-                      disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                    >Export Excel
-                    </AntButton>
-                    <AntButton
-                      type="default"
-                      icon={<FilePdfOutlined />}
-                      onClick={handleExportPDF}
-                      disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                    >Export PDF
-                    </AntButton>
-                  </Space>
+              queryLoading ? (
+                <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
+                  <Spin />
                 </Box>
-                <Table
-                  dataSource={filteredReports}
-                  columns={columns}
-                  rowKey="id"
-                  pagination={{
-                    pageSize: 20,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} records`
-                  }}
-                  size="middle"
-                  scroll={{ x: 'max-content', y: 450 }}
-                  bordered
-                  components={{
-                  header: {
-                    cell: (props) => (
-                      <th
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '16px',
-                          fontWeight: 600,
-                          padding: '12px 8px'
-                        }}
+              ) : (
+                <>
+                  <Box
+                    sx={{
+                      mb: 2,
+                      pb: 2,
+                      borderBottom: '1px solid #f0f0f0',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                    <Space style={{ marginLeft: 'auto' }} size={12}>
+                      <Input
+                        placeholder="Search"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                        style={{ width: 250 }}
                       />
-                    )
-                  },
-                  body: {
-                    cell: (props) => (
-                      <td
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '15px',
-                          fontWeight: 400,
-                          padding: '12px 8px'
-                        }}
-                      />
-                    )
-                  }
-                }}
-                />
-              </>
-            )}
+                      <AntButton
+                        type="default"
+                        icon={<FileExcelOutlined />}
+                        onClick={handleExportExcel}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      >Export Excel
+                      </AntButton>
+                      <AntButton
+                        type="default"
+                        icon={<FilePdfOutlined />}
+                        onClick={handleExportPDF}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      >Export PDF
+                      </AntButton>
+                    </Space>
+                  </Box>
+                  <Table
+                    dataSource={filteredReports}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={{
+                      pageSize: 20,
+                      showSizeChanger: true,
+                      showTotal: (total) => `Total ${total} records`
+                    }}
+                    size="middle"
+                    scroll={{ x: 'max-content', y: 450 }}
+                    bordered
+                    components={{
+                      header: {
+                        cell: (props) => (
+                          <th
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      },
+                      body: {
+                        cell: (props) => (
+                          <td
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '15px',
+                              fontWeight: 400,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      }
+                    }}
+                  />
+                </>
+              )}
           </CardContent>
         </Card>
       </Box>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton,Empty, Input, Tag, Descriptions, Spin } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin , Row, Col} from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
@@ -31,7 +31,7 @@ export default function ScheduledMaintenanceDetailsReports() {
 
   const { data: reportData, isLoading: queryLoading } = useGetLocationwiseQuery(
     { ...filters, clientId },
-    { skip: !filters.fromDate || !filters.toDate || !filters.locationId || !shouldFetch}
+    { skip: !filters.fromDate || !filters.toDate || !filters.locationId || !shouldFetch }
   )
 
 
@@ -82,7 +82,7 @@ export default function ScheduledMaintenanceDetailsReports() {
           style={{ marginBottom: 8 }}
         />
         <Space>
-          <AntButton type="primary" size="small" onClick={() => confirm()} icon= {<SearchOutlined />}>
+          <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
             Search
           </AntButton>
           <AntButton size="small" onClick={() => clearFilters()}>
@@ -202,7 +202,7 @@ export default function ScheduledMaintenanceDetailsReports() {
 
 
   const handleApplyFilters = (values) => {
-    if(!clientId) {
+    if (!clientId) {
       alert('Client ID is missing. Please check your user profile.')
       return
     }
@@ -231,7 +231,7 @@ export default function ScheduledMaintenanceDetailsReports() {
           <CardContent>
             <Form
               form={form}
-              layout="inline"
+              layout="vertical"
               onFinish={handleApplyFilters}
               initialValues={{
                 dateRange: [dayjs().subtract(1, 'day'), dayjs()],
@@ -239,42 +239,56 @@ export default function ScheduledMaintenanceDetailsReports() {
                 statusId: -1,
               }}
             >
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="dateRange" label="Date Range">
+                    <RangePicker style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="location" label="Location">
-                <Select style={{ width: 230 }} allowClear loading={locationsLoading}>
-                  {locations?.map((loc) => (
-                    <Select.Option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location">
+                    <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
+                      {locations?.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="statusId" label="Status">
-                <Select style={{ width: 180 }} allowClear>
-                  <Select.Option value={-1}>All</Select.Option>
-                  <Select.Option value={640}>Open</Select.Option>
-                  <Select.Option value={631}>Completed</Select.Option>
-                  <Select.Option value={15}>Verified</Select.Option>
-                  {/* <Select.Option value={4}>Overdue</Select.Option> */}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="statusId" label="Status">
+                    <Select style={{ width: '100%' }} allowClear>
+                      <Select.Option value={-1}>All</Select.Option>
+                      <Select.Option value={640}>Open</Select.Option>
+                      <Select.Option value={631}>Completed</Select.Option>
+                      <Select.Option value={15}>Verified</Select.Option>
+                      {/* <Select.Option value={4}>Overdue</Select.Option> */}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item>
-                <AntButton type="primary" htmlType="submit" loading={queryLoading}>
-                  Apply Filters
-                </AntButton>
-              </Form.Item>
-              <Form.Item>
-                <AntButton htmlType="button" onClick={() => { form.resetFields()
-                  setShouldFetch(false)
-                }}>
-                  Reset
-                </AntButton>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
+                        Apply Filters
+                      </AntButton>
+                      <AntButton
+                        htmlType="button"
+                        onClick={() => {
+                          form.resetFields();
+                          setShouldFetch(false);
+                        }}
+                      >
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -283,25 +297,25 @@ export default function ScheduledMaintenanceDetailsReports() {
           <CardContent>
             {!shouldFetch ? (
               <Empty description="Please apply filters to view the report" />
-            ):
-             queryLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
-              </Box>
-            ) : (
-              <Table
-                dataSource={reports}
-                columns={columns}
-                rowKey={(record, index) => index}
-                expandable={{ expandedRowRender }}
-                rowClassName={(record) =>
-                  record.isOverdue ? 'overdue-row' : ''
-                }
-                pagination={{ pageSize: 20 }}
-                bordered
-                scroll={{ x: 'max-content', y: 450 }}
-              />
-            )}
+            ) :
+              queryLoading ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <Spin />
+                </Box>
+              ) : (
+                <Table
+                  dataSource={reports}
+                  columns={columns}
+                  rowKey={(record, index) => index}
+                  expandable={{ expandedRowRender }}
+                  rowClassName={(record) =>
+                    record.isOverdue ? 'overdue-row' : ''
+                  }
+                  pagination={{ pageSize: 20 }}
+                  bordered
+                  scroll={{ x: 'max-content', y: 450 }}
+                />
+              )}
           </CardContent>
         </Card>
       </Box>

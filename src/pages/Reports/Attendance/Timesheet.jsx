@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton,Empty, Row, Col, Input,Spin } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Row, Col, Input, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -196,14 +196,14 @@ export default function TimesheetReport() {
 
 
   useEffect(() => {
-    if(queryLoading) return
+    if (queryLoading) return
     if (response?.success && Array.isArray(response.data)) {
       const formatted = response.data.map(transformReportRow)
       setReports(formatted)
     } else {
       setReports([])
     }
-  }, [response,queryLoading])
+  }, [response, queryLoading])
 
   // const getDateColumns = () => {
   //   if (!filters.fromDate || !filters.toDate) return []
@@ -513,54 +513,74 @@ export default function TimesheetReport() {
         </Typography>
 
         <Card className='filter-card' sx={{ mb: 3 }}>
-          <CardContent className='filter-content'>
+          <CardContent className="filter-content">
             <Form
               form={form}
               onFinish={handleFilterChange}
-              layout="inline"
+              layout="vertical"
             >
-              <Form.Item name="month" label="Month">
-                <DatePicker picker="month" format="MMMM,YYYY" style={{ width: 180 }}
-                  disabledDate={(current) =>
-                    current && current > dayjs().endOf('month')
-                  }
-                />
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="month" label="Month">
+                    <DatePicker
+                      picker="month"
+                      format="MMMM,YYYY"
+                      style={{ width: '100%' }}
+                      disabledDate={(current) =>
+                        current && current > dayjs().endOf('month')
+                      }
+                    />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="location" label="Location">
-                <Select loading={locationsLoading} style={{ width: 180 }}>
-                  {locationOptions.map(loc => (
-                    <Select.Option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location">
+                    <Select
+                      loading={locationsLoading}
+                      style={{ width: '100%' }}
+                    >
+                      {locationOptions.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="type" label="Type">
-                <Select loading={userTypesLoading} style={{ width: 180 }}>
-                  {typeOptions.map(type => (
-                    <Select.Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item className='filter-item'>
-                <Space>
-                  <AntButton type="primary" 
-                  htmlType="submit"  
-                  icon={<SearchOutlined />}
-                  loading={queryLoading}>
-                    Search
-                  </AntButton>
-                  <AntButton
-                    onClick={handleResetFilters}
-                  >
-                    Reset
-                  </AntButton>
-                </Space>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="type" label="Type">
+                    <Select
+                      loading={userTypesLoading}
+                      style={{ width: '100%' }}
+                    >
+                      {typeOptions.map((type) => (
+                        <Select.Option key={type.id} value={type.id}>
+                          {type.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }} className="filter-item">
+                    <Space wrap>
+                      <AntButton
+                        type="primary"
+                        htmlType="submit"
+                        icon={<SearchOutlined />}
+                        loading={queryLoading}
+                      >
+                        Search
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -571,90 +591,90 @@ export default function TimesheetReport() {
             {!shouldFetch ? (
               <Empty description="Click Search to view data" />
             ) :
-            queryLoading ? (
-              <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
-                <Spin />
-              </Box>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    mb: 2,
-                    pb: 2,
-                    borderBottom: '1px solid #f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}>
-                  <Space style={{ marginLeft: 'auto' }} size={12}>
-                    <Input
-                      placeholder="Search"
-                      prefix={<SearchOutlined />}
-                      value={searchText}
-                      onChange={e => setSearchText(e.target.value)}
-                      allowClear
-                      style={{ width: 250 }}
-                    />
-                    <AntButton
-                      type="default"
-                      icon={<FileExcelOutlined />}
-                      onClick={handleExportExcel}
-                      disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                    >Export Excel
-                    </AntButton>
-                    <AntButton
-                      type="default"
-                      icon={<FilePdfOutlined />}
-                      onClick={handleExportPDF}
-                      disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                    >Export PDF
-                    </AntButton>
-                  </Space>
+              queryLoading ? (
+                <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
+                  <Spin />
                 </Box>
-                <Table
-                  dataSource={filteredReports}
-                  columns={columns}
-                  rowKey="id"
-                  pagination={{
-                    pageSize: 20,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} records`
-                  }}
-                  size="middle"
-                  scroll={{ x: 'max-content', y: 450 }}
-                  bordered
-                  components={{
-                  header: {
-                    cell: (props) => (
-                      <th
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '16px',
-                          fontWeight: 600,
-                          padding: '12px 8px'
-                        }}
+              ) : (
+                <>
+                  <Box
+                    sx={{
+                      mb: 2,
+                      pb: 2,
+                      borderBottom: '1px solid #f0f0f0',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}>
+                    <Space style={{ marginLeft: 'auto' }} size={12}>
+                      <Input
+                        placeholder="Search"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                        style={{ width: 250 }}
                       />
-                    )
-                  },
-                  body: {
-                    cell: (props) => (
-                      <td
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '15px',
-                          fontWeight: 400,
-                          padding: '12px 8px'
-                        }}
-                      />
-                    )
-                  }
-                }}
-                />
-              </>
-            )}
+                      <AntButton
+                        type="default"
+                        icon={<FileExcelOutlined />}
+                        onClick={handleExportExcel}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      >Export Excel
+                      </AntButton>
+                      <AntButton
+                        type="default"
+                        icon={<FilePdfOutlined />}
+                        onClick={handleExportPDF}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      >Export PDF
+                      </AntButton>
+                    </Space>
+                  </Box>
+                  <Table
+                    dataSource={filteredReports}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={{
+                      pageSize: 20,
+                      showSizeChanger: true,
+                      showTotal: (total) => `Total ${total} records`
+                    }}
+                    size="middle"
+                    scroll={{ x: 'max-content', y: 450 }}
+                    bordered
+                    components={{
+                      header: {
+                        cell: (props) => (
+                          <th
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      },
+                      body: {
+                        cell: (props) => (
+                          <td
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '15px',
+                              fontWeight: 400,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      }
+                    }}
+                  />
+                </>
+              )}
           </CardContent>
         </Card>
 

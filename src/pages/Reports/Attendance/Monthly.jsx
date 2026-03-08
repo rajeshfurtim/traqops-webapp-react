@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Spin } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Spin, Row, Col } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetMonthlyEmployeeReportQuery } from '../../../store/api/reports.api'
@@ -59,7 +59,7 @@ export default function MonthlyAttendanceReport() {
   // Function to determine shift based on in-time
   const getShiftLetter = (inTime) => {
     if (!inTime) return ''
-    
+
     const [hours, minutes, seconds] = inTime.split(':').map(Number)
     const timeInMinutes = hours * 60 + minutes
 
@@ -111,10 +111,10 @@ export default function MonthlyAttendanceReport() {
   useEffect(() => {
     if (queryError) {
       console.error('API Error:', queryError)
-      const errorMsg = queryError?.data?.message || 
-                       queryError?.error || 
-                       queryError?.message || 
-                       'Failed to fetch report. Please try again.'
+      const errorMsg = queryError?.data?.message ||
+        queryError?.error ||
+        queryError?.message ||
+        'Failed to fetch report. Please try again.'
       setApiError(errorMsg)
       message.error(errorMsg)
       setReports([])
@@ -147,7 +147,7 @@ export default function MonthlyAttendanceReport() {
         // Create a map of day-wise shifts from monthWiseShift array
         const dayShiftMap = {}
         let totalDutyCount = 0
-        
+
         if (Array.isArray(item.monthWiseShift)) {
           item.monthWiseShift.forEach(shift => {
             if (shift.createdAt && shift.inTime) {
@@ -197,7 +197,7 @@ export default function MonthlyAttendanceReport() {
       newFilters.fromDate = selectedMonth.startOf('month').format('YYYY-MM-DD')
       newFilters.toDate = selectedMonth.endOf('month').format('YYYY-MM-DD')
     }
-    
+
     // Handle location selection - send all location IDs if "All Locations" is selected
     if (values.location === 'All Locations') {
       if (Array.isArray(locations) && locations.length > 0) {
@@ -209,7 +209,7 @@ export default function MonthlyAttendanceReport() {
         newFilters.locationId = selectedLocation.id
       }
     }
-    
+
     // Handle department/user type selection
     if (values.department && values.department !== 'All Departments') {
       const selectedUserType = userTypeOptions.find(ut => ut.name === values.department)
@@ -225,18 +225,18 @@ export default function MonthlyAttendanceReport() {
     setShouldFetch(true)
   }
   //filter
-   const [searchText, setSearchText] = useState('')
-    const filteredReports = useMemo(() => {
-      if (!searchText) return reports
-      const lowerSearch = searchText.trim().toLowerCase()
-      return reports.filter(r =>
-        r.employeeNo?.toLowerCase().includes(lowerSearch) ||
-        r.employeeName?.toLowerCase().includes(lowerSearch) ||
-        r.userType?.toLowerCase().includes(lowerSearch) ||
-        r.location?.toLowerCase().includes(lowerSearch)
-      )
-    }, [reports, searchText])
-  
+  const [searchText, setSearchText] = useState('')
+  const filteredReports = useMemo(() => {
+    if (!searchText) return reports
+    const lowerSearch = searchText.trim().toLowerCase()
+    return reports.filter(r =>
+      r.employeeNo?.toLowerCase().includes(lowerSearch) ||
+      r.employeeName?.toLowerCase().includes(lowerSearch) ||
+      r.userType?.toLowerCase().includes(lowerSearch) ||
+      r.location?.toLowerCase().includes(lowerSearch)
+    )
+  }, [reports, searchText])
+
 
 
   const handleSearch = () => {
@@ -262,42 +262,42 @@ export default function MonthlyAttendanceReport() {
 
   const [exporting, setExporting] = useState({ excel: false, pdf: false })
   const handleExportExcel = async () => {
-  try {
-    setExporting(prev => ({ ...prev, excel: true }))
+    try {
+      setExporting(prev => ({ ...prev, excel: true }))
 
-    await exportToExcel(
-      columns,            
-      filteredReports,    
-      `monthly-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
-    )
+      await exportToExcel(
+        columns,
+        filteredReports,
+        `monthly-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+      )
 
-    message.success('Excel exported successfully')
-  } catch (err) {
-    message.error('Excel export failed')
-  } finally {
-    setExporting(prev => ({ ...prev, excel: false }))
+      message.success('Excel exported successfully')
+    } catch (err) {
+      message.error('Excel export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
+    }
   }
-}
 
 
   const handleExportPDF = async () => {
-  try {
-    console.log("adhsgvuiav bjhav")
-    setExporting(prev => ({ ...prev, pdf: true }))
+    try {
+      console.log("adhsgvuiav bjhav")
+      setExporting(prev => ({ ...prev, pdf: true }))
 
-    await exportToPDF(
-      columns,           
-      filteredReports,
-      `monthly-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
-    )
+      await exportToPDF(
+        columns,
+        filteredReports,
+        `monthly-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
+      )
 
-    message.success('PDF exported successfully')
-  } catch (err) {
-    message.error('PDF export failed')
-  } finally {
-    setExporting(prev => ({ ...prev, pdf: false }))
+      message.success('PDF exported successfully')
+    } catch (err) {
+      message.error('PDF export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
+    }
   }
-}
 
 
   const columns = [
@@ -369,77 +369,98 @@ export default function MonthlyAttendanceReport() {
           <CardContent>
             <Form
               form={form}
-              layout="inline"
+              layout="vertical"
               onFinish={handleFilterChange}
               style={{ marginBottom: 16 }}
               initialValues={{
                 month: dayjs(),
                 location: 'All Locations',
-                department: 'All Departments'
+                department: 'All Departments',
               }}
             >
-              <Form.Item name="month" label="Month">
-                <DatePicker picker="month"
-                  style={{ width: 180 }}
-                  allowClear={false} />
-              </Form.Item>
-              <Form.Item name="location" label="Location" className='filter-item'>
-                <Select
-                  placeholder="All Locations"
-                  style={{ width: 180 }}
-                  loading={locationsLoading}
-                >
-                  {locationOptions.map(location => (
-                    <Select.Option key={location.id} value={location.name}>
-                      {location.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item name="department" label="Department">
-                <Select placeholder="All Departments" style={{ width: 150 }} loading={userTypesLoading}>
-                  {userTypeOptions.map(userType => (
-                    <Select.Option key={userType.id} value={userType.name}>
-                      {userType.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item>
-                <Space>
-                  <AntButton 
-                    type="primary" 
-                    icon={<SearchOutlined />}
-                    onClick={handleSearch}
-                    loading={queryLoading}
-                  >
-                    Search
-                  </AntButton>
-                  <AntButton onClick={handleResetFilters}>
-                    Reset
-                  </AntButton>
-                </Space>
-              </Form.Item>
-              {/* <Form.Item>
-                <Space>
-                  <AntButton
-                    type="default"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={reports.length === 0}
-                    style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                  >
-                  </AntButton>
-                  <AntButton
-                    type="default"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={reports.length === 0}
-                    style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                  >
-                  </AntButton>
-                </Space>
-              </Form.Item> */}
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="month" label="Month">
+                    <DatePicker
+                      picker="month"
+                      style={{ width: '100%' }}
+                      allowClear={false}
+                    />
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="location" label="Location" className="filter-item">
+                    <Select
+                      placeholder="All Locations"
+                      style={{ width: '100%' }}
+                      loading={locationsLoading}
+                    >
+                      {locationOptions.map((location) => (
+                        <Select.Option key={location.id} value={location.name}>
+                          {location.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="department" label="Department">
+                    <Select
+                      placeholder="All Departments"
+                      style={{ width: '100%' }}
+                      loading={userTypesLoading}
+                    >
+                      {userTypeOptions.map((userType) => (
+                        <Select.Option key={userType.id} value={userType.name}>
+                          {userType.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton
+                        type="primary"
+                        icon={<SearchOutlined />}
+                        onClick={handleSearch}
+                        loading={queryLoading}
+                      >
+                        Search
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+
+                {/* Uncomment and wrap export buttons if needed */}
+                {/* <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+        <Form.Item style={{ marginBottom: 0 }}>
+          <Space wrap>
+            <AntButton
+              type="default"
+              icon={<FileExcelOutlined />}
+              onClick={handleExportExcel}
+              disabled={reports.length === 0}
+              style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+            />
+            <AntButton
+              type="default"
+              icon={<FilePdfOutlined />}
+              onClick={handleExportPDF}
+              disabled={reports.length === 0}
+              style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+            />
+          </Space>
+        </Form.Item>
+      </Col> */}
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -463,100 +484,100 @@ export default function MonthlyAttendanceReport() {
               />
             ) : (
               <>
-              <Box
-                sx={{
-                  mb: 2,
-                  pb: 2,
-                  borderBottom: '1px solid #f0f0f0',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-              {/* Left content */}
-              <Typography
-                variant="body2"
-                fontWeight="bold"
-                sx={{ fontSize: '1.2rem' }}
-              >
-                Overall Employee Count:{' '}
-                <span style={{ color: '#1890ff' }}>{reports.length}</span>
-                {' | '} 
-                Total Duty:{' '}
-                <span style={{ color: '#52c41a' }}>
-                  {reports.reduce((sum, report) => sum + report.totalDuty, 0)}
-                </span>
-              </Typography>
+                <Box
+                  sx={{
+                    mb: 2,
+                    pb: 2,
+                    borderBottom: '1px solid #f0f0f0',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  {/* Left content */}
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    sx={{ fontSize: '1.2rem' }}
+                  >
+                    Overall Employee Count:{' '}
+                    <span style={{ color: '#1890ff' }}>{reports.length}</span>
+                    {' | '}
+                    Total Duty:{' '}
+                    <span style={{ color: '#52c41a' }}>
+                      {reports.reduce((sum, report) => sum + report.totalDuty, 0)}
+                    </span>
+                  </Typography>
 
-                {/* Right buttons */}
-                <Space style={{ marginLeft: 'auto' }} size={12}>
-                  <Input
-                    placeholder="Search"
-                    prefix={<SearchOutlined />}
-                    value={searchText}
-                    onChange={e => setSearchText(e.target.value)}
-                    allowClear
-                    style={{ width: 250 }}
-                  />
-                  <AntButton
-                    type="default"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={reports.length === 0}
+                  {/* Right buttons */}
+                  <Space style={{ marginLeft: 'auto' }} size={12}>
+                    <Input
+                      placeholder="Search"
+                      prefix={<SearchOutlined />}
+                      value={searchText}
+                      onChange={e => setSearchText(e.target.value)}
+                      allowClear
+                      style={{ width: 250 }}
+                    />
+                    <AntButton
+                      type="default"
+                      icon={<FileExcelOutlined />}
+                      onClick={handleExportExcel}
+                      disabled={reports.length === 0}
                     // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                  >Export Excel
-                  </AntButton>
-                  <AntButton
-                    type="default"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={reports.length === 0}
+                    >Export Excel
+                    </AntButton>
+                    <AntButton
+                      type="default"
+                      icon={<FilePdfOutlined />}
+                      onClick={handleExportPDF}
+                      disabled={reports.length === 0}
                     // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                  >Export PDF
-                  </AntButton>
-                </Space>
-              </Box>
+                    >Export PDF
+                    </AntButton>
+                  </Space>
+                </Box>
 
-              <Table
-                dataSource={filteredReports}
-                columns={columns}
-                rowKey="id"
-                pagination={{
-                  pageSize: 20,
-                  showSizeChanger: true,
-                  showTotal: (total) => `Total ${total} records`
-                }}
-                size="middle"
-                scroll={{ x: 'max-content', y: 450 }}
-                bordered
-                components={{
-                  header: {
-                    cell: (props) => (
-                      <th
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '16px',
-                          fontWeight: 600,
-                          padding: '12px 8px'
-                        }}
-                      />
-                    )
-                  },
-                  body: {
-                    cell: (props) => (
-                      <td
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '15px',
-                          fontWeight: 400,
-                          padding: '12px 8px'
-                        }}
-                      />
-                    )
-                  }
-                }}
-              />
+                <Table
+                  dataSource={filteredReports}
+                  columns={columns}
+                  rowKey="id"
+                  pagination={{
+                    pageSize: 20,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} records`
+                  }}
+                  size="middle"
+                  scroll={{ x: 'max-content', y: 450 }}
+                  bordered
+                  components={{
+                    header: {
+                      cell: (props) => (
+                        <th
+                          {...props}
+                          style={{
+                            ...props.style,
+                            fontSize: '16px',
+                            fontWeight: 600,
+                            padding: '12px 8px'
+                          }}
+                        />
+                      )
+                    },
+                    body: {
+                      cell: (props) => (
+                        <td
+                          {...props}
+                          style={{
+                            ...props.style,
+                            fontSize: '15px',
+                            fontWeight: 400,
+                            padding: '12px 8px'
+                          }}
+                        />
+                      )
+                    }
+                  }}
+                />
 
               </>
             )}

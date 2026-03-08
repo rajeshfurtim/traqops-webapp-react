@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Empty, Spin } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Empty, Spin, Row, Col } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -255,38 +255,45 @@ export default function MonthlyEmployeeAttendanceReport() {
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Form form={form} layout="inline">
-              <Form.Item name="month" label="Month">
-                <DatePicker picker="month" allowClear={false} />
-              </Form.Item>
+            <Form form={form} layout="vertical">
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="month" label="Month">
+                    <DatePicker picker="month" allowClear={false} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="userTypeId" label="User Type">
-                <Select style={{ width: 220 }} loading={userTypeLoading}>
-                  <Select.Option value={-1}>All User Types</Select.Option>
-                  {userTypes?.map(u => (
-                    <Select.Option key={u.id} value={u.id}>
-                      {u.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="userTypeId" label="User Type">
+                    <Select style={{ width: '100%' }} loading={userTypeLoading}>
+                      <Select.Option value={-1}>All User Types</Select.Option>
+                      {userTypes?.map((u) => (
+                        <Select.Option key={u.id} value={u.id}>
+                          {u.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
 
-              <Form.Item>
-                <AntButton
-                  type="primary"
-                  icon={<SearchOutlined />}
-                  loading={queryLoading}
-                  onClick={handleSearch}
-                >
-                  Search
-                </AntButton>
-              </Form.Item>
-
-              <Form.Item>
-                <AntButton onClick={handleResetFilters}>
-                  Reset
-                </AntButton>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Space wrap>
+                      <AntButton
+                        type="primary"
+                        icon={<SearchOutlined />}
+                        loading={queryLoading}
+                        onClick={handleSearch}
+                      >
+                        Search
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -294,101 +301,101 @@ export default function MonthlyEmployeeAttendanceReport() {
         <Card>
           <CardContent>
             {!shouldFetch ? (
-              <Empty description ="Click search to view data" />
+              <Empty description="Click search to view data" />
             ) :
-             queryLoading ? (
-              <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
-                <Spin />
-              </Box>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    mb: 2,
-                    pb: 2,
-                    borderBottom: '1px solid #f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography fontWeight="bold" variant="body2" sx={{ fontSize: '1.2rem' }} >
-                    Overall Employee Count:{' '}
-                    <span style={{ color: '#1890ff' }}>{reports.length}</span>
-                    {' | '}Total Duty:{' '}
-                    <span style={{ color: '#52c41a' }}>
-                      {reports.reduce((s, r) => s + r.totalDuty, 0)}
-                    </span>
-                  </Typography>
-
-                  <Space style={{ marginLeft: 'auto' }} size={12}>
-                    <Input
-                      placeholder="Search"
-                      prefix={<SearchOutlined />}
-                      value={searchText}
-                      onChange={e => setSearchText(e.target.value)}
-                      allowClear
-                      style={{ width: 250 }}
-                    />
-
-                    <AntButton
-                      icon={<FileExcelOutlined />}
-                      onClick={handleExportExcel}
-                      disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                    >
-                      Export Excel
-                    </AntButton>
-
-                    <AntButton
-                      icon={<FilePdfOutlined />}
-                      onClick={handleExportPDF}
-                      disabled={reports.length === 0}
-                      //  style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                    >
-                      Export PDF
-                    </AntButton>
-                  </Space>
+              queryLoading ? (
+                <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
+                  <Spin />
                 </Box>
+              ) : (
+                <>
+                  <Box
+                    sx={{
+                      mb: 2,
+                      pb: 2,
+                      borderBottom: '1px solid #f0f0f0',
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography fontWeight="bold" variant="body2" sx={{ fontSize: '1.2rem' }} >
+                      Overall Employee Count:{' '}
+                      <span style={{ color: '#1890ff' }}>{reports.length}</span>
+                      {' | '}Total Duty:{' '}
+                      <span style={{ color: '#52c41a' }}>
+                        {reports.reduce((s, r) => s + r.totalDuty, 0)}
+                      </span>
+                    </Typography>
 
-                <Table
-                  dataSource={filteredReports}
-                  columns={columns}
-                  rowKey="id"
-                  pagination={{ pageSize: 100 }}
-                  size="middle"
-                  scroll={{ x: 'max-content', y: 450 }}
-                  bordered
-                  components={{
-                  header: {
-                    cell: (props) => (
-                      <th
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '16px',
-                          fontWeight: 600,
-                          padding: '12px 8px'
-                        }}
+                    <Space style={{ marginLeft: 'auto' }} size={12}>
+                      <Input
+                        placeholder="Search"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                        style={{ width: 250 }}
                       />
-                    )
-                  },
-                  body: {
-                    cell: (props) => (
-                      <td
-                        {...props}
-                        style={{
-                          ...props.style,
-                          fontSize: '15px',
-                          fontWeight: 400,
-                          padding: '12px 8px'
-                        }}
-                      />
-                    )
-                  }
-                }}
-                />
-              </>
-            )}
+
+                      <AntButton
+                        icon={<FileExcelOutlined />}
+                        onClick={handleExportExcel}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      >
+                        Export Excel
+                      </AntButton>
+
+                      <AntButton
+                        icon={<FilePdfOutlined />}
+                        onClick={handleExportPDF}
+                        disabled={reports.length === 0}
+                      //  style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      >
+                        Export PDF
+                      </AntButton>
+                    </Space>
+                  </Box>
+
+                  <Table
+                    dataSource={filteredReports}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={{ pageSize: 100 }}
+                    size="middle"
+                    scroll={{ x: 'max-content', y: 450 }}
+                    bordered
+                    components={{
+                      header: {
+                        cell: (props) => (
+                          <th
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      },
+                      body: {
+                        cell: (props) => (
+                          <td
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '15px',
+                              fontWeight: 400,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      }
+                    }}
+                  />
+                </>
+              )}
           </CardContent>
         </Card>
       </Box>
