@@ -34,29 +34,30 @@ export default function TaskReport() {
   }
 
   useEffect(() => {
-    console.log("nav state", navstate)
+    console.log('nav state', navstate)
     if (navstate.fromDate) {
-      const statusMap = { Open: 640, Completed: 631, Verified: 15 }
+      const statusId = STATUS_MAP[navstate.statusType] ?? -1
+
       form.setFieldsValue({
         dateRange: [dayjs(navstate.fromDate), dayjs(navstate.toDate)],
         location: navstate.locationId,
         frequencyId: navstate.frequencyId,
-        statusId: STATUS_MAP[navstate.statusType]
+        statusId,
       })
 
       setFilters({
         fromDate: navstate.fromDate,
         toDate: navstate.toDate,
-        location: navstate.locationId,
-        frequencyId: navstate.frequencyId,
-        statusId: statusMap[navstate.statusType],
+        locationId: navstate.locationId ?? defaultLocationId,
+        frequencyId: navstate.frequencyId ?? -1,
+        statusId,
         pn: 1,
-        ps: 1000
+        ps: 1000,
       })
 
       setShouldFetch(true)
     }
-  }, [navstate])
+  }, [navstate, form])
 
   const { data: reportData, isLoading: queryLoading } = useGetbyfrequencyQuery(
     { ...filters, clientId },

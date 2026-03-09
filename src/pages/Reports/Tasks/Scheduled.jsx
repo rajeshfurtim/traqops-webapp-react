@@ -80,6 +80,23 @@ export default function ScheduledMaintenanceReports() {
       verified: item.verifiedCount || 0,
     }))
 
+  const [activeStatuses, setActiveStatuses] = useState(['open', 'completed', 'verified'])
+
+  const handleLegendClick = (dataKey) => {
+    setActiveStatuses((prev) =>
+      prev.includes(dataKey)
+        ? prev.filter((key) => key !== dataKey)
+        : [...prev, dataKey]
+    )
+  }
+
+  const filteredRechartsData = rechartsStackData.map((item) => ({
+    ...item,
+    open: activeStatuses.includes('open') ? item.open : 0,
+    completed: activeStatuses.includes('completed') ? item.completed : 0,
+    verified: activeStatuses.includes('verified') ? item.verified : 0,
+  }))
+
   /* ---------------- CHART CLICK ---------------- */
   const handleChartBarClick = (payload, statusType) => {
     if (!payload?.frequencyId) return
@@ -494,21 +511,41 @@ export default function ScheduledMaintenanceReports() {
                     <Box sx={{ width: '100%', height: 400 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={rechartsStackData}
+                          data={filteredRechartsData}
                           margin={{ top: 30, right: 30, left: 10, bottom: 10 }}
                         >
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="frequency" tick={{ fontSize: 12 }} />
                           <YAxis tick={{ fontSize: 12 }} />
                           <Tooltip content={<CustomTooltip />} />
-                          <Legend wrapperStyle={{ paddingTop: 10 }} />
+                          <Legend
+                            wrapperStyle={{ paddingTop: 10 }}
+                            formatter={(value, entry) => {
+                              const dataKey = entry.dataKey
+                              const isActive = activeStatuses.includes(dataKey)
+                              return (
+                                <span
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleLegendClick(dataKey)
+                                  }}
+                                  style={{
+                                    cursor: 'pointer',
+                                    opacity: isActive ? 1 : 0.4,
+                                  }}
+                                >
+                                  {value}
+                                </span>
+                              )
+                            }}
+                          />
 
                           <Bar
                             dataKey="open"
                             stackId="a"
                             fill="#ff4d6d"
                             name="Open"
-                            cursor="pointer"
+                            style={{ cursor: 'pointer' }}
                             radius={[4, 4, 0, 0]}
                             animationDuration={900}
                             onClick={(data) =>
@@ -522,7 +559,7 @@ export default function ScheduledMaintenanceReports() {
                             stackId="a"
                             fill="#69b1ff"
                             name="Completed"
-                            cursor="pointer"
+                            style={{ cursor: 'pointer' }}
                             animationDuration={900}
                             onClick={(data) =>
                               handleChartBarClick(data.payload, 'completed')
@@ -535,7 +572,7 @@ export default function ScheduledMaintenanceReports() {
                             stackId="a"
                             fill="#73d13d"
                             name="Verified"
-                            cursor="pointer"
+                            style={{ cursor: 'pointer' }}
                             radius={[4, 4, 0, 0]}
                             animationDuration={900}
                             onClick={(data) =>

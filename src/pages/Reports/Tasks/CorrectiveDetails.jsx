@@ -201,7 +201,7 @@ const columns = [
                 statusId: -1,
               }}
             >
-              <Row gutter={[16, 16]} align="bottom">
+              <Row gutter={[16, 16]} >
                 <Col xs={24} sm={12} md={6} lg={4}>
                   <Form.Item name="dateRange" label="Date Range">
                     <RangePicker style={{ width: '100%' }} />
@@ -241,7 +241,7 @@ const columns = [
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={24} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                <Col xs={24} sm={24} md={8} lg={6} style={{ display: 'flex', alignItems:'center' }}>
                   <Form.Item style={{ marginBottom: 0 }} className="filter-item">
                     <Space wrap>
                       <AntButton type="primary" htmlType="submit" loading={queryLoading}>
