@@ -101,7 +101,7 @@ export default function ScheduledMaintenanceReports() {
   const handleChartBarClick = (payload, statusType) => {
     if (!payload?.frequencyId) return
 
-    navigate('/reports/tasks/ScheduledDetailsPages/TaskReport', {
+    navigate('/reports/tasks/ScheduledDetails/TaskReport', {
       state: {
         fromDate: filters.fromDate,
         toDate: filters.toDate,
@@ -314,7 +314,7 @@ export default function ScheduledMaintenanceReports() {
               onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
               onClick={() => {
-                navigate('/reports/tasks/ScheduledDetailsPages/TaskReport', {
+                navigate('/reports/tasks/ScheduledDetails/TaskReport', {
                   state: {
                     fromDate: filters.fromDate,
                     toDate: filters.toDate,
