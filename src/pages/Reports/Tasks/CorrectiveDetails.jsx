@@ -31,11 +31,12 @@ export default function ScheduledMaintenanceDetailsReports() {
   })
 
 
-  const { data: reportData, isLoading: queryLoading } = useGettaskReportSummarycmQuery(
+  const { data: reportData, isLoading: isInitialLoading, isFetching } = useGettaskReportSummarycmQuery(
     { ...filters, clientId },
     { skip: !filters.fromDate || !filters.toDate || !filters.locationId || !shouldFetch }
   )
 
+  const queryLoading = isInitialLoading || isFetching
 
   const reports = (reportData?.data?.content || []).map((item, index) => {
     const remark = item.breakDownRemarks?.[0] || {};
