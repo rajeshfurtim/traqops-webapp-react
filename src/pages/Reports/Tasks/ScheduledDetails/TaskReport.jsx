@@ -1,4 +1,4 @@
-import { useState, useEffect, Children } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
 import { Table, Form, Select, DatePicker, Button as AntButton, Empty, Spin, Descriptions, Space, Row, Col } from 'antd'
@@ -35,7 +35,6 @@ export default function TaskReport() {
   }
 
   useEffect(() => {
-    console.log("nav state", navstate)
     if (navstate.fromDate) {
       const statusMap = { Open: 640, Completed: 631, Verified: 15 }
       form.setFieldsValue({
@@ -67,6 +66,7 @@ export default function TaskReport() {
   const reports = (reportData?.data || []).map((item, index) => {
     const remark = item.scheduledCheckListDtos?.[0] || {}
     return {
+      _rowKey: index, 
       index,
       sno: index + 1,
       raw: item,
@@ -82,13 +82,11 @@ export default function TaskReport() {
       open: item.openCount || 0,
       completed: item.completedCount || 0,
       verified: item.verifiedCount || 0
-
     }
   })
 
   const stringSorter = (key) => (a, b) =>
-    (a[key] || "").localeCompare(b[key] || "");
-
+    (a[key] || "").localeCompare(b[key] || "")
 
   const getColumnSearchProps = (dataIndex) => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
@@ -121,26 +119,10 @@ export default function TaskReport() {
     {
       title: 'Asset Status',
       children: [
-        {
-          title: 'Not Live',
-          dataIndex: 'notlive',
-          key: 'notlive'
-        },
-        {
-          title: 'Open',
-          dataIndex: 'open',
-          key: 'open'
-        },
-        {
-          title: 'Completed',
-          dataIndex: 'completed',
-          key: 'completed'
-        },
-        {
-          title: 'Verified',
-          dataIndex: 'verified',
-          key: 'verified'
-        }
+        { title: 'Not Live', dataIndex: 'notlive', key: 'notlive' },
+        { title: 'Open', dataIndex: 'open', key: 'open' },
+        { title: 'Completed', dataIndex: 'completed', key: 'completed' },
+        { title: 'Verified', dataIndex: 'verified', key: 'verified' }
       ]
     },
   ]
@@ -153,7 +135,6 @@ export default function TaskReport() {
   )
 
   const handleApplyFilters = values => {
-    const statusMap = { Open: 640, Completed: 631, Verified: 15 }
     setFilters({
       fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: values.dateRange?.[1]?.format('YYYY-MM-DD'),
@@ -165,6 +146,8 @@ export default function TaskReport() {
     })
     setShouldFetch(true)
   }
+
+
 
   return (
     <>
@@ -244,15 +227,22 @@ export default function TaskReport() {
           <CardContent>
             {!shouldFetch ? <Empty description="Please apply filters to view the report" /> :
               queryLoading ? <Box display="flex" justifyContent="center" p={4}><Spin /></Box> :
-                <Table dataSource={reports} columns={columns} rowKey={(record, index) => index} expandable={{ expandedRowRender }} pagination={{ pageSize: 20 }} scroll={{ x: 'max-content', y: 450 }} bordered
+                <Table
+                  dataSource={reports}
+                  columns={columns}
+                  rowKey="_rowKey" // safe index-based key
+                  expandable={{ expandedRowRender }}
+                  pagination={{ pageSize: 20 }}
+                  scroll={{ x: 'max-content', y: 450 }}
+                  bordered
                   onRow={(record) => ({
                     onClick: () => {
-                      console.log("clickeddddddddddd", record.pmTaskId)
                       navigate("/reports/tasks/ScheduledDetails/TaskReportDetails", {
                         state: { pmTaskId: record.pmTaskId }
                       })
                     }
-                  })} />}
+                  })}
+                />}
           </CardContent>
         </Card>
       </Box>
