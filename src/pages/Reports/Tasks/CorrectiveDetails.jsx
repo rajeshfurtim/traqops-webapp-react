@@ -201,14 +201,15 @@ const columns = [
                 statusId: -1,
               }}
             >
-              <Row gutter={[16, 16]} >
-                <Col xs={24} sm={12} md={6} lg={4}>
+              <Row gutter={[16, 16]}>
+                {/* Date range needs more width on large screens */}
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="dateRange" label="Date Range">
                     <RangePicker style={{ width: '100%' }} />
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={6} lg={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="location" label="Location">
                     <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
                       {locations?.map((loc) => (
@@ -220,7 +221,7 @@ const columns = [
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={6} lg={4}>
+                <Col xs={24} sm={12} md={8} lg={4}>
                   <Form.Item name="system" label="System">
                     <Select style={{ width: '100%' }} allowClear>
                       <Select.Option value={-1}>All</Select.Option>
@@ -230,7 +231,7 @@ const columns = [
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={6} lg={4}>
+                <Col xs={24} sm={12} md={8} lg={4}>
                   <Form.Item name="statusId" label="Status">
                     <Select style={{ width: '100%' }} allowClear>
                       <Select.Option value={-1}>All</Select.Option>
@@ -241,7 +242,13 @@ const columns = [
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={24} md={8} lg={6} style={{ display: 'flex', alignItems:'center' }}>
+                <Col
+                  xs={24}
+                  sm={24}
+                  md={8}
+                  lg={4}
+                  style={{ display: 'flex', alignItems: 'center' }}
+                >
                   <Form.Item style={{ marginBottom: 0 }} className="filter-item">
                     <Space wrap>
                       <AntButton type="primary" htmlType="submit" loading={queryLoading}>
