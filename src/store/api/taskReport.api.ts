@@ -3,6 +3,7 @@ import { baseApi, API_BASE_URL } from './baseApi'
 
 export const taskReportApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
+    
     getFrequencyCount: build.query({
       query: (params) => {
         const { fromDate, toDate, locationId, frequencyId, clientId } = params
@@ -30,6 +31,7 @@ export const taskReportApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+
     getLocationwise: build.query({
       query: (params) => {
         const { fromDate, toDate, locationId, statusId, clientId } = params
@@ -56,7 +58,6 @@ export const taskReportApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
-
     getLocationwiseSheduled: build.query({
       query: (params) => {
         const { clientId, locationId, pn, ps } = params
@@ -72,7 +73,9 @@ export const taskReportApi = baseApi.injectEndpoints({
           url: `${API_BASE_URL}/assets/getassetsfilter/locationwise`,
           method: 'GET',
           params: {
-            locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
+            locationId: Array.isArray(locationId)
+              ? locationId.join(',')
+              : locationId.toString(),
             clientId: clientId.toString(),
             ...(pn != null && { pn: pn.toString() }),
             ...(ps != null && { ps: ps.toString() }),
@@ -82,10 +85,10 @@ export const taskReportApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
-
     getconsolitadeReport: build.query({
       query: (params) => {
         const { fromDate, toDate, locationId } = params
+
         if (!fromDate || !toDate) {
           throw new Error('FromDate and ToDate are required for getconsolitadeReport')
         }
@@ -93,14 +96,13 @@ export const taskReportApi = baseApi.injectEndpoints({
           throw new Error('LocationId is required for getconsolitadeReport')
         }
 
-
         return {
           url: `${API_BASE_URL}/pmtask/consolidatereport/locationwise`,
           method: 'GET',
           params: {
             fromDate,
             toDate,
-            ...(locationId != null && { locationId: locationId.toString() }),
+            locationId: locationId.toString(),
           },
         }
       },
@@ -110,6 +112,7 @@ export const taskReportApi = baseApi.injectEndpoints({
     getCmReportSummary: build.query({
       query: (params) => {
         const { fromDate, toDate, locationId } = params
+
         if (!fromDate || !toDate) {
           throw new Error('FromDate and ToDate are required for getCmReportSummary')
         }
@@ -123,28 +126,31 @@ export const taskReportApi = baseApi.injectEndpoints({
           params: {
             fromDate,
             toDate,
-            ...(locationId != null && { locationId: locationId.toString() }),
+            locationId: locationId.toString(),
           },
         }
       },
       providesTags: ['Report'],
     }),
+
     gettaskReportSummarycm: build.query({
       query: (params) => {
         const { fromDate, toDate, locationId, statusId, pn, ps, clientId } = params
+
         if (!fromDate || !toDate) {
-          throw new Error('FromDate and ToDate are required for gettaskReportSummary')
+          throw new Error('FromDate and ToDate are required')
         }
         if (!locationId) {
-          throw new Error('LocationId is required for gettaskReportSummary')
+          throw new Error('LocationId is required')
         }
+
         return {
           url: `${API_BASE_URL}/reports/breakdown/taskreports`,
           method: 'GET',
           params: {
             fromDate,
             toDate,
-            ...(locationId != null && { locationId: locationId.toString() }),
+            locationId: locationId.toString(),
             ...(statusId != null && { statusId: statusId.toString() }),
             ...(pn != null && { pn: pn.toString() }),
             ...(ps != null && { ps: ps.toString() }),
@@ -154,28 +160,45 @@ export const taskReportApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+
     getbyfrequency: build.query({
       query: (params) => {
-        const { fromDate,toDate,locationId,statusId,frequencyId,pn,ps,clientId} = params
-      return{
-         url: `${API_BASE_URL}/reports/pmtask/getlocation/byfrequency`,
+        const { fromDate, toDate, locationId, statusId, frequencyId, pn, ps, clientId } = params
+
+        return {
+          url: `${API_BASE_URL}/reports/pmtask/getlocation/byfrequency`,
           method: 'GET',
           params: {
             fromDate,
             toDate,
             ...(locationId != null && { locationId: locationId.toString() }),
             ...(statusId != null && { statusId: statusId.toString() }),
-            ...(frequencyId != null && { frequencyId: frequencyId.toString()}),
+            ...(frequencyId != null && { frequencyId: frequencyId.toString() }),
             ...(pn != null && { pn: pn.toString() }),
             ...(ps != null && { ps: ps.toString() }),
             clientId: clientId.toString(),
           },
-      }
-    },
-    providesTags: ['Report'],
-    })
+        }
+      },
+      providesTags: ['Report'],
+    }),
 
-}),
+    getallpmtasklist: build.query({
+      query: (params) => {
+        const { id } = params || {}
+
+        return {
+          url: `${API_BASE_URL}/pmtask/getallpmtasklist`,
+          method: 'GET',
+          params: {
+            ...(id != null && { id: id.toString() }),
+          },
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
+  }),
   overrideExisting: false,
 })
 
@@ -187,4 +210,5 @@ export const {
   useGetCmReportSummaryQuery,
   useGettaskReportSummarycmQuery,
   useGetbyfrequencyQuery,
+  useGetallpmtasklistQuery,
 } = taskReportApi
