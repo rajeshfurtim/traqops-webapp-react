@@ -1,7 +1,7 @@
 import { useState,useMemo, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton,message,Spin } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { mockApi } from '../../../services/api'
@@ -10,6 +10,7 @@ import { formatNumber, formatCurrency } from '../../../utils/formatters';
 import { useGetEnergyConsumptionReportQuery } from '../../../store/api/reports.api';
 import { useGetLocationList } from '../../../hooks/useGetLocationList';
 import { exportToExcel,exportToPDF } from '../../../utils/exportUtils';
+import { SearchOutlined } from '@ant-design/icons'
 
 const { RangePicker } = DatePicker
 
@@ -19,6 +20,7 @@ export default function EnergyConsumption() {
   const [filters, setFilters] = useState({})
   const [form] = Form.useForm();
     const [shouldFetch, setShouldFetch] = useState(false);
+      const [searchText, setSearchText] = useState('')
     
   
   let locationId=null;
@@ -135,8 +137,9 @@ export default function EnergyConsumption() {
   energylist.forEach(item => {
     const locations = item.locations || []
 
-    locations.forEach(location => {
+    locations.forEach((location,i )=> {
       tableDataArr.push({
+        index:i+1,
         name: location.locationName,
         chillerValue: location.chillerValue,
         date: dayjs(location.date).format('DD-MM-YYYY'),
@@ -148,7 +151,17 @@ export default function EnergyConsumption() {
   })
 
   return tableDataArr
-}, [response, queryLoading])
+}, [response, queryLoading]);
+const filteredReports = useMemo(() => {
+  if (!searchText) return reportss;
+
+  return reportss.filter((row) =>
+    Object.values(row)
+      .join(" ")
+      .toLowerCase()
+      .includes(searchText.toLowerCase())
+  );
+}, [reportss, searchText]);
 // console.log(reportss)
      const locationOptions = [
     { id: -1, name: 'All Locations' },
@@ -256,14 +269,56 @@ export default function EnergyConsumption() {
         setExporting(prev => ({ ...prev, excel: false }))
       }
     }
+      const getColumnSearchProps = (dataIndex) => ({
+        filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+          <div style={{ padding: 8 }}>
+            <Input
+              placeholder={`Search ${dataIndex}`}
+              value={selectedKeys[0]}
+              onChange={(e) =>
+                setSelectedKeys(e.target.value ? [e.target.value] : [])
+              }
+              onPressEnter={() => confirm()}
+              style={{ marginBottom: 8 }}
+            />
+                          <Space>
+                  <AntButton
+                    type="primary"
+                    size="small"
+                    onClick={() => confirm()}
+                    icon={<SearchOutlined />}
+                  >
+                    Search
+                  </AntButton>
+
+                  <AntButton
+                    size="small"
+                    onClick={() => {
+                      clearFilters();
+                      confirm();
+                    }}
+                  >
+                    Reset
+                  </AntButton>
+                </Space>
+          </div>
+        ),
+        onFilter: (value, record) =>
+          record[dataIndex]
+            ?.toString()
+            .toLowerCase()
+            .includes(value.toLowerCase()),
+      })
+    
 
   const columns = [
     {
       title: 'S.No',
-      dataIndex: 'date',
-      key: 'date',
+      dataIndex: 'index',
+      key: 'index',
       width: 120,
        render: (text, record, index) => index + 1,
+       
       // sorter: (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix()
     },
     {
@@ -311,6 +366,11 @@ export default function EnergyConsumption() {
       width: 120
     }
   ]
+  const columnslist = columns.map(col => ({
+  ...col,
+  key: col.dataIndex,
+  ...getColumnSearchProps(col.dataIndex)
+}));
   
 
   return (
@@ -371,6 +431,14 @@ export default function EnergyConsumption() {
               </Form.Item>
             </Form>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                <Input
+                                      placeholder="Search"
+                                      prefix={<SearchOutlined />}
+                                      value={searchText}
+                                      onChange={e => setSearchText(e.target.value)}
+                                      allowClear
+                                      style={{ width: 250 }}
+                                    />
              
               <AntButton icon={<FilePdfOutlined />} onClick={handleExportPDF}  disabled={reportss.length === 0}>
                 Export PDF
@@ -390,7 +458,7 @@ export default function EnergyConsumption() {
                 <Spin />
               </Box>
             ) : (
-              <Table dataSource={reportss} columns={columns} rowKey="id" pagination={{ pageSize: 10 }} size="middle" />
+              <Table dataSource={filteredReports} columns={columnslist} rowKey="id" pagination={{ pageSize: 10 }} size="middle" />
             )}
           </CardContent>
         </Card>

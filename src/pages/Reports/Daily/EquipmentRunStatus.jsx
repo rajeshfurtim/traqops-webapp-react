@@ -1,7 +1,7 @@
 import { useState,useMemo, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, Space,DatePicker, Button as AntButton, Tag,message,Spin } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { mockApi } from '../../../services/api'
@@ -10,11 +10,13 @@ import { useGetEquipmentRunStatusReportQuery } from '../../../store/api/reports.
 import { useGetLocationList } from '../../../hooks/useGetLocationList';
 import { exportToExcel,exportToPDF } from '../../../utils/exportUtils';
 const { RangePicker } = DatePicker
+import { SearchOutlined } from '@ant-design/icons'
 
 export default function EquipmentRunStatus() {
   const [loading, setLoading] = useState(true)
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState({})
+   const [searchText, setSearchText] = useState('')
   const [form] = Form.useForm();
    const { locations, loading: locationsLoading } = useGetLocationList()
  const { data: response, isLoading: queryLoading,isFetching, error: queryError,}=useGetEquipmentRunStatusReportQuery(
@@ -164,6 +166,56 @@ const getStatusCellStyle = (value) => ({
     fontWeight: 500,
   },
 });
+    const filteredReports = useMemo(() => {
+          if (!searchText) return reportss;
+        
+          return reportss.filter((row) =>
+            Object.values(row)
+              .join(" ")
+              .toLowerCase()
+              .includes(searchText.toLowerCase())
+          );
+        }, [reportss, searchText]);
+         const getColumnSearchProps = (dataIndex) => ({
+                filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+                  <div style={{ padding: 8 }}>
+                    <Input
+                      placeholder={`Search ${dataIndex}`}
+                      value={selectedKeys[0]}
+                      onChange={(e) =>
+                        setSelectedKeys(e.target.value ? [e.target.value] : [])
+                      }
+                      onPressEnter={() => confirm()}
+                      style={{ marginBottom: 8 }}
+                    />
+                                  <Space>
+                          <AntButton
+                            type="primary"
+                            size="small"
+                            onClick={() => confirm()}
+                            icon={<SearchOutlined />}
+                          >
+                            Search
+                          </AntButton>
+        
+                          <AntButton
+                            size="small"
+                            onClick={() => {
+                              clearFilters();
+                              confirm();
+                            }}
+                          >
+                            Reset
+                          </AntButton>
+                        </Space>
+                  </div>
+                ),
+                onFilter: (value, record) =>
+                  record[dataIndex]
+                    ?.toString()
+                    .toLowerCase()
+                    .includes(value.toLowerCase()),
+              })
   const columns = [
     {
       title: 'S.No',
@@ -229,6 +281,11 @@ const getStatusCellStyle = (value) => ({
     //   render: (text) => dayjs(text).format('MMM DD, YYYY')
     // }
   ]
+                    const columnslist = columns.map(col => ({
+  ...col,
+  key: col.dataIndex,
+  ...getColumnSearchProps(col.dataIndex)
+}));
 
   return (
     <>
@@ -290,12 +347,20 @@ const getStatusCellStyle = (value) => ({
                             </Form.Item>
               <Form.Item>
                 <Space>
-                  <AntButton type="primary" htmlType="submit">Filter</AntButton>
+                  <AntButton type="primary" htmlType="submit">Search</AntButton>
                   <AntButton onClick={handleResetFilters}>Reset</AntButton>
                 </Space>
               </Form.Item>
             </Form>
             <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+               <Input
+                                                                          placeholder="Search"
+                                                                          prefix={<SearchOutlined />}
+                                                                          value={searchText}
+                                                                          onChange={e => setSearchText(e.target.value)}
+                                                                          allowClear
+                                                                          style={{ width: 250 }}
+                                                                        />
               <AntButton icon={<FileExcelOutlined />} onClick={handleExportExcel}  disabled={reportss.length === 0}>
                 Export Excel
               </AntButton >
@@ -313,7 +378,7 @@ const getStatusCellStyle = (value) => ({
                  <Spin />
               </Box>
             ) : ( 
-              <Table dataSource={reportss} columns={columns} rowKey="id" bordered pagination={{ pageSize: 10 }} size="middle" />
+              <Table dataSource={filteredReports} columns={columnslist} rowKey="id" bordered pagination={{ pageSize: 10 }} size="middle" />
             )}
           </CardContent>
         </Card>
