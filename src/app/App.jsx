@@ -57,6 +57,7 @@ import ShiftStarting from '../pages/Reports/OperationChecklistPages/ShiftStartin
 import CriticalRoomTemp from '../pages/Reports/OperationChecklistPages/CriticalRoomTemp'
 import DailyClosingReading from '../pages/Reports/OperationChecklistPages/DailyClosingReading'
 import WaterCooledChillers from '../pages/Reports/OperationChecklistPages/WaterCooledChillers'
+import ElectricalPanelMonitoring from '../pages/Reports/OperationChecklistPages/ElectricalPanelMonitoring'
 import HistoryCards from '../pages/Reports/HistoryCards'
 import EvaluationPenalty from '../pages/Reports/EvaluationPenalty'
 import CmrlAppReports from '../pages/Reports/CmrlAppReports'
@@ -154,7 +155,8 @@ function App() {
               <Route path="reports/operation-checklist/shift-starting" element={<ShiftStarting />} />
               <Route path="reports/operation-checklist/critical-temp" element={<CriticalRoomTemp />} />
               <Route path="reports/operation-checklist/closing-reading" element={<DailyClosingReading />} />
-              <Route path="reports/operation-checklist/water-cooled-chillers" element={<WaterCooledChillers />} />
+              <Route path="reports/operation-checklist/daily-checks/:checklistId/:assetCategoryId" element={<WaterCooledChillers />} />
+              <Route path="reports/operation-checklist/electrical-panel" element={<ElectricalPanelMonitoring />} />
               <Route path="reports/history-cards" element={<HistoryCards />} />
               <Route path="reports/evaluation-penalty" element={<EvaluationPenalty />} />
               <Route path="reports/cmrl-app" element={<CmrlAppReports />} />

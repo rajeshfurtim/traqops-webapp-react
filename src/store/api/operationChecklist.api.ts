@@ -101,7 +101,7 @@ export const operationChecklistsApi = baseApi.injectEndpoints({
                   params: {
                     date: date,
                     locationId: locationId.toString(),
-                    assetCategoryId: assetCategoryId.toString(),
+                    assetCategoryId: Array.isArray(assetCategoryId) ? assetCategoryId.join(',') : assetCategoryId?.toString(),
                     checklistId: checklistId.toString()
                   },
                 }

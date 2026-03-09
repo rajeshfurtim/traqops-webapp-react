@@ -28,31 +28,37 @@ export default function OperationChecklist() {
     },
     {
       title: '5. Daily Checks for Water Cooled Chillers - Operation',
-      path: '/reports/operation-checklist/water-cooled-chillers'
+      checklistId: 47774,
+      assetCategoryId: [11887]
     },
     {
       title: '6. Daily Checks for Pumps - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      checklistId: 314742,
+      assetCategoryId: [54045, 314516]
     },
     {
       title: '7. Daily Checks for Cooling Tower - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      checklistId: 61212,
+      assetCategoryId: [54027]
     },
     {
       title: '8. Daily Checks for AHU - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      checklistId: 47900,
+      assetCategoryId: [11890]
     },
     {
       title: '9. Daily Checks for all Ventilation Fans - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      checklistId: 61248,
+      assetCategoryId: [313840, 314525, 314550, 314551, 314545]
     },
     {
       title: '10. Daily Checks for FCU- Operation System',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      checklistId: 54700,
+      assetCategoryId: [11893]
     },
     {
       title: '11. Daily Electrical Panel Monitoring - Operation',
-      path: '/reports/operation-checklist/chiller-monitoring'
+      path: '/reports/operation-checklist/electrical-panel'
     }
   ]
 
@@ -78,7 +84,15 @@ export default function OperationChecklist() {
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => {
+                    if (item.path) {
+                      navigate(item.path)
+                    } else {
+                      navigate(
+                        `/reports/operation-checklist/daily-checks/${item.checklistId}/${item.assetCategoryId.join(",")}`
+                      )
+                    }
+                  }}
                   actions={[<ArrowRightOutlined />]}
                   className="checklist-item"
                 >

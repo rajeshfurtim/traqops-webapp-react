@@ -5,75 +5,37 @@ import { Form, Select, Space, Button as AntButton, Row, Col, DatePicker, Table, 
 import { FilePdfOutlined, StepBackwardOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery } from '../../../store/api/masterSettings.api'
-import { useGetDailyChecksChecklistByCategoryQuery } from '../../../store/api/operationChecklist.api'
+import { useGetAssetListLocationWiseQuery, useGetChillerMonitoringChecklistQuery } from '../../../store/api/operationChecklist.api'
 import { useAuth } from '../../../context/AuthContext'
 import { useReactToPrint } from "react-to-print"
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useParams } from "react-router-dom"
+import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
+import "./print.css";
 
-export default function WaterCooledChillers() {
+export default function ElectricalPanelMonitoring() {
 
     const { user } = useAuth()
     const clientId = user?.client?.id || user?.clientId
     const [form] = Form.useForm()
     const printRef = useRef(null)
-    const location = useLocation()
     const navigate = useNavigate()
-    const { checklistId, assetCategoryId } = useParams();
 
     const [filters, setFilters] = useState({})
-
-    const assetCategoryIdList = assetCategoryId
-        ?.split(",")
-        .map((id) => Number(id));
-
-    const checklistTitles = {
-        47774: "Daily Checks for Water Cooled Chillers",
-        314742: "Daily Checks for Pumps",
-        61212: "Daily Checks for Cooling Tower",
-        47900: "Daily Checks for AHU",
-        61248: "Daily Checks for Ventilation Fans",
-        54700: "Daily Checks for FCU"
-    };
-
-    const pageTitle = checklistTitles[checklistId] || "Daily Checks";
-
-    const checklistHeaderTitles = {
-        47774: "DAILY CHECKS FOR WATER COOLED CHILLERS",
-        314742: "DAILY CHECKS FOR PUMPS",
-        61212: "DAILY CHECKS FOR COOLING TOWERS",
-        47900: "DAILY CHECKS FOR AIR HANDLING UNITS",
-        61248: "DAILY CHECKLIST FOR VENTILATION FANS",
-        54700: "DAILY CHECKS FOR FAN COIL UNITS"
-    };
-
-    const headerPageTitle = checklistHeaderTitles[checklistId] || "Daily Checks";
-
-    const checklistDocNo = {
-        47774: "UG/VAC & TVS/CAMS/005",
-        314742: "UG/VAC & TVS/CAMS/006",
-        61212: "UG/VAC & TVS/CAMS/007",
-        47900: "UG/VAC & TVS/CAMS/008",
-        61248: "UG/VAC & TVS/CAMS/008a",
-        54700: "UG/VAC & TVS/CAMS/008b"
-    };
-
-    const headerDocNo = checklistDocNo[checklistId] || "Daily Checks";
+    const selectedAssetId = filters.assetId;
+    const [selectedLocationId, setSelectedLocationId] = useState(null)
 
     const { data: locationList, isLoading: locationLoading } = useGetLocationListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
+    const { data: assetList, isLoading: assetsLoading, isFetching: assetsFetching } = useGetAssetListLocationWiseQuery({ locationId: selectedLocationId, categoryId: 139095 }, { skip: !selectedLocationId })
     const { data: checklistData, isLoading: checklistLoading, isFetching } =
-        useGetDailyChecksChecklistByCategoryQuery(
+        useGetChillerMonitoringChecklistQuery(
             {
                 ...filters,
-                checklistId
+                checklistId: 210002
             },
             {
-                skip: !filters.locationId
+                skip: !filters.locationId || !filters.assetId
             }
         )
-
-    const result = checklistData?.data;
 
     useEffect(() => {
         form.setFieldsValue({
@@ -81,12 +43,20 @@ export default function WaterCooledChillers() {
         })
     }, [])
 
+    const handleLocationChange = (locationaId) => {
+        console.log('locationaId:', locationaId)
+        form.setFieldsValue({
+            asset: null
+        })
+        setSelectedLocationId(locationaId)
+    }
+
     const handleFilterChange = (values) => {
         console.log('Filter values:', values)
         const newFilters = {}
         if (values.date) newFilters.date = dayjs(values.date).format('YYYY-MM-DD')
         if (values.location) newFilters.locationId = values.location
-        newFilters.assetCategoryId = assetCategoryIdList
+        if (values.asset) newFilters.assetId = values.asset
         setFilters(newFilters)
     }
 
@@ -96,163 +66,230 @@ export default function WaterCooledChillers() {
     }
 
     // Checklist Logic
-    const getLocationName = () => {
-        return locationList?.data?.content?.find(l => l.id === filters.locationId)?.name || "-";
-    }
+    const buildColumns = () => {
+        if (!checklistData?.data?.data) return [];
 
-    const displayValue = (dataRow, asset) => {
-        if (!dataRow?.elementData) return "-";
+        const baseColumns = [
+            {
+                title: "Sl.No",
+                render: (_, record, index) => {
+                    if (record.isFooter === "performed") return "";
+                    if (record.isFooter === "completed") return "";
+                    if (record.isFooter === "verifiedMaintainer") return "";
+                    if (record.isFooter === "verified") return "";
+                    if (record.isFooter === "overall") return "";
+                    return index + 1;
+                }
+            },
+            {
+                title: "Equipment Name",
+                render: (_, record) => {
+                    if (record.isFooter === "performed")
+                        return "Performed By Operator";
 
-        const element = dataRow.elementData?.[asset?.assets?.id];
+                    if (record.isFooter === "completed")
+                        return "Completed By / Date";
+
+                    if (record.isFooter === "verifiedMaintainer")
+                        return "Verified By Maintainers";
+
+                    if (record.isFooter === "verified")
+                        return "Verified By / Date";
+
+                    if (record.isFooter === "overall")
+                        return "Overall Remarks";
+
+                    return record.clElement?.name;
+                }
+            }
+        ];
+
+        const dynamicTaskColumns = checklistData?.data?.tasks
+            ?.filter(task => task.pmAssets?.length > 0)
+            ?.map(task => ({
+                title: (
+                    <div style={{ textAlign: "center" }}>
+                        <div>{dayjs(task.startDate).format("HH:00")}</div>
+                        <div style={{ fontSize: 12 }}>
+                            {task?.status?.name}
+                        </div>
+                    </div>
+                ),
+                children: [
+                    {
+                        title: "Value",
+                        render: (_, record) => {
+                            if (record.isFooter === "performed") {
+                                return getPerformedBy(task);
+                            }
+
+                            if (record.isFooter === "completed") {
+                                return getStatusValues(task, "COMPLETED");
+                            }
+
+                            if (record.isFooter === "verifiedMaintainer") {
+                                return getVerifiedByMaintainer(task);
+                            }
+
+                            if (record.isFooter === "verified") {
+                                return getStatusValues(task, "VERIFIED");
+                            }
+
+                            if (record.isFooter === "overall") {
+                                return getOverall(task);
+                            }
+
+                            return displayValue(record, task);
+                        }
+                    },
+                    {
+                        title: "Remarks",
+                        render: (_, record) => {
+                            if (record.isFooter === "completed") {
+                                return getStatusRemarks(task, "COMPLETED");
+                            }
+
+                            if (record.isFooter === "verified") {
+                                return getStatusRemarks(task, "VERIFIED");
+                            }
+
+                            if (record.isFooter === "overall") {
+                                return getOverall(task);
+                            }
+
+                            if (record.isFooter) return "";
+
+                            return displayRemark(record, task);
+                        }
+                    }
+                ]
+            })) || [];
+
+        return [...baseColumns, ...dynamicTaskColumns];
+    };
+
+    const displayValue = (data, task) => {
+        const element = data.elementData?.[task.id];
 
         if (!element) return "-";
 
-        const type = dataRow?.clElement?.dataEntryType;
-
-        if (type === "NUMERIC VALUE") {
-            return element?.value ?? "-";
+        if (data.clElement?.dataEntryType === "NUMERIC VALUE") {
+            return element.value ?? "-";
         }
 
-        if (type === "TEXT") {
-            return element?.textContent ?? "-";
+        if (data.clElement?.dataEntryType === "TEXT") {
+            return element.textContent ?? "-";
         }
 
-        if (type === "CHECKBOX") {
-            return element?.textContent ?? "-";
+        if (data.clElement?.dataEntryType === "CHECKBOX") {
+            return element.textContent ?? "-";
         }
 
-        return element?.textContent ?? "-";
+        return "-";
     };
 
-    const displayValue1 = (dataRow, asset) => {
-        if (!dataRow?.elementData) return "-";
-
-        const element = dataRow.elementData?.[asset?.assets?.id];
-
-        if (!element) return "-";
-
-        return element?.remark ?? "-";
+    const displayRemark = (data, task) => {
+        return data.elementData?.[task.id]?.remark ?? "-";
     };
 
-    const getPerfomedBy = (asset) => {
-        return asset?.performedBy || "-";
-    };
+    const getPerformedBy = (task) => {
 
-    const getVerifiedBymaintaner = (asset) => {
-        return asset?.verifiedBy || "-";
-    };
+        if (!task?.pmAssets?.length) return "-";
 
-    const getStatusValues = (task, type) => {
-
-        const statuses = task?.pmAssetStatus || [];
-
-        for (let status of statuses) {
-            if (status.status.name === type) {
-                return `${status.userInfo.userName} / ${dayjs(status.createdAt).format(
-                    "DD/MM/YY HH:mm"
-                )}`;
+        for (let asset of task.pmAssets) {
+            if (asset?.assets?.id === selectedAssetId) {
+                return asset?.performedBy ?? "-";
             }
         }
 
         return "-";
     };
 
-    const getStatusRemarks = (asset, type) => {
-        if (!asset?.pmAssetStatus?.length) return "-";
+    const getStatusValues = (task, type) => {
 
-        const status = asset.pmAssetStatus.find(
-            (s) => s?.status?.name === type
-        );
+        if (!task?.pmAssets?.length) return "-";
 
-        return status?.remarks || "-";
+        for (let asset of task.pmAssets) {
+            if (
+                asset?.assets?.id === selectedAssetId &&
+                asset?.pmAssetStatus?.length
+            ) {
+                for (let status of asset.pmAssetStatus) {
+                    if (status?.status?.name === type) {
+                        const date = dayjs(status?.createdAt);
+                        return `${status?.userInfo?.userName} / ${date.format("DD/MM/YY HH:mm")}`;
+                    }
+                }
+            }
+        }
+
+        return "-";
     };
 
-    const getOverallremarks = (asset) => {
-        if (!asset?.pmAssetStatus?.length) return "-";
+    const getStatusRemarks = (task, type) => {
 
-        return asset.pmAssetStatus?.[0]?.remarks || "-";
+        if (!task?.pmAssets?.length) return "-";
+
+        for (let asset of task.pmAssets) {
+            if (
+                asset?.assets?.id === selectedAssetId &&
+                asset?.pmAssetStatus?.length
+            ) {
+                for (let status of asset.pmAssetStatus) {
+                    if (status?.status?.name === type) {
+                        return status?.remarks ?? "-";
+                    }
+                }
+            }
+        }
+
+        return "-";
     };
 
-    const buildColumns = () => {
-        const columns = [
-            {
-                title: "Sl.No",
-                render: (_, record, index) => (record.isFooter ? "" : index + 1),
-                width: 80,
-            },
-            {
-                title: "Description of Work",
-                width: 250,
-                render: (_, record) => {
-                    if (record.isFooter === "performed") return "Performed By Operator";
-                    if (record.isFooter === "completed") return "Completed By / Date";
-                    if (record.isFooter === "verifiedMaintainer")
-                        return "Verified By Maintainers";
-                    if (record.isFooter === "verified") return "Verified By / Date";
-                    if (record.isFooter === "overall") return "Overall Remarks";
+    const getVerifiedByMaintainer = (task) => {
 
-                    return record.clElement?.name;
-                },
-            },
-        ];
+        if (!task?.pmAssets?.length) return "-";
 
-        result?.tasks?.forEach((task) => {
-            task.pmAssets?.forEach((asset) => {
-                columns.push({
-                    title: (
-                        <div>
-                            {asset.assets.name} - {asset.assets.itemCode}
-                            <div>{asset.status?.name}</div>
-                            <div>Ptw No: {asset?.ptwNo}</div>
-                        </div>
-                    ),
-                    children: [
-                        {
-                            title: "Value",
-                            width: 120,
-                            render: (row) => {
-                                if (row.isFooter === "performed") return getPerfomedBy(asset);
-                                if (row.isFooter === "completed")
-                                    return getStatusValues(asset, "COMPLETED");
-                                if (row.isFooter === "verifiedMaintainer")
-                                    return getVerifiedBymaintaner(asset);
-                                if (row.isFooter === "verified")
-                                    return getStatusValues(asset, "VERIFIED");
-                                if (row.isFooter === "overall") return getOverallremarks(asset);
+        for (let asset of task.pmAssets) {
+            if (asset?.assets?.id === selectedAssetId) {
+                return asset?.verifiedBy ?? "-";
+            }
+        }
 
-                                return displayValue(row, asset);
-                            },
-                        },
-                        {
-                            title: "Remarks",
-                            width: 200,
-                            render: (row) => {
-                                if (row.isFooter === "completed")
-                                    return getStatusRemarks(asset, "Completed");
-                                if (row.isFooter === "verified")
-                                    return getStatusRemarks(asset, "Verified");
-                                if (row.isFooter === "overall") return getOverallremarks(asset);
+        return "-";
+    };
 
-                                return displayValue1(row, asset);
-                            },
-                        },
-                    ],
-                });
-            });
-        });
+    const getOverall = (task) => {
 
-        return columns;
+        if (!task?.pmAssets?.length) return "-";
+
+        for (let asset of task.pmAssets) {
+            if (asset?.assets?.id === selectedAssetId) {
+                return asset?.pmAssetStatus?.[0]?.remarks ?? "-";
+            }
+        }
+
+        return "-";
+    };
+
+    const getAssetName = () => {
+        return assetList?.data?.find(a => a.assetId === filters.assetId)?.assetName || "-";
+    };
+
+    const getLocationName = () => {
+        return locationList?.data?.content?.find(l => l.id === filters.locationId)?.name || "-";
     };
 
     const handlePrint = useReactToPrint({
-        contentRef: printRef
+        contentRef: printRef,
+        // documentTitle: `Routine_Monitoring_Checklist_${dayjs(filters.date).format("DD-MM-YYYY")}_${getLocationName()}_${getAssetName()}`,
     });
 
     return (
         <>
             <Helmet>
-                <title>{getPageTitle(location.pathname)}</title>
-                <meta name="description" content={`${APP_CONFIG.name} - ${pageTitle}`} />
+                <title>{getPageTitle('reports/operation-checklist/electrical-panel')}</title>
+                <meta name="description" content={`${APP_CONFIG.name} - Electrical Panel Monitoring`} />
             </Helmet>
             <Box>
                 {/* <Typography variant="h4" gutterBottom fontWeight="bold">
@@ -292,10 +329,31 @@ export default function WaterCooledChillers() {
                                     >
                                         <Select
                                             placeholder="Select Location"
+                                            onChange={handleLocationChange}
                                         >
                                             {locationList?.data?.content?.map(l => (
                                                 <Select.Option key={l.id} value={l.id}>
                                                     {l.name}
+                                                </Select.Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+
+                                <Col xs={24} sm={12} md={8} lg={6}>
+                                    <Form.Item
+                                        label="Asset"
+                                        name="asset"
+                                        rules={[{ required: true, message: 'Please select asset!' }]}
+                                    >
+                                        <Select
+                                            placeholder="Select Asset"
+                                            loading={assetsFetching || assetsLoading}
+                                            disabled={assetsFetching || assetsLoading}
+                                        >
+                                            {assetList?.data?.map(l => (
+                                                <Select.Option key={l.assetId} value={l.assetId}>
+                                                    {l.assetName}
                                                 </Select.Option>
                                             ))}
                                         </Select>
@@ -333,7 +391,7 @@ export default function WaterCooledChillers() {
                                         type="primary"
                                         icon={<FilePdfOutlined />}
                                         onClick={handlePrint}
-                                        disabled={!result?.data?.length}
+                                        disabled={checklistData?.data?.data?.length === 0}
                                         style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
                                     >
                                     </AntButton>
@@ -355,20 +413,16 @@ export default function WaterCooledChillers() {
                             </Box>
                         ) : (
                             <>
-                                {result && (
+                                {checklistData?.data && (
                                     <>
                                         <div ref={printRef}>
-
                                             <Box sx={{ mb: 2 }}>
-
                                                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
-
                                                     <tbody>
+                                                        <tr style={{ height: "100px", backgroundColor: "#fff" }}>
 
-                                                        <tr style={{ height: "100px" }}>
-
-                                                            <th colSpan={6} style={{ border: "1px solid #ddd", textAlign: "left" }}>
-
+                                                            {/* LEFT SECTION (colspan 3) */}
+                                                            <th colSpan={6} style={{ textAlign: "left", border: "1px solid #ddd" }}>
                                                                 <div style={{ display: "flex", alignItems: "center" }}>
 
                                                                     <img
@@ -380,21 +434,25 @@ export default function WaterCooledChillers() {
                                                                     />
 
                                                                     <div>
-                                                                        <div>Doc no: {headerDocNo}</div>
+                                                                        <div>
+                                                                            Doc no: <>UG/VAC & TVS/CAMS/029</>
+                                                                        </div>
+                                                                        <div>
+                                                                            Asset: <>{getAssetName()}</>
+                                                                        </div>
                                                                     </div>
-
                                                                 </div>
-
                                                             </th>
 
-                                                            <th colSpan={12} style={{ border: "1px solid #ddd", textAlign: "center" }}>
+                                                            {/* CENTER SECTION (colspan 9) */}
+                                                            <th colSpan={12} style={{ textAlign: "center", border: "1px solid #ddd" }}>
                                                                 <h3 style={{ margin: 0 }}>
-                                                                    {headerPageTitle}
+                                                                    <>DAILY ELECTRICAL MONITORING CHECKLIST</>
                                                                 </h3>
                                                             </th>
 
-                                                            <th colSpan={6} style={{ border: "1px solid #ddd", textAlign: "right" }}>
-
+                                                            {/* RIGHT SECTION (colspan 4) */}
+                                                            <th colSpan={6} style={{ textAlign: "right", border: "1px solid #ddd" }}>
                                                                 <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
 
                                                                     <img
@@ -406,28 +464,24 @@ export default function WaterCooledChillers() {
                                                                     />
 
                                                                     <div style={{ textAlign: "left" }}>
-                                                                        <div>Station: {getLocationName()}</div>
                                                                         <div>
-                                                                            Date: {filters.date ? dayjs(filters.date).format("DD/MM/YYYY") : "-"}
+                                                                            Station: <>{getLocationName()}</>
+                                                                        </div>
+                                                                        <div>
+                                                                            Date: <>{dayjs(form.getFieldValue("date")).format("DD/MM/YYYY")}</>
                                                                         </div>
                                                                     </div>
-
                                                                 </div>
-
                                                             </th>
 
                                                         </tr>
-
                                                     </tbody>
-
                                                 </table>
-
                                             </Box>
-
                                             <Table
                                                 columns={buildColumns()}
                                                 dataSource={[
-                                                    ...(result?.data || []),
+                                                    ...checklistData?.data?.data || [],
                                                     { isFooter: "performed" },
                                                     { isFooter: "completed" },
                                                     { isFooter: "verifiedMaintainer" },
@@ -438,10 +492,9 @@ export default function WaterCooledChillers() {
                                                     record.isFooter ? `footer-${record.isFooter}` : record.id || index
                                                 }
                                                 bordered
-                                                pagination={false}
                                                 scroll={{ x: "max-content" }}
+                                                pagination={false}
                                             />
-
                                         </div>
                                     </>
                                 )}

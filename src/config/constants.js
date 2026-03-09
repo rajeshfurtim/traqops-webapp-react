@@ -55,7 +55,8 @@ export const PAGE_TITLES = {
   'reports/operation-checklist/shift-starting': 'Shift Starting',
   'reports/operation-checklist/critical-temp': 'Critical Room Temp',
   'reports/operation-checklist/closing-reading': 'Daily Closing Reading',
-  'reports/operation-checklist/water-cooled-chillers': 'Water Cooled Chillers',
+  'reports/operation-checklist/daily-checks/:checklistId/:assetCategoryId': 'Daily Checks',
+  'reports/operation-checklist/electrical-panel': 'Electrical Panel Monitoring',
   'reports/history-cards': 'History Cards',
   'reports/evaluation-penalty': 'Evaluation & Penalty',
   'reports/cmrl-app': 'CMRL App Reports',
@@ -78,7 +79,25 @@ export const PAGE_TITLES = {
 }
 
 export const getPageTitle = (route) => {
-  const pageName = PAGE_TITLES[route] || 'TraqOps'
+  // const pageName = PAGE_TITLES[route] || 'TraqOps'
+  // return `${APP_CONFIG.name} | ${pageName}`
+
+  // direct match
+  if (PAGE_TITLES[route]) {
+    return `${APP_CONFIG.name} | ${PAGE_TITLES[route]}`
+  }
+
+  // dynamic route match
+  const matchedRoute = Object.keys(PAGE_TITLES).find((key) => {
+    if (!key.includes(':')) return false
+    const baseRoute = key.split('/:')[0]
+    return route.startsWith(baseRoute)
+  })
+
+  const pageName = matchedRoute
+    ? PAGE_TITLES[matchedRoute]
+    : APP_CONFIG.name
+
   return `${APP_CONFIG.name} | ${pageName}`
 }
 
