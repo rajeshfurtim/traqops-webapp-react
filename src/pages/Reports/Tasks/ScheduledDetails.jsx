@@ -85,7 +85,10 @@ export default function ScheduledMaintenanceDetailsReports() {
           <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
             Search
           </AntButton>
-          <AntButton size="small" onClick={() => clearFilters()}>
+          <AntButton size="small" onClick={() => {
+            clearFilters()
+            confirm()
+            }}>
             Reset
           </AntButton>
         </Space>
@@ -114,9 +117,11 @@ export default function ScheduledMaintenanceDetailsReports() {
     }
   }
 
+  const stringSorter = (key) => (a, b) =>
+  (a[key] || "").localeCompare(b[key] || "");
 
   const columns = [
-    { title: 'S.No', dataIndex: 'sno', key: 'sno', ...getColumnSearchProps('sno') },
+    { title: 'S.No', dataIndex: 'sno', key: 'sno', ...getColumnSearchProps('sno'),sorter: (a, b) => a.sno - b.sno, },
 
     {
       title: 'Date',
@@ -165,27 +170,27 @@ export default function ScheduledMaintenanceDetailsReports() {
         </div>
       ),
     },
-    { title: 'Location', dataIndex: 'location', key: 'location', ...getColumnSearchProps('location') },
-    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', ...getColumnSearchProps('frequency') },
-    { title: 'Asset', dataIndex: 'asset', key: 'asset', ...getColumnSearchProps('asset') },
-    { title: 'Category', dataIndex: 'category', key: 'category', ...getColumnSearchProps('category') },
+    { title: 'Location', dataIndex: 'location', key: 'location', ...getColumnSearchProps('location'), sorter: stringSorter("location") },
+    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', ...getColumnSearchProps('frequency'), sorter: stringSorter("frequency") },
+    { title: 'Asset', dataIndex: 'asset', key: 'asset', ...getColumnSearchProps('asset'), sorter: stringSorter("asset") },
+    { title: 'Category', dataIndex: 'category', key: 'category', ...getColumnSearchProps('category'), sorter: stringSorter("category") },
 
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (_, record) => getStatusTag(record.status, record.isOverdue),
-      ...getColumnSearchProps('status'),
+      ...getColumnSearchProps('status'),  sorter: stringSorter("status")
     },
 
-    { title: 'PTW No.', dataIndex: 'ptwNo', key: 'ptwNo', ...getColumnSearchProps('ptwNo') },
-    { title: 'Completed By', dataIndex: 'completedBy', key: 'completedBy', ...getColumnSearchProps('completedBy') },
-    { title: 'Completed By', dataIndex: 'verifiedBy', key: 'verifiedBy1', ...getColumnSearchProps('verifiedBy') },
-    { title: 'Remarks', dataIndex: 'remarks', key: 'remarks1', ...getColumnSearchProps('remarks') },
-    { title: 'Completed Date', dataIndex: 'completedDate', key: 'completedDate', ...getColumnSearchProps('completedDate') },
-    { title: 'Verified By', dataIndex: 'verifiedBy', key: 'verifiedBy2', ...getColumnSearchProps('verifiedBy') },
-    { title: 'Verified Date', dataIndex: 'verifiedDate', key: 'verifiedDate', ...getColumnSearchProps('verifiedDate') },
-    { title: 'Remark', dataIndex: 'remarks', key: 'remarks2', ...getColumnSearchProps('remarks') },
+    { title: 'PTW No.', dataIndex: 'ptwNo', key: 'ptwNo', ...getColumnSearchProps('ptwNo'), sorter: stringSorter("ptwNo") },
+    { title: 'Completed By', dataIndex: 'completedBy', key: 'completedBy', ...getColumnSearchProps('completedBy') , sorter: stringSorter("completedBy")},
+    { title: 'Completed By', dataIndex: 'verifiedBy', key: 'verifiedBy1', ...getColumnSearchProps('verifiedBy'), sorter: stringSorter("verifiedBy") },
+    { title: 'Remarks', dataIndex: 'remarks', key: 'remarks1', ...getColumnSearchProps('remarks'), sorter: stringSorter("remarks") },
+    { title: 'Completed Date', dataIndex: 'completedDate', key: 'completedDate', ...getColumnSearchProps('completedDate') , sorter: stringSorter("completedDate")},
+    { title: 'Verified By', dataIndex: 'verifiedBy', key: 'verifiedBy2', ...getColumnSearchProps('verifiedBy') , sorter: stringSorter("verifiedBy")},
+    { title: 'Verified Date', dataIndex: 'verifiedDate', key: 'verifiedDate', ...getColumnSearchProps('verifiedDate'), sorter: stringSorter("verifiedDate") },
+    { title: 'Remark', dataIndex: 'remarks', key: 'remarks2', ...getColumnSearchProps('remarks'), sorter: stringSorter("remarks") },
   ]
 
 

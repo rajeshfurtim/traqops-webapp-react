@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme, alpha } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin, Row, Col } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin, Row, Col, Input } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
@@ -10,6 +10,7 @@ import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle, FaTasks, FaClock } from 'react-icons/fa'
 import { Column } from '@ant-design/plots'
 import CountUp from "react-countup"
+import { SearchOutlined } from '@ant-design/icons'
 
 const { RangePicker } = DatePicker
 
@@ -191,9 +192,43 @@ export default function ScheduledMaintenanceReports() {
     return colors[type]
   }
 
+ const getColumnSearchProps = (dataIndex) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          placeholder={`Search ${dataIndex}`}
+          value={selectedKeys[0]}
+          onChange={(e) =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
+          onPressEnter={() => confirm()}
+          style={{ marginBottom: 8 }}
+        />
+        <Space>
+          <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
+            Search
+          </AntButton>
+          <AntButton size="small" onClick={() => {
+            clearFilters()
+            confirm()
+          }
+           }>
+            Reset
+          </AntButton>
+        </Space>
+      </div>
+    ),
+    onFilter: (value, record) =>
+      record[dataIndex]
+        ?.toString()
+        .toLowerCase()
+        .includes(value.toLowerCase()),
+  })
+
+
   const columns = [
     { title: 'S.No', dataIndex: 'sno', key: 'sno', align: 'center' },
-    { title: 'Location', dataIndex: 'location', key: 'location', align: 'center' },
+    { title: 'Location', dataIndex: 'location', key: 'location', align: 'center',sorter: (a, b) => a.location.localeCompare(b.location),  ...getColumnSearchProps('sno') },
     {
       title: 'Status',
       key: 'status',

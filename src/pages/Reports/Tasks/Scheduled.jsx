@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress, Grid } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col, Input } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -11,6 +11,7 @@ import { useGetFrequencyCountQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
+import { SearchOutlined } from '@ant-design/icons'
 import {
   BarChart,
   Bar,
@@ -237,11 +238,49 @@ export default function ScheduledMaintenanceReports() {
     },
   ]
 
+  /* -----------------Search ----------------------*/
+  
+  const stringSorter = (key) => (a, b) =>
+  (a[key] || "").localeCompare(b[key] || "");
+
+  const getColumnSearchProps = (dataIndex) => ({
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder={`Search ${dataIndex}`}
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => confirm()}
+            style={{ marginBottom: 8 }}
+          />
+          <Space>
+            <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
+              Search
+            </AntButton>
+            <AntButton size="small" onClick={() => {
+              clearFilters()
+              confirm()
+              }}>
+              Reset
+            </AntButton>
+          </Space>
+        </div>
+      ),
+      onFilter: (value, record) =>
+        record[dataIndex]
+          ?.toString()
+          .toLowerCase()
+          .includes(value.toLowerCase()),
+    })
+
+
   /* ---------------- TABLE COLUMNS ---------------- */
   const columns = [
-    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 80, align: 'center' },
+    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 80, align: 'center' , ...getColumnSearchProps('sno'),sorter: (a, b) => a.sno - b.sno,  },
     { title: 'Location', dataIndex: 'location', key: 'location', width: 350, align: 'center' },
-    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', width: 350, align: 'center' },
+    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', width: 350, align: 'center' , ...getColumnSearchProps('frequency'), sorter: stringSorter("frequency") },
 
     {
       title: 'Status',

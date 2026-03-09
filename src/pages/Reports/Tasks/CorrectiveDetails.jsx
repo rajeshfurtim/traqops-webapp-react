@@ -99,33 +99,53 @@ export default function ScheduledMaintenanceDetailsReports() {
         .includes(value.toLowerCase()),
   })
 
+const columns = [
+  { title: 'S.No', dataIndex: 'sno', key: 'sno', ...getColumnSearchProps('sno'), sorter: (a, b) => a.sno - b.sno },
 
-  const columns = [
-    { title: 'S.No', dataIndex: 'sno', key: 'sno', ...getColumnSearchProps('sno') },
-    { title: 'Created Name', dataIndex: 'createdname', key: 'createdname', ...getColumnSearchProps('createdname') },
-    { title: 'Date', dataIndex: 'date', key: 'date', ...getColumnSearchProps('date') },
-    { title: 'Location', dataIndex: 'location', key: 'location', ...getColumnSearchProps('location') },
-    { title: 'Fault ID', dataIndex: 'faultid', key: 'faultid', ...getColumnSearchProps('faultid') },
-    { title: 'System.No', dataIndex: 'system', key: 'system', ...getColumnSearchProps('system') },
-    { title: 'PTWno', dataIndex: 'ptwno', key: 'ptwno', ...getColumnSearchProps('ptwno') },
-    { title: 'Equipment', dataIndex: 'Equipment', key: 'Equipment', ...getColumnSearchProps('Equipment') },
-    { title: 'Item Code', dataIndex: 'itemcode', key: 'itemcode', ...getColumnSearchProps('itemcode') },
-    { title: 'Fault Category', dataIndex: 'faultcategory', key: 'faultcategory', ...getColumnSearchProps('faultcategory') },
-    { title: 'Fault Subcategory', dataIndex: 'faultsubcategory', key: 'faultsubcategory', ...getColumnSearchProps('faultsubcategory') },
-    { title: 'Status', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status') },
-    { title: 'Assigned To', dataIndex: 'assignedto', key: 'assignedto', ...getColumnSearchProps('assignedto') },
-    { title: 'Workdone Remark', dataIndex: 'workdoneremark', key: 'workdoneremark', ...getColumnSearchProps('workdoneremark') },
-    { title: 'Completed By', dataIndex: 'completedby', key: 'completedby', ...getColumnSearchProps('completedby') },
-    { title: 'Completed Date', dataIndex: 'completeddate', key: 'completeddate', ...getColumnSearchProps('completeddate') },
-    { title: 'Completed Remark', dataIndex: 'completedremark', key: 'completedremark', ...getColumnSearchProps('completedremark') },
-    { title: 'Verify By', dataIndex: 'verifyby', key: 'verifyby', ...getColumnSearchProps('verifyby') },
-    { title: 'Verified Date', dataIndex: 'verifieddate', key: 'verifieddate', ...getColumnSearchProps('verifieddate') },
-    { title: 'Verified Remark', dataIndex: 'verifiedremark', key: 'verifiedremark', ...getColumnSearchProps('verifiedremark') },
-    { title: 'Closing Date', dataIndex: 'closingdate', key: 'closingdate', ...getColumnSearchProps('closingdate') },
-    { title: 'Remarks', dataIndex: 'remarks', key: 'remarks', ...getColumnSearchProps('remarks') },
-    { title: 'Duration', dataIndex: 'duration', key: 'duration', ...getColumnSearchProps('duration') },
+  { title: 'Created Name', dataIndex: 'createdname', key: 'createdname', ...getColumnSearchProps('createdname'), sorter:(a,b) => a.createdname.localeCompare(b.createdname) },
 
-  ]
+  { title: 'Date', dataIndex: 'date', key: 'date', ...getColumnSearchProps('date'), sorter:(a,b)=> new Date(a.date) - new Date(b.date) },
+
+  { title: 'Location', dataIndex: 'location', key: 'location', ...getColumnSearchProps('location'), sorter:(a,b) => a.location.localeCompare(b.location) },
+
+  { title: 'Fault ID', dataIndex: 'faultid', key: 'faultid', ...getColumnSearchProps('faultid'), sorter:(a,b) => a.faultid.localeCompare(b.faultid) },
+
+  { title: 'System.No', dataIndex: 'system', key: 'system', ...getColumnSearchProps('system'), sorter:(a,b) => a.system.localeCompare(b.system) },
+
+  { title: 'PTWno', dataIndex: 'ptwno', key: 'ptwno', ...getColumnSearchProps('ptwno'), sorter:(a,b) => a.ptwno.localeCompare(b.ptwno) },
+
+  { title: 'Equipment', dataIndex: 'Equipment', key: 'Equipment', ...getColumnSearchProps('Equipment'), sorter:(a,b) => a.Equipment.localeCompare(b.Equipment) },
+
+  { title: 'Item Code', dataIndex: 'itemcode', key: 'itemcode', ...getColumnSearchProps('itemcode'), sorter:(a,b) => a.itemcode.localeCompare(b.itemcode) },
+
+  { title: 'Fault Category', dataIndex: 'faultcategory', key: 'faultcategory', ...getColumnSearchProps('faultcategory'), sorter:(a,b) => a.faultcategory.localeCompare(b.faultcategory) },
+
+  { title: 'Fault Subcategory', dataIndex: 'faultsubcategory', key: 'faultsubcategory', ...getColumnSearchProps('faultsubcategory'), sorter:(a,b) => a.faultsubcategory.localeCompare(b.faultsubcategory) },
+
+  { title: 'Status', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status'), sorter:(a,b) => a.status.localeCompare(b.status) },
+
+  { title: 'Assigned To', dataIndex: 'assignedto', key: 'assignedto', ...getColumnSearchProps('assignedto'), sorter:(a,b) => a.assignedto.localeCompare(b.assignedto) },
+
+  { title: 'Workdone Remark', dataIndex: 'workdoneremark', key: 'workdoneremark', ...getColumnSearchProps('workdoneremark'), sorter:(a,b) => a.workdoneremark.localeCompare(b.workdoneremark) },
+
+  { title: 'Completed By', dataIndex: 'completedby', key: 'completedby', ...getColumnSearchProps('completedby'), sorter:(a,b) => a.completedby.localeCompare(b.completedby) },
+
+  { title: 'Completed Date', dataIndex: 'completeddate', key: 'completeddate', ...getColumnSearchProps('completeddate'), sorter:(a,b)=> new Date(a.completeddate) - new Date(b.completeddate) },
+
+  { title: 'Completed Remark', dataIndex: 'completedremark', key: 'completedremark', ...getColumnSearchProps('completedremark'), sorter:(a,b) => a.completedremark.localeCompare(b.completedremark) },
+
+  { title: 'Verify By', dataIndex: 'verifyby', key: 'verifyby', ...getColumnSearchProps('verifyby'), sorter:(a,b) => a.verifyby.localeCompare(b.verifyby) },
+
+  { title: 'Verified Date', dataIndex: 'verifieddate', key: 'verifieddate', ...getColumnSearchProps('verifieddate'), sorter:(a,b)=> new Date(a.verifieddate) - new Date(b.verifieddate) },
+
+  { title: 'Verified Remark', dataIndex: 'verifiedremark', key: 'verifiedremark', ...getColumnSearchProps('verifiedremark'), sorter:(a,b) => a.verifiedremark.localeCompare(b.verifiedremark) },
+
+  { title: 'Closing Date', dataIndex: 'closingdate', key: 'closingdate', ...getColumnSearchProps('closingdate'), sorter:(a,b)=> new Date(a.closingdate) - new Date(b.closingdate) },
+
+  { title: 'Remarks', dataIndex: 'remarks', key: 'remarks', ...getColumnSearchProps('remarks'), sorter:(a,b) => a.remarks.localeCompare(b.remarks) },
+
+  { title: 'Duration', dataIndex: 'duration', key: 'duration', ...getColumnSearchProps('duration'), sorter:(a,b) => a.duration.localeCompare(b.duration) },
+];
 
 
   const expandedRowRender = (record) => (

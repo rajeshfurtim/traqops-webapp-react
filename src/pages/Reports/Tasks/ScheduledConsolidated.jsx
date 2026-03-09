@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col, Input } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useAuth } from '../../../context/AuthContext'
@@ -10,6 +10,8 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetLocationwiseSheduledQuery } from '../../../store/api/taskReport.api'
 import { useGetconsolitadeReportQuery } from '../../../store/api/taskReport.api'
 import { freeze } from '@reduxjs/toolkit'
+import { SearchOutlined } from '@ant-design/icons'
+
 
 const { RangePicker } = DatePicker
 
@@ -132,23 +134,129 @@ export default function ConsolidatedScheduledMaintenanceReport() {
     };
   });
 
-  const columns = [
-    { title: "S.NO", width: 30, dataIndex: "sno", key: "sno" },
-    { title: "Equipment Name", dataIndex: "equipmentname", key: "equipmentname", width: 60 },
-    { title: "Equipment Code", dataIndex: "equipmentCode", key: "equipmentCode", width: 60 },
-    { title: "Location", dataIndex: "locationName", key: "locationName", width: 100 },
-    {
-      title: monthname,
-      children: [
-        { title: "Frequency (M/Q/H/A)", dataIndex: "frequency", key: `${monthname}-frequency`, width: 60 },
-        { title: "PREVENTIVE MAINTENANCE", dataIndex: "preventiveMaintenance", key: `${monthname}-preventiveMaintenance`, width: 60 },
-        { title: "PTW NO", dataIndex: "ptwNo", key: `${monthname}-ptwNo`, width: 60 },
-        { title: "PERFORMED BY MAINTAINER", dataIndex: "performedByMaintainer", key: `${monthname}-performedByMaintainer`, width: 60 },
-        { title: "VERIFIED BY ENGINEER", dataIndex: "verifiedByEngineer", key: `${monthname}-verifiedByEngineer`, width: 60 },
-        { title: "REMARKS", dataIndex: "remarks", key: `${monthname}-remarks`, width: 60 },
-      ],
-    }
-  ]
+   const getColumnSearchProps = (dataIndex) => ({
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          placeholder={`Search ${dataIndex}`}
+          value={selectedKeys[0]}
+          onChange={(e) =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
+          onPressEnter={() => confirm()}
+          style={{ marginBottom: 8 }}
+        />
+        <Space>
+          <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
+            Search
+          </AntButton>
+          <AntButton size="small" onClick={() => {
+            clearFilters()
+            confirm()
+            }}>
+            Reset
+          </AntButton>
+        </Space>
+      </div>
+    ),
+    onFilter: (value, record) =>
+      record[dataIndex]
+        ?.toString()
+        .toLowerCase()
+        .includes(value.toLowerCase()),
+  })
+
+
+ const stringSorter = (key) => (a, b) =>
+  (a[key] || "").localeCompare(b[key] || "");
+
+const columns = [
+  {
+    title: "S.NO",
+    width: 30,
+    dataIndex: "sno",
+    key: "sno",
+    sorter: (a, b) => a.sno - b.sno,
+    ...getColumnSearchProps("sno"),
+  },
+  {
+    title: "Equipment Name",
+    dataIndex: "equipmentname",
+    key: "equipmentname",
+    width: 60,
+    sorter: stringSorter("equipmentname"),
+    ...getColumnSearchProps("equipmentname"),
+  },
+  {
+    title: "Equipment Code",
+    dataIndex: "equipmentCode",
+    key: "equipmentCode",
+    width: 60,
+    sorter: stringSorter("equipmentCode"),
+    ...getColumnSearchProps("equipmentCode"),
+  },
+  {
+    title: "Location",
+    dataIndex: "locationName",
+    key: "locationName",
+    width: 100,
+    sorter: stringSorter("locationName"),
+    ...getColumnSearchProps("locationName"),
+  },
+  {
+    title: monthname,
+    children: [
+      {
+        title: "Frequency (M/Q/H/A)",
+        dataIndex: "frequency",
+        key: `${monthname}-frequency`,
+        width: 60,
+        sorter: stringSorter("frequency"),
+        ...getColumnSearchProps("frequency"),
+      },
+      {
+        title: "PREVENTIVE MAINTENANCE",
+        dataIndex: "preventiveMaintenance",
+        key: `${monthname}-preventiveMaintenance`,
+        width: 60,
+        sorter: stringSorter("preventiveMaintenance"),
+        ...getColumnSearchProps("preventiveMaintenance"),
+      },
+      {
+        title: "PTW NO",
+        dataIndex: "ptwNo",
+        key: `${monthname}-ptwNo`,
+        width: 60,
+        sorter: stringSorter("ptwNo"),
+        ...getColumnSearchProps("ptwNo"),
+      },
+      {
+        title: "PERFORMED BY MAINTAINER",
+        dataIndex: "performedByMaintainer",
+        key: `${monthname}-performedByMaintainer`,
+        width: 60,
+        sorter: stringSorter("performedByMaintainer"),
+        ...getColumnSearchProps("performedByMaintainer"),
+      },
+      {
+        title: "VERIFIED BY ENGINEER",
+        dataIndex: "verifiedByEngineer",
+        key: `${monthname}-verifiedByEngineer`,
+        width: 60,
+        sorter: stringSorter("verifiedByEngineer"),
+        ...getColumnSearchProps("verifiedByEngineer"),
+      },
+      {
+        title: "REMARKS",
+        dataIndex: "remarks",
+        key: `${monthname}-remarks`,
+        width: 60,
+        sorter: stringSorter("remarks"),
+        ...getColumnSearchProps("remarks"),
+      },
+    ],
+  },
+];
   return (
     <>
       <Helmet>
