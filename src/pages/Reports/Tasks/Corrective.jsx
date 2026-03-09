@@ -8,7 +8,17 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetCmReportSummaryQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle, FaTasks, FaClock } from 'react-icons/fa'
-import { Column } from '@ant-design/plots'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ResponsiveContainer,
+  LabelList,
+} from 'recharts'
 import CountUp from "react-countup"
 import { SearchOutlined } from '@ant-design/icons'
 
@@ -120,50 +130,160 @@ export default function ScheduledMaintenanceReports() {
   const totalOverdue = reports.reduce((sum, item) => sum + item.overdueCount, 0)
   const totalTasks = totalOpen + totalCompleted + totalVerified + totalWorkDone + totalOverdue
 
-  /* ---------------- CHART CONFIG ---------------- */
-  const totalbyLocations = {}
-  chartData.forEach((item) => {
-    if (!totalbyLocations[item.location]) {
-      totalbyLocations[item.location] = 0
+  /* ---------------- SAMPLE & BAR CHART DATA ---------------- */
+  // Sample dataset (20+ records) used when API has no data
+  const sampleBarData = [
+    { location: 'Loc 01', open: 5, workDone: 3, completed: 2, verified: 1, overdueCount: 0 },
+    { location: 'Loc 02', open: 2, workDone: 4, completed: 6, verified: 3, overdueCount: 1 },
+    { location: 'Loc 03', open: 8, workDone: 2, completed: 1, verified: 0, overdueCount: 4 },
+    { location: 'Loc 04', open: 1, workDone: 5, completed: 3, verified: 2, overdueCount: 0 },
+    { location: 'Loc 05', open: 4, workDone: 1, completed: 5, verified: 4, overdueCount: 2 },
+    { location: 'Loc 06', open: 3, workDone: 3, completed: 3, verified: 3, overdueCount: 3 },
+    { location: 'Loc 07', open: 7, workDone: 1, completed: 2, verified: 1, overdueCount: 5 },
+    { location: 'Loc 08', open: 6, workDone: 4, completed: 1, verified: 1, overdueCount: 0 },
+    { location: 'Loc 09', open: 2, workDone: 2, completed: 2, verified: 2, overdueCount: 2 },
+    { location: 'Loc 10', open: 9, workDone: 0, completed: 0, verified: 0, overdueCount: 1 },
+    { location: 'Loc 11', open: 1, workDone: 2, completed: 3, verified: 4, overdueCount: 0 },
+    { location: 'Loc 12', open: 3, workDone: 5, completed: 2, verified: 1, overdueCount: 1 },
+    { location: 'Loc 13', open: 4, workDone: 4, completed: 4, verified: 0, overdueCount: 0 },
+    { location: 'Loc 14', open: 5, workDone: 2, completed: 3, verified: 1, overdueCount: 1 },
+    { location: 'Loc 15', open: 2, workDone: 1, completed: 4, verified: 3, overdueCount: 0 },
+    { location: 'Loc 16', open: 6, workDone: 3, completed: 2, verified: 2, overdueCount: 1 },
+    { location: 'Loc 17', open: 3, workDone: 2, completed: 5, verified: 1, overdueCount: 2 },
+    { location: 'Loc 18', open: 7, workDone: 1, completed: 1, verified: 3, overdueCount: 0 },
+    { location: 'Loc 19', open: 2, workDone: 3, completed: 3, verified: 2, overdueCount: 1 },
+    { location: 'Loc 20', open: 4, workDone: 2, completed: 2, verified: 4, overdueCount: 0 },
+    { location: 'Loc 21', open: 5, workDone: 1, completed: 3, verified: 2, overdueCount: 2 },
+    { location: 'Loc 22', open: 1, workDone: 4, completed: 4, verified: 1, overdueCount: 0 },
+  ]
+
+  // Use live API data when available, otherwise fall back to sample data
+  const baseBarChartData = (reports.length ? reports : sampleBarData).map((item) => {
+    const open = item.open
+    const workDone = item.workDone
+    const completed = item.completed
+    const verified = item.verified
+    const overdueCount = item.overdueCount
+    const total = open + workDone + completed + verified + overdueCount
+
+    return {
+      location: item.location,
+      open,
+      workDone,
+      completed,
+      verified,
+      overdueCount,
+      total,
     }
-    totalbyLocations[item.location] += item.value
   })
 
-  const chartConfig = {
-    data: chartData,
-    xField: 'location',
-    yField: 'value',
-    seriesField: 'type',
-    colorField: 'type',
-    isStack: true,
-    height: 500,
-    animation: {
-      appear: {
-        animation: 'wave-in',
-        duration: 800,
-      },
-    },
-    scale: {
-      color: {
-        domain: ['Open', 'Work Done', 'Completed', 'Verified', 'Overdue'],
-        range: ['#ff4d6d', '#5cdbd3', '#595959', '#73d13d', '#ffa940'],
-      },
-    },
-    label: {
-      position: 'middle',
-      formatter: (datum) => (datum.value > 0 ? datum.value : ''),
-      style: { fill: '#fff', fontSize: 12, fontWeight: 600 },
-    },
-    legend: { position: 'top' },
-    columnStyle: { radius: [8, 8, 0, 0] },
-    annotations: Object.keys(totalbyLocations).map((loc) => ({
-      type: 'text',
-      position: [loc, totalbyLocations[loc]],
-      content: String(totalbyLocations[loc]),
-      style: { textAlign: 'center', fontSize: 14, fontWeight: 700, fill: '#000' },
-      offsetY: -12,
-    })),
+  // Legend-based status visibility (Open / Completed / Verified / Work Done / Overdue)
+  const [activeSeries, setActiveSeries] = useState(['open', 'workDone', 'completed', 'verified', 'overdueCount'])
+
+  const toggleSeries = (key) => {
+    setActiveSeries((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    )
   }
+
+  const barChartData = baseBarChartData.map((item) => ({
+    ...item,
+    open: activeSeries.includes('open') ? item.open : 0,
+    workDone: activeSeries.includes('workDone') ? item.workDone : 0,
+    completed: activeSeries.includes('completed') ? item.completed : 0,
+    verified: activeSeries.includes('verified') ? item.verified : 0,
+    overdueCount: activeSeries.includes('overdueCount') ? item.overdueCount : 0,
+  }))
+
+  // Custom label renderers for chart
+  const renderInnerBarLabel = (props) => {
+    const { value, x, y, width, height, fill } = props
+    if (!value) return null
+
+    const label = String(value)
+    const paddingX = 6
+    const paddingY = 2
+    const textWidth = label.length * 6
+    const rectWidth = textWidth + paddingX * 2
+    const rectHeight = 16
+
+    const rectX = x + width / 2 - rectWidth / 2
+    const rectY = y + height / 2 - rectHeight / 2
+
+    return (
+      <g>
+        <rect
+          x={rectX}
+          y={rectY}
+          width={rectWidth}
+          height={rectHeight}
+          rx={8}
+          ry={8}
+          fill={fill || '#222'}
+          stroke="rgba(0,0,0,0.45)"
+          strokeWidth={0.5}
+          opacity={0.9}
+        />
+        <text
+          x={rectX + rectWidth / 2}
+          y={rectY + rectHeight / 2 + 4}
+          textAnchor="middle"
+          fill="#ffffff"
+          fontSize={11}
+          fontWeight={600}
+        >
+          {label}
+        </text>
+      </g>
+    )
+  }
+
+  const renderTotalLabel = (props) => {
+    const { value, x, y, width } = props
+    if (value === undefined || value === null) return null
+
+    const label = String(value)
+    const paddingX = 6
+    const paddingY = 2
+    const textWidth = label.length * 6
+    const rectWidth = textWidth + paddingX * 2
+    const rectHeight = 18
+
+    const rectX = x + width / 2 - rectWidth / 2
+    const rectY = y - rectHeight - 4
+
+    return (
+      <g>
+        <rect
+          x={rectX}
+          y={rectY}
+          width={rectWidth}
+          height={rectHeight}
+          rx={8}
+          ry={8}
+          fill="#111827"
+          stroke="rgba(255,255,255,0.6)"
+          strokeWidth={0.5}
+          opacity={0.95}
+        />
+        <text
+          x={rectX + rectWidth / 2}
+          y={rectY + rectHeight / 2 + 4}
+          textAnchor="middle"
+          fill="#f9fafb"
+          fontSize={11}
+          fontWeight={700}
+        >
+          {label}
+        </text>
+      </g>
+    )
+  }
+
+  // Dynamic chart width for horizontal scroll (show only a few locations at once)
+  const barWidthPerLocation = 160
+  const minChartWidth = 900
+  const computedChartWidth = Math.max(minChartWidth, barChartData.length * barWidthPerLocation)
 
   /* ---------------- TABLE ---------------- */
   const pillContainerStyle = { display: 'flex', justifyContent: 'center', gap: 8, alignItems: 'center' }
@@ -337,9 +457,126 @@ export default function ScheduledMaintenanceReports() {
               </Box>
             ) : (
               <>
+                {/* Series filter pills (always visible) */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 1,
+                    mb: 2,
+                    alignItems: 'center',
+                  }}
+                >
+                  {[
+                    { key: 'open', label: 'Open', color: '#69b1ff' },
+                    { key: 'workDone', label: 'Work Done', color: '#5cdbd3' },
+                    { key: 'completed', label: 'Completed', color: '#555555' },
+                    { key: 'verified', label: 'Verified', color: '#73d13d' },
+                    { key: 'overdueCount', label: 'Overdue', color: '#ffa940' },
+                  ].map((item) => {
+                    const isActive = activeSeries.includes(item.key)
+                    return (
+                      <Box
+                        key={item.key}
+                        onClick={() => toggleSeries(item.key)}
+                        sx={{
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: 999,
+                          border: `1px solid ${item.color}`,
+                          backgroundColor: isActive ? item.color : 'transparent',
+                          color: isActive ? '#fff' : item.color,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          transition: 'all 0.15s ease',
+                          '&:hover': {
+                            boxShadow: '0 0 0 2px rgba(0,0,0,0.04)',
+                          },
+                        }}
+                      >
+                        {item.label}
+                      </Box>
+                    )
+                  })}
+                </Box>
+
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
-                    <Column {...chartConfig} />
+                    <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                      <Box sx={{ width: computedChartWidth, height: 400 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={barChartData}
+                            margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis
+                              dataKey="location"
+                              tick={{ fontSize: 11 }}
+                              interval={0}
+                              height={70}
+                              // angle={-45}
+                              textAnchor="end"
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <RechartsTooltip />
+                            {/* <Legend
+                              wrapperStyle={{ paddingBottom: 8 }}
+                            /> */}
+                           
+                            <Bar dataKey="open" stackId="a" fill="#69b1ff" name="Open">
+                              <LabelList
+                                dataKey="open"
+                                position="inside"
+                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                formatter={(v) => (v > 0 ? v : '')}
+                              />
+                            </Bar>
+                            
+                            <Bar dataKey="workDone" stackId="a" fill="#5cdbd3" name="Work Done">
+                              <LabelList
+                                dataKey="workDone"
+                                position="inside"
+                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                formatter={(v) => (v > 0 ? v : '')}
+                              />
+                            </Bar>
+                            <Bar dataKey="completed" stackId="a" fill="#555555" name="Completed">
+                              <LabelList
+                                dataKey="completed"
+                                position="inside"
+                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                formatter={(v) => (v > 0 ? v : '')}
+                              />
+                            </Bar>
+                            <Bar dataKey="verified" stackId="a" fill="#73d13d" name="Verified">
+                              <LabelList
+                                dataKey="verified"
+                                position="inside"
+                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                formatter={(v) => (v > 0 ? v : '')}
+                              />
+                            </Bar>
+                            <Bar dataKey="overdueCount" stackId="a" fill="#ffa940" name="Overdue">
+                              <LabelList
+                                dataKey="overdueCount"
+                                position="inside"
+                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                formatter={(v) => (v > 0 ? v : '')}
+                              />
+                              {/* total count on top of each stacked bar */}
+                              <LabelList
+                                dataKey="total"
+                                position="top"
+                                style={{ fill: '#000', fontSize: 12, fontWeight: 700 }}
+                              />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    </Box>
                   </CardContent>
                 </Card>
                 <Table
