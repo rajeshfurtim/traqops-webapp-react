@@ -20,6 +20,7 @@ export default function TaskReport() {
   const { freqencyList, isLoading: frequencyLoading } = useGetFreqencyList()
 
   const [filters, setFilters] = useState({})
+  const [loading, setLoading] = useState(false)
   const [shouldFetch, setShouldFetch] = useState(false)
   const location = useLocation()
   const navstate = location.state || {}
@@ -54,19 +55,20 @@ export default function TaskReport() {
         ps: 1000
       })
 
-      setShouldFetch(true)
+      // setShouldFetch(true)
     }
   }, [navstate])
 
-  const { data: reportData, isLoading: queryLoading } = useGetbyfrequencyQuery(
+  const { data: reportData, isLoading: isInitialLoading, isFetching } = useGetbyfrequencyQuery(
     { ...filters, clientId },
     { skip: !filters.fromDate || !filters.toDate || !filters.locationId || !shouldFetch }
   )
+  const queryLoading = isInitialLoading || isFetching
 
   const reports = (reportData?.data || []).map((item, index) => {
     const remark = item.scheduledCheckListDtos?.[0] || {}
     return {
-      _rowKey: index, 
+      _rowKey: index,
       index,
       sno: index + 1,
       raw: item,
@@ -146,6 +148,13 @@ export default function TaskReport() {
     })
     setShouldFetch(true)
   }
+  const handleResetFilters = () => {
+    form.resetFields()
+    setFilters({
+      fromDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
+      toDate: dayjs().format('YYYY-MM-DD'),
+    })
+  }
 
 
 
@@ -212,7 +221,7 @@ export default function TaskReport() {
                       <AntButton type="primary" htmlType="submit" loading={queryLoading}>
                         Apply Filters
                       </AntButton>
-                      <AntButton htmlType="button" onClick={() => form.resetFields()}>
+                      <AntButton htmlType="button" onClick={handleResetFilters}>
                         Reset
                       </AntButton>
                     </Space>
@@ -225,24 +234,35 @@ export default function TaskReport() {
 
         <Card>
           <CardContent>
-            {!shouldFetch ? <Empty description="Please apply filters to view the report" /> :
-              queryLoading ? <Box display="flex" justifyContent="center" p={4}><Spin /></Box> :
+            {!shouldFetch ? (
+              <Empty description="Please apply filters to view the report" />
+            ) : queryLoading ? (
+              <Box display="flex" justifyContent="center" p={4}>
+                <Spin />
+              </Box>
+            ) : (
+              <>
                 <Table
                   dataSource={reports}
                   columns={columns}
-                  rowKey="_rowKey" // safe index-based key
+                  rowKey="_rowKey"
                   expandable={{ expandedRowRender }}
                   pagination={{ pageSize: 20 }}
-                  scroll={{ x: 'max-content', y: 450 }}
+                  scroll={{ x: "max-content", y: 450 }}
                   bordered
                   onRow={(record) => ({
                     onClick: () => {
-                      navigate("/reports/tasks/ScheduledDetails/TaskReportDetails", {
-                        state: { pmTaskId: record.pmTaskId }
-                      })
-                    }
+                      navigate(
+                        "/reports/tasks/ScheduledDetails/TaskReportDetails",
+                        {
+                          state: { pmTaskId: record.pmTaskId },
+                        }
+                      );
+                    },
                   })}
-                />}
+                />
+              </>
+            )}
           </CardContent>
         </Card>
       </Box>

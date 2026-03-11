@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col, Input } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col, Input,Spin, Empty } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useAuth } from '../../../context/AuthContext'
@@ -19,7 +19,8 @@ export default function ConsolidatedScheduledMaintenanceReport() {
   const [form] = Form.useForm()
   const { user } = useAuth()
   const clientId = user?.clientId || user?.client?.id
-
+  const [loading, setLoading] = useState(false)
+  const [shouldFetch, setShouldFetch] = useState(false)
   const { locations, loading: locationsLoading } = useGetLocationList()
   const [selectedLocationId, setSelectedLocationId] = useState(null)
 
@@ -50,6 +51,7 @@ export default function ConsolidatedScheduledMaintenanceReport() {
   }, [locationsLoading, locations])
 
   const handleFilterChange = (values) => {
+    setShouldFetch(true)
     setFilters({
       fromDate: values.dateRange
         ? values.dateRange[0].format('YYYY-MM-DD')
@@ -83,7 +85,7 @@ export default function ConsolidatedScheduledMaintenanceReport() {
     })
   }
 
-  const { data: reportData, isLoading } =
+  const { data: reportData, isLoading, isLoading: isInitialLoading, isFetching } =
     useGetLocationwiseSheduledQuery(
       { ...filters, clientId },
       {
@@ -91,9 +93,11 @@ export default function ConsolidatedScheduledMaintenanceReport() {
           !filters.fromDate ||
           !filters.toDate ||
           !filters.locationId ||
-          !clientId
+          !clientId || !shouldFetch
       }
     )
+
+  const queryLoading = isInitialLoading || isFetching
 
   const { data: consolidatedReporstData, isLoading: isConsolidatedReportLoading }
     = useGetconsolitadeReportQuery({ ...filters },
@@ -134,7 +138,7 @@ export default function ConsolidatedScheduledMaintenanceReport() {
     };
   });
 
-   const getColumnSearchProps = (dataIndex) => ({
+  const getColumnSearchProps = (dataIndex) => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
       <div style={{ padding: 8 }}>
         <Input
@@ -151,9 +155,9 @@ export default function ConsolidatedScheduledMaintenanceReport() {
             Search
           </AntButton>
           <AntButton size="small" onClick={() => {
-            clearFilters()
-            confirm()
-            }}>
+            form.resetFields();
+            setShouldFetch(false);
+          }}>
             Reset
           </AntButton>
         </Space>
@@ -167,96 +171,96 @@ export default function ConsolidatedScheduledMaintenanceReport() {
   })
 
 
- const stringSorter = (key) => (a, b) =>
-  (a[key] || "").localeCompare(b[key] || "");
+  const stringSorter = (key) => (a, b) =>
+    (a[key] || "").localeCompare(b[key] || "");
 
-const columns = [
-  {
-    title: "S.NO",
-    width: 30,
-    dataIndex: "sno",
-    key: "sno",
-    sorter: (a, b) => a.sno - b.sno,
-    ...getColumnSearchProps("sno"),
-  },
-  {
-    title: "Equipment Name",
-    dataIndex: "equipmentname",
-    key: "equipmentname",
-    width: 60,
-    sorter: stringSorter("equipmentname"),
-    ...getColumnSearchProps("equipmentname"),
-  },
-  {
-    title: "Equipment Code",
-    dataIndex: "equipmentCode",
-    key: "equipmentCode",
-    width: 60,
-    sorter: stringSorter("equipmentCode"),
-    ...getColumnSearchProps("equipmentCode"),
-  },
-  {
-    title: "Location",
-    dataIndex: "locationName",
-    key: "locationName",
-    width: 100,
-    sorter: stringSorter("locationName"),
-    ...getColumnSearchProps("locationName"),
-  },
-  {
-    title: monthname,
-    children: [
-      {
-        title: "Frequency (M/Q/H/A)",
-        dataIndex: "frequency",
-        key: `${monthname}-frequency`,
-        width: 60,
-        sorter: stringSorter("frequency"),
-        ...getColumnSearchProps("frequency"),
-      },
-      {
-        title: "PREVENTIVE MAINTENANCE",
-        dataIndex: "preventiveMaintenance",
-        key: `${monthname}-preventiveMaintenance`,
-        width: 60,
-        sorter: stringSorter("preventiveMaintenance"),
-        ...getColumnSearchProps("preventiveMaintenance"),
-      },
-      {
-        title: "PTW NO",
-        dataIndex: "ptwNo",
-        key: `${monthname}-ptwNo`,
-        width: 60,
-        sorter: stringSorter("ptwNo"),
-        ...getColumnSearchProps("ptwNo"),
-      },
-      {
-        title: "PERFORMED BY MAINTAINER",
-        dataIndex: "performedByMaintainer",
-        key: `${monthname}-performedByMaintainer`,
-        width: 60,
-        sorter: stringSorter("performedByMaintainer"),
-        ...getColumnSearchProps("performedByMaintainer"),
-      },
-      {
-        title: "VERIFIED BY ENGINEER",
-        dataIndex: "verifiedByEngineer",
-        key: `${monthname}-verifiedByEngineer`,
-        width: 60,
-        sorter: stringSorter("verifiedByEngineer"),
-        ...getColumnSearchProps("verifiedByEngineer"),
-      },
-      {
-        title: "REMARKS",
-        dataIndex: "remarks",
-        key: `${monthname}-remarks`,
-        width: 60,
-        sorter: stringSorter("remarks"),
-        ...getColumnSearchProps("remarks"),
-      },
-    ],
-  },
-];
+  const columns = [
+    {
+      title: "S.NO",
+      width: 30,
+      dataIndex: "sno",
+      key: "sno",
+      sorter: (a, b) => a.sno - b.sno,
+      ...getColumnSearchProps("sno"),
+    },
+    {
+      title: "Equipment Name",
+      dataIndex: "equipmentname",
+      key: "equipmentname",
+      width: 60,
+      sorter: stringSorter("equipmentname"),
+      ...getColumnSearchProps("equipmentname"),
+    },
+    {
+      title: "Equipment Code",
+      dataIndex: "equipmentCode",
+      key: "equipmentCode",
+      width: 60,
+      sorter: stringSorter("equipmentCode"),
+      ...getColumnSearchProps("equipmentCode"),
+    },
+    {
+      title: "Location",
+      dataIndex: "locationName",
+      key: "locationName",
+      width: 100,
+      sorter: stringSorter("locationName"),
+      ...getColumnSearchProps("locationName"),
+    },
+    {
+      title: monthname,
+      children: [
+        {
+          title: "Frequency (M/Q/H/A)",
+          dataIndex: "frequency",
+          key: `${monthname}-frequency`,
+          width: 60,
+          sorter: stringSorter("frequency"),
+          ...getColumnSearchProps("frequency"),
+        },
+        {
+          title: "PREVENTIVE MAINTENANCE",
+          dataIndex: "preventiveMaintenance",
+          key: `${monthname}-preventiveMaintenance`,
+          width: 60,
+          sorter: stringSorter("preventiveMaintenance"),
+          ...getColumnSearchProps("preventiveMaintenance"),
+        },
+        {
+          title: "PTW NO",
+          dataIndex: "ptwNo",
+          key: `${monthname}-ptwNo`,
+          width: 60,
+          sorter: stringSorter("ptwNo"),
+          ...getColumnSearchProps("ptwNo"),
+        },
+        {
+          title: "PERFORMED BY MAINTAINER",
+          dataIndex: "performedByMaintainer",
+          key: `${monthname}-performedByMaintainer`,
+          width: 60,
+          sorter: stringSorter("performedByMaintainer"),
+          ...getColumnSearchProps("performedByMaintainer"),
+        },
+        {
+          title: "VERIFIED BY ENGINEER",
+          dataIndex: "verifiedByEngineer",
+          key: `${monthname}-verifiedByEngineer`,
+          width: 60,
+          sorter: stringSorter("verifiedByEngineer"),
+          ...getColumnSearchProps("verifiedByEngineer"),
+        },
+        {
+          title: "REMARKS",
+          dataIndex: "remarks",
+          key: `${monthname}-remarks`,
+          width: 60,
+          sorter: stringSorter("remarks"),
+          ...getColumnSearchProps("remarks"),
+        },
+      ],
+    },
+  ];
   return (
     <>
       <Helmet>
@@ -306,7 +310,7 @@ const columns = [
                 <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
                   <Form.Item style={{ marginBottom: 0 }}>
                     <Space wrap>
-                      <AntButton type="primary" htmlType="submit">
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
                         Apply Filters
                       </AntButton>
                       <AntButton onClick={handleReset}>
@@ -334,21 +338,24 @@ const columns = [
               </Space>
             </Box>
 
-            {isLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <Table
-                // dataSource={reportData?.data || []}
-                dataSource={reports}
-                columns={columns}
-                rowKey={(record) => record.id || record.month}
-                pagination={{ pageSize: 20 }}
-                size="middle"
-                bordered
-              />
-            )}
+            {!shouldFetch ? (
+              <Empty description="Please apply filters to view the report" />
+            ) :
+              queryLoading ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <Spin />
+                </Box>
+              ) : (
+                <Table
+                  // dataSource={reportData?.data || []}
+                  dataSource={reports}
+                  columns={columns}
+                  rowKey={(record) => record.id || record.month}
+                  pagination={{ pageSize: 20 }}
+                  size="middle"
+                  bordered
+                />
+              )}
           </CardContent>
         </Card>
       </Box>

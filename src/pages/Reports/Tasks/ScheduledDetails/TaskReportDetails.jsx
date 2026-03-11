@@ -12,6 +12,7 @@ export default function TaskReportDetails() {
   const navstate = location.state || {}
 
   const [filters, setFilters] = useState({})
+  const [loading, setLoading] = useState(false)
   const [shouldFetch, setShouldFetch] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedAsset, setSelectedAsset] = useState(null)

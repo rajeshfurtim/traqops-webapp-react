@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme, alpha } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin, Row, Col, Input } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Spin, Row, Col, Input } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
@@ -29,6 +29,8 @@ export default function ScheduledMaintenanceReports() {
   const { user } = useAuth()
 
   const { locations = [], loading: locationsLoading } = useGetLocationList()
+  const [loading, setLoading] = useState(false)
+  const [shouldFetch, setShouldFetch] = useState(false)
 
   const [filters, setFilters] = useState({
     fromDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -38,16 +40,17 @@ export default function ScheduledMaintenanceReports() {
 
   const clientId = user?.client?.id || user?.clientId
 
-  const { data: reportData, isLoading } =
+  const { data: reportData,  isLoading: isInitialLoading, isFetching  } =
     useGetCmReportSummaryQuery(
       { ...filters, clientId },
       { skip: !filters.fromDate || !filters.toDate }
     )
+    const queryLoading = isInitialLoading || isFetching
 
   /* ---------------- APPLY FILTERS ---------------- */
   const handleApplyFilters = (values) => {
     let selectedLocationId
-
+    setShouldFetch(true)
     // If All Locations (-1) OR cleared selection
     if (values.location === -1 || !values.location) {
       selectedLocationId = locations.length
@@ -312,7 +315,7 @@ export default function ScheduledMaintenanceReports() {
     return colors[type]
   }
 
- const getColumnSearchProps = (dataIndex) => ({
+  const getColumnSearchProps = (dataIndex) => ({
     filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
       <div style={{ padding: 8 }}>
         <Input
@@ -332,7 +335,7 @@ export default function ScheduledMaintenanceReports() {
             clearFilters()
             confirm()
           }
-           }>
+          }>
             Reset
           </AntButton>
         </Space>
@@ -348,7 +351,7 @@ export default function ScheduledMaintenanceReports() {
 
   const columns = [
     { title: 'S.No', dataIndex: 'sno', key: 'sno', align: 'center' },
-    { title: 'Location', dataIndex: 'location', key: 'location', align: 'center',sorter: (a, b) => a.location.localeCompare(b.location),  ...getColumnSearchProps('sno') },
+    { title: 'Location', dataIndex: 'location', key: 'location', align: 'center', sorter: (a, b) => a.location.localeCompare(b.location), ...getColumnSearchProps('sno') },
     {
       title: 'Status',
       key: 'status',
@@ -394,7 +397,7 @@ export default function ScheduledMaintenanceReports() {
           <CardContent>
             <Form
               form={form}
-              layout="vertical" 
+              layout="vertical"
               onFinish={handleApplyFilters}
               initialValues={{
                 dateRange: [dayjs().subtract(1, 'day'), dayjs()],
@@ -424,7 +427,7 @@ export default function ScheduledMaintenanceReports() {
                 <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
                   <Form.Item style={{ marginBottom: 0 }}>
                     <Space wrap>
-                      <AntButton type="primary" htmlType="submit">
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
                         Apply Filters
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>
@@ -451,143 +454,146 @@ export default function ScheduledMaintenanceReports() {
         {/* TABLE + CHART */}
         <Card>
           <CardContent>
-            {isLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
-              </Box>
-            ) : (
-              <>
-                {/* Series filter pills (always visible) */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 1,
-                    mb: 2,
-                    alignItems: 'center',
-                  }}
-                >
-                  {[
-                    { key: 'open', label: 'Open', color: '#69b1ff' },
-                    { key: 'workDone', label: 'Work Done', color: '#5cdbd3' },
-                    { key: 'completed', label: 'Completed', color: '#555555' },
-                    { key: 'verified', label: 'Verified', color: '#73d13d' },
-                    { key: 'overdueCount', label: 'Overdue', color: '#ffa940' },
-                  ].map((item) => {
-                    const isActive = activeSeries.includes(item.key)
-                    return (
-                      <Box
-                        key={item.key}
-                        onClick={() => toggleSeries(item.key)}
-                        sx={{
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: 999,
-                          border: `1px solid ${item.color}`,
-                          backgroundColor: isActive ? item.color : 'transparent',
-                          color: isActive ? '#fff' : item.color,
-                          fontSize: 12,
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          userSelect: 'none',
-                          transition: 'all 0.15s ease',
-                          '&:hover': {
-                            boxShadow: '0 0 0 2px rgba(0,0,0,0.04)',
-                          },
-                        }}
-                      >
-                        {item.label}
-                      </Box>
-                    )
-                  })}
+            {!shouldFetch ? (
+              <Empty description="Please apply filters to view the report" />
+            ) :
+              queryLoading ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <Spin />
                 </Box>
+              ) : (
+                <>
+                  {/* Series filter pills (always visible) */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 1,
+                      mb: 2,
+                      alignItems: 'center',
+                    }}
+                  >
+                    {[
+                      { key: 'open', label: 'Open', color: '#69b1ff' },
+                      { key: 'workDone', label: 'Work Done', color: '#5cdbd3' },
+                      { key: 'completed', label: 'Completed', color: '#555555' },
+                      { key: 'verified', label: 'Verified', color: '#73d13d' },
+                      { key: 'overdueCount', label: 'Overdue', color: '#ffa940' },
+                    ].map((item) => {
+                      const isActive = activeSeries.includes(item.key)
+                      return (
+                        <Box
+                          key={item.key}
+                          onClick={() => toggleSeries(item.key)}
+                          sx={{
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 999,
+                            border: `1px solid ${item.color}`,
+                            backgroundColor: isActive ? item.color : 'transparent',
+                            color: isActive ? '#fff' : item.color,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            transition: 'all 0.15s ease',
+                            '&:hover': {
+                              boxShadow: '0 0 0 2px rgba(0,0,0,0.04)',
+                            },
+                          }}
+                        >
+                          {item.label}
+                        </Box>
+                      )
+                    })}
+                  </Box>
 
-                <Card sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Box sx={{ width: '100%', overflowX: 'auto' }}>
-                      <Box sx={{ width: computedChartWidth, height: 400 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart
-                            data={barChartData}
-                            margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
-                          >
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis
-                              dataKey="location"
-                              tick={{ fontSize: 11 }}
-                              interval={0}
-                              height={70}
-                              // angle={-45}
-                              textAnchor="end"
-                            />
-                            <YAxis tick={{ fontSize: 12 }} />
-                            <RechartsTooltip />
-                            {/* <Legend
+                  <Card sx={{ mb: 3 }}>
+                    <CardContent>
+                      <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                        <Box sx={{ width: computedChartWidth, height: 400 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                              data={barChartData}
+                              margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                              <XAxis
+                                dataKey="location"
+                                tick={{ fontSize: 11 }}
+                                interval={0}
+                                height={70}
+                                // angle={-45}
+                                textAnchor="end"
+                              />
+                              <YAxis tick={{ fontSize: 12 }} />
+                              <RechartsTooltip />
+                              {/* <Legend
                               wrapperStyle={{ paddingBottom: 8 }}
                             /> */}
-                           
-                            <Bar dataKey="open" stackId="a" fill="#69b1ff" name="Open">
-                              <LabelList
-                                dataKey="open"
-                                position="inside"
-                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
-                                formatter={(v) => (v > 0 ? v : '')}
-                              />
-                            </Bar>
-                            
-                            <Bar dataKey="workDone" stackId="a" fill="#5cdbd3" name="Work Done">
-                              <LabelList
-                                dataKey="workDone"
-                                position="inside"
-                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
-                                formatter={(v) => (v > 0 ? v : '')}
-                              />
-                            </Bar>
-                            <Bar dataKey="completed" stackId="a" fill="#555555" name="Completed">
-                              <LabelList
-                                dataKey="completed"
-                                position="inside"
-                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
-                                formatter={(v) => (v > 0 ? v : '')}
-                              />
-                            </Bar>
-                            <Bar dataKey="verified" stackId="a" fill="#73d13d" name="Verified">
-                              <LabelList
-                                dataKey="verified"
-                                position="inside"
-                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
-                                formatter={(v) => (v > 0 ? v : '')}
-                              />
-                            </Bar>
-                            <Bar dataKey="overdueCount" stackId="a" fill="#ffa940" name="Overdue">
-                              <LabelList
-                                dataKey="overdueCount"
-                                position="inside"
-                                style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
-                                formatter={(v) => (v > 0 ? v : '')}
-                              />
-                              {/* total count on top of each stacked bar */}
-                              <LabelList
-                                dataKey="total"
-                                position="top"
-                                style={{ fill: '#000', fontSize: 12, fontWeight: 700 }}
-                              />
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
+
+                              <Bar dataKey="open" stackId="a" fill="#69b1ff" name="Open">
+                                <LabelList
+                                  dataKey="open"
+                                  position="inside"
+                                  style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                  formatter={(v) => (v > 0 ? v : '')}
+                                />
+                              </Bar>
+
+                              <Bar dataKey="workDone" stackId="a" fill="#5cdbd3" name="Work Done">
+                                <LabelList
+                                  dataKey="workDone"
+                                  position="inside"
+                                  style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                  formatter={(v) => (v > 0 ? v : '')}
+                                />
+                              </Bar>
+                              <Bar dataKey="completed" stackId="a" fill="#555555" name="Completed">
+                                <LabelList
+                                  dataKey="completed"
+                                  position="inside"
+                                  style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                  formatter={(v) => (v > 0 ? v : '')}
+                                />
+                              </Bar>
+                              <Bar dataKey="verified" stackId="a" fill="#73d13d" name="Verified">
+                                <LabelList
+                                  dataKey="verified"
+                                  position="inside"
+                                  style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                  formatter={(v) => (v > 0 ? v : '')}
+                                />
+                              </Bar>
+                              <Bar dataKey="overdueCount" stackId="a" fill="#ffa940" name="Overdue">
+                                <LabelList
+                                  dataKey="overdueCount"
+                                  position="inside"
+                                  style={{ fill: '#fff', fontSize: 11, fontWeight: 600 }}
+                                  formatter={(v) => (v > 0 ? v : '')}
+                                />
+                                {/* total count on top of each stacked bar */}
+                                <LabelList
+                                  dataKey="total"
+                                  position="top"
+                                  style={{ fill: '#000', fontSize: 12, fontWeight: 700 }}
+                                />
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </Box>
                       </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-                <Table
-                  dataSource={reports}
-                  columns={columns}
-                  rowKey="sno"
-                  pagination={{ pageSize: 20 }}
-                  bordered
-                />
-              </>
-            )}
+                    </CardContent>
+                  </Card>
+                  <Table
+                    dataSource={reports}
+                    columns={columns}
+                    rowKey="sno"
+                    pagination={{ pageSize: 20 }}
+                    bordered
+                  />
+                </>
+              )}
           </CardContent>
         </Card>
       </Box>

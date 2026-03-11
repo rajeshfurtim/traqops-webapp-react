@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress, Grid } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col, Input } from 'antd'
+import { Box, Typography, Card, CardContent,  Grid } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Row, Col, Input, Empty, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -32,6 +32,8 @@ export default function ScheduledMaintenanceReports() {
 
   const { freqencyList, isLoading: frequencyLoading } = useGetFreqencyList()
   const { locations, loading: locationsLoading } = useGetLocationList()
+  const [loading, setLoading] = useState(false)
+  const [shouldFetch, setShouldFetch] = useState(false)
 
   const [filters, setFilters] = useState({
     fromDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
@@ -42,11 +44,12 @@ export default function ScheduledMaintenanceReports() {
 
   const clientId = user?.client?.id || user?.clientId
 
-  const { data: reportData, isLoading } =
+  const { data: reportData, isLoading: isInitialLoading, isFetching } =
     useGetFrequencyCountQuery({ ...filters, clientId }, {
       skip: !filters.fromDate || !filters.toDate,
     })
 
+  const queryLoading = isInitialLoading || isFetching
   /* ---------------- TABLE DATA ---------------- */
   const reports = (reportData?.data || []).map((item, index) => ({
     id: item.frequencyId,
@@ -153,6 +156,7 @@ export default function ScheduledMaintenanceReports() {
 
   /* ---------------- FILTER HANDLERS ---------------- */
   const handleApplyFilters = (values) => {
+    setShouldFetch(true)
     setFilters({
       fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: values.dateRange?.[1]?.format('YYYY-MM-DD'),
@@ -172,6 +176,7 @@ export default function ScheduledMaintenanceReports() {
       locationId: undefined,
       frequencyId: undefined,
     })
+    setShouldFetch(false)
   }
 
   /* ---------------- STATUS PILL ---------------- */
@@ -189,9 +194,9 @@ export default function ScheduledMaintenanceReports() {
 
   const pillContainerStyle = {
     display: 'flex',
-    justifyContent:'center',
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: '20px',          
+    gap: '20px',
     width: '100%',
     flexWrap: 'nowrap'
   }
@@ -205,7 +210,7 @@ export default function ScheduledMaintenanceReports() {
     fontWeight: 600,
     border: '1px solid #d9d9d9',
     height: '26px',
-    minWidth: '90px'    
+    minWidth: '90px'
   }
 
   const countStyle = {
@@ -256,48 +261,48 @@ export default function ScheduledMaintenanceReports() {
   ]
 
   /* -----------------Search ----------------------*/
-  
+
   const stringSorter = (key) => (a, b) =>
-  (a[key] || "").localeCompare(b[key] || "");
+    (a[key] || "").localeCompare(b[key] || "");
 
   const getColumnSearchProps = (dataIndex) => ({
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder={`Search ${dataIndex}`}
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => confirm()}
-            style={{ marginBottom: 8 }}
-          />
-          <Space>
-            <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
-              Search
-            </AntButton>
-            <AntButton size="small" onClick={() => {
-              clearFilters()
-              confirm()
-              }}>
-              Reset
-            </AntButton>
-          </Space>
-        </div>
-      ),
-      onFilter: (value, record) =>
-        record[dataIndex]
-          ?.toString()
-          .toLowerCase()
-          .includes(value.toLowerCase()),
-    })
+    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
+      <div style={{ padding: 8 }}>
+        <Input
+          placeholder={`Search ${dataIndex}`}
+          value={selectedKeys[0]}
+          onChange={(e) =>
+            setSelectedKeys(e.target.value ? [e.target.value] : [])
+          }
+          onPressEnter={() => confirm()}
+          style={{ marginBottom: 8 }}
+        />
+        <Space>
+          <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
+            Search
+          </AntButton>
+          <AntButton size="small" onClick={() => {
+            clearFilters()
+            confirm()
+          }}>
+            Reset
+          </AntButton>
+        </Space>
+      </div>
+    ),
+    onFilter: (value, record) =>
+      record[dataIndex]
+        ?.toString()
+        .toLowerCase()
+        .includes(value.toLowerCase()),
+  })
 
 
   /* ---------------- TABLE COLUMNS ---------------- */
   const columns = [
-    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 80, align: 'center' , ...getColumnSearchProps('sno'),sorter: (a, b) => a.sno - b.sno,  },
+    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 80, align: 'center', ...getColumnSearchProps('sno'), sorter: (a, b) => a.sno - b.sno, },
     { title: 'Location', dataIndex: 'location', key: 'location', width: 350, align: 'center' },
-    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', width: 350, align: 'center' , ...getColumnSearchProps('frequency'), sorter: stringSorter("frequency") },
+    { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', width: 350, align: 'center', ...getColumnSearchProps('frequency'), sorter: stringSorter("frequency") },
 
     {
       title: 'Status',
@@ -424,7 +429,7 @@ export default function ScheduledMaintenanceReports() {
                 >
                   <Form.Item style={{ marginBottom: 0 }}>
                     <Space wrap>
-                      <AntButton type="primary" htmlType="submit">
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
                         Apply Filters
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>Reset</AntButton>
@@ -445,7 +450,7 @@ export default function ScheduledMaintenanceReports() {
                   height: '100%',
                   borderRadius: 3,
                   border: `1px solid ${box.color}`,
-                  backgroundColor: `${box.color}0f`, 
+                  backgroundColor: `${box.color}0f`,
                   boxShadow: '0 4px 14px rgba(15, 23, 42, 0.06)',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   '&:hover': {
@@ -499,104 +504,107 @@ export default function ScheduledMaintenanceReports() {
         {/* TABLE + CHART */}
         <Card sx={{ mt: 2 }}>
           <CardContent>
-            {isLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <>
-                {/* CHART */}
-                <Card sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Box sx={{ width: '100%', height: 400 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                          data={filteredRechartsData}
-                          margin={{ top: 30, right: 30, left: 10, bottom: 10 }}
-                        >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis dataKey="frequency" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} />
-                          <Tooltip content={<CustomTooltip />} />
-                          <Legend
-                            wrapperStyle={{ paddingTop: 10 }}
-                            formatter={(value, entry) => {
-                              const dataKey = entry.dataKey
-                              const isActive = activeStatuses.includes(dataKey)
-                              return (
-                                <span
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleLegendClick(dataKey)
-                                  }}
-                                  style={{
-                                    cursor: 'pointer',
-                                    opacity: isActive ? 1 : 0.4,
-                                  }}
-                                >
-                                  {value}
-                                </span>
-                              )
-                            }}
-                          />
+            {!shouldFetch ? (
+              <Empty description="Please apply filters to view the report" />
+            ) :
+              queryLoading ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <Spin />
+                </Box>
+              ) : (
+                <>
+                  {/* CHART */}
+                  <Card sx={{ mb: 3 }}>
+                    <CardContent>
+                      <Box sx={{ width: '100%', height: 400 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={filteredRechartsData}
+                            margin={{ top: 30, right: 30, left: 10, bottom: 10 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                            <XAxis dataKey="frequency" tick={{ fontSize: 12 }} />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Legend
+                              wrapperStyle={{ paddingTop: 10 }}
+                              formatter={(value, entry) => {
+                                const dataKey = entry.dataKey
+                                const isActive = activeStatuses.includes(dataKey)
+                                return (
+                                  <span
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleLegendClick(dataKey)
+                                    }}
+                                    style={{
+                                      cursor: 'pointer',
+                                      opacity: isActive ? 1 : 0.4,
+                                    }}
+                                  >
+                                    {value}
+                                  </span>
+                                )
+                              }}
+                            />
 
-                          <Bar
-                            dataKey="open"
-                            stackId="a"
-                            fill="#ff4d6d"
-                            name="Open"
-                            style={{ cursor: 'pointer' }}
-                            radius={[4, 4, 0, 0]}
-                            animationDuration={900}
-                            onClick={(data) =>
-                              handleChartBarClick(data.payload, 'open')
-                            }
-                            activeBar={{ fill: '#ff6b81', stroke: '#ff4d6d', strokeWidth: 2 }}
-                          />
+                            <Bar
+                              dataKey="open"
+                              stackId="a"
+                              fill="#ff4d6d"
+                              name="Open"
+                              style={{ cursor: 'pointer' }}
+                              radius={[4, 4, 0, 0]}
+                              animationDuration={900}
+                              onClick={(data) =>
+                                handleChartBarClick(data.payload, 'open')
+                              }
+                              activeBar={{ fill: '#ff6b81', stroke: '#ff4d6d', strokeWidth: 2 }}
+                            />
 
-                          <Bar
-                            dataKey="completed"
-                            stackId="a"
-                            fill="#69b1ff"
-                            name="Completed"
-                            style={{ cursor: 'pointer' }}
-                            animationDuration={900}
-                            onClick={(data) =>
-                              handleChartBarClick(data.payload, 'completed')
-                            }
-                            activeBar={{ fill: '#91caff', stroke: '#69b1ff', strokeWidth: 2 }}
-                          />
+                            <Bar
+                              dataKey="completed"
+                              stackId="a"
+                              fill="#69b1ff"
+                              name="Completed"
+                              style={{ cursor: 'pointer' }}
+                              animationDuration={900}
+                              onClick={(data) =>
+                                handleChartBarClick(data.payload, 'completed')
+                              }
+                              activeBar={{ fill: '#91caff', stroke: '#69b1ff', strokeWidth: 2 }}
+                            />
 
-                          <Bar
-                            dataKey="verified"
-                            stackId="a"
-                            fill="#73d13d"
-                            name="Verified"
-                            style={{ cursor: 'pointer' }}
-                            radius={[4, 4, 0, 0]}
-                            animationDuration={900}
-                            onClick={(data) =>
-                              handleChartBarClick(data.payload, 'verified')
-                            }
-                            activeBar={{ fill: '#95de64', stroke: '#73d13d', strokeWidth: 2 }}
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
-                  </CardContent>
-                </Card>
+                            <Bar
+                              dataKey="verified"
+                              stackId="a"
+                              fill="#73d13d"
+                              name="Verified"
+                              style={{ cursor: 'pointer' }}
+                              radius={[4, 4, 0, 0]}
+                              animationDuration={900}
+                              onClick={(data) =>
+                                handleChartBarClick(data.payload, 'verified')
+                              }
+                              activeBar={{ fill: '#95de64', stroke: '#73d13d', strokeWidth: 2 }}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </Box>
+                    </CardContent>
+                  </Card>
 
-                {/* TABLE */}
-                <Table
-                  dataSource={reports}
-                  columns={columns}
-                  rowKey="id"
-                  pagination={{ pageSize: 20 }}
-                  bordered
-                  size="middle"
-                />
-              </>
-            )}
+                  {/* TABLE */}
+                  <Table
+                    dataSource={reports}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={{ pageSize: 20 }}
+                    bordered
+                    size="middle"
+                  />
+                </>
+              )}
           </CardContent>
         </Card>
       </Box>

@@ -29,11 +29,11 @@ export default function ScheduledMaintenanceDetailsReports() {
   })
 
 
-  const { data: reportData, isLoading: queryLoading } = useGetLocationwiseQuery(
+  const { data: reportData, isLoading: isInitialLoading, isFetching } = useGetLocationwiseQuery(
     { ...filters, clientId },
     { skip: !filters.fromDate || !filters.toDate || !filters.locationId || !shouldFetch }
   )
-
+  const queryLoading = isInitialLoading || isFetching
 
   const reports = (reportData?.data || []).map((item, index) => {
     const isOverdue =
@@ -300,7 +300,7 @@ export default function ScheduledMaintenanceDetailsReports() {
 
         <Card>
           <CardContent>
-            {!shouldFetch ? (
+          {!shouldFetch ? (
               <Empty description="Please apply filters to view the report" />
             ) :
               queryLoading ? (
