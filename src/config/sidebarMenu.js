@@ -207,6 +207,26 @@ export const sidebarMenuConfig = [
         ]
       },
       {
+        key: '/reports/history-card',
+        icon: 'FileTextOutlined',
+        label: 'History Cards',
+        path: '/reports/history-card',
+        children: [
+          {
+            key: '/reports/history-card/tvs',
+            icon: 'FileTextOutlined',
+            label: 'TVS',
+            path: '/reports/history-card/tvs'
+          },
+          {
+            key: '/reports/history-card/vac',
+            icon: 'FileTextOutlined',
+            label: 'VAC',
+            path: '/reports/history-card/vac'
+          }
+        ]
+      },
+      {
         key: '/reports/tools',
         icon: 'ToolOutlined',
         label: 'Tools Report',

@@ -58,7 +58,9 @@ import CriticalRoomTemp from '../pages/Reports/OperationChecklistPages/CriticalR
 import DailyClosingReading from '../pages/Reports/OperationChecklistPages/DailyClosingReading'
 import WaterCooledChillers from '../pages/Reports/OperationChecklistPages/WaterCooledChillers'
 import ElectricalPanelMonitoring from '../pages/Reports/OperationChecklistPages/ElectricalPanelMonitoring'
-import HistoryCards from '../pages/Reports/HistoryCards'
+import HistoryCard from '../pages/Reports/HistoryCards/index'
+import Tvs from '../pages/Reports/HistoryCards/Tvs'
+import Vac from '../pages/Reports/HistoryCards/Vac'
 import EvaluationPenalty from '../pages/Reports/EvaluationPenalty'
 import CmrlAppReports from '../pages/Reports/CmrlAppReports'
 import Invoices from '../pages/Invoices'
@@ -157,7 +159,9 @@ function App() {
               <Route path="reports/operation-checklist/closing-reading" element={<DailyClosingReading />} />
               <Route path="reports/operation-checklist/daily-checks/:checklistId/:assetCategoryId" element={<WaterCooledChillers />} />
               <Route path="reports/operation-checklist/electrical-panel" element={<ElectricalPanelMonitoring />} />
-              <Route path="reports/history-cards" element={<HistoryCards />} />
+              <Route path="reports/history-card" element={<HistoryCard />} />
+              <Route path="reports/history-card/tvs" element={<Tvs />} />
+              <Route path="reports/history-card/vac" element={<Vac />} />
               <Route path="reports/evaluation-penalty" element={<EvaluationPenalty />} />
               <Route path="reports/cmrl-app" element={<CmrlAppReports />} />
               <Route path="invoices" element={<Invoices />} />

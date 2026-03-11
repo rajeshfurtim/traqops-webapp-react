@@ -1,0 +1,40 @@
+.checklist-table td,
+.checklist-table th{
+border:1px solid black;
+padding: 5px;
+text-align: center;
+}
+
+.checklist-table{
+border-collapse:collapse;
+width:100%;
+}
+
+@media print {
+
+  @page {
+    size: A3 landscape;
+    margin: 10mm;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .checklist-table {
+    font-size: 10px !important;
+  }
+
+  .checklist-table-container,
+  .checklist-table-content,
+  .checklist-table-body,
+  .checklist-table-scroll {
+    overflow: visible !important;
+  }
+
+  .checklist-table table {
+    width: 100% !important;
+  }
+
+}
