@@ -102,7 +102,7 @@ export default function DailyAttendanceReport() {
   const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
 
   // RTK Query hook
-  const { data: response, isLoading: queryLoading, error: queryError, } = useGetDailyLocationReportQuery(
+  const { data: response,  isLoading: isInitialLoading, isFetching  } = useGetDailyLocationReportQuery(
     {
       date: formattedDate,
       locationId: locationId,
@@ -111,6 +111,8 @@ export default function DailyAttendanceReport() {
     },
     { skip: !clientId || !shouldFetch }
   )
+  const queryLoading = isInitialLoading || isFetching
+
 
   useEffect(() => {
     if (shouldFetch) {
@@ -119,11 +121,10 @@ export default function DailyAttendanceReport() {
         filters,
         clientId,
         queryLoading,
-        queryError,
         response
       })
     }
-  }, [shouldFetch, filters, clientId, queryLoading, queryError, response])
+  }, [shouldFetch, filters, clientId, queryLoading, response])
 
   // Process response data
   // useEffect(() => {
@@ -391,7 +392,7 @@ export default function DailyAttendanceReport() {
                         onClick={handleSearch}
                         loading={queryLoading}
                       >
-                        Search
+                        Apply filter
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>
                         Reset
@@ -409,10 +410,10 @@ export default function DailyAttendanceReport() {
           <CardContent>
 
             {!shouldFetch ? (
-              <Empty description="Click Search to view data" />
+              <Empty description="Please apply filters to view the report" />
             ) :
               queryLoading ? (
-                <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
+                <Box display="flex" justifyContent="center" p={4}>
                   <Spin />
                 </Box>
               ) : (
