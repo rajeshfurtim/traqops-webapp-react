@@ -61,7 +61,7 @@ export const PAGE_TITLES = {
   'reports/history-card/tvs': 'TVS',
   'reports/history-card/vac': 'VAC',
   'reports/evaluation-penalty': 'Evaluation & Penalty',
-  'reports/cmrl-app': 'CMRL App Reports',
+  'reports/cmrl-app-reports': 'CMRL App Reports',
   invoices: 'Invoice Management',
   documents: 'Document Management',
   'master-settings': 'Master Settings',

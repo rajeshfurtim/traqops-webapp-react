@@ -163,7 +163,7 @@ function App() {
               <Route path="reports/history-card/tvs" element={<Tvs />} />
               <Route path="reports/history-card/vac" element={<Vac />} />
               <Route path="reports/evaluation-penalty" element={<EvaluationPenalty />} />
-              <Route path="reports/cmrl-app" element={<CmrlAppReports />} />
+              <Route path="reports/cmrl-app-reports" element={<CmrlAppReports />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="documents" element={<Documents />} />
               {/* Master Settings nested routes */}

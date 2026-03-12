@@ -237,6 +237,12 @@ export const sidebarMenuConfig = [
         icon: 'UnorderedListOutlined',
         label: 'Operation Checklists',
         path: '/reports/operation-checklist'
+      },
+      {
+        key: '/reports/cmrl-app-reports',
+        icon: 'FolderOpenOutlined',
+        label: 'CMRL App Reports',
+        path: '/reports/cmrl-app-reports'
       }
     ]
   },
