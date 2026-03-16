@@ -74,7 +74,8 @@ export const baseApi = createApi({
     'InvoiceGenerate',
     'AssetsList',
     'Voltas',
-    'OneApp'
+    'OneApp',
+    'Folders'
   ],
   endpoints: () => ({}),
 })
