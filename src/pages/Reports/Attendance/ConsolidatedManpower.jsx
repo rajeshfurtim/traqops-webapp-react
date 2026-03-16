@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Spin } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Spin,Empty } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -53,11 +53,13 @@ export default function ConsolidatedManpowerReport() {
   }
 
   // API Call
-  const { data: response, isLoading: queryLoading,} =
+  const { data: response, isLoading: isInitialLoading, isFetching} =
     useGetConsolidateManpowerReportQuery(
       { ...filters, clientId },
       { skip: !clientId || !filters.fromDate || !filters.toDate }
     )
+
+  const queryLoading = isInitialLoading || isFetching
 
   // Build table rows
  const reports = useMemo(() => {
@@ -221,7 +223,7 @@ export default function ConsolidatedManpowerReport() {
               </Form.Item>
 
               <Form.Item>
-                <AntButton type="primary" htmlType="submit">
+                <AntButton type="primary" htmlType="submit" loading={queryLoading}>
                   Apply Filters
                 </AntButton>
               </Form.Item>
@@ -237,11 +239,14 @@ export default function ConsolidatedManpowerReport() {
         {/* Table */}
         <Card>
           <CardContent>
-            {queryLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
-              </Box>
-            ) : (
+            {!shouldFetch ? (
+              <Empty description="Please apply filters to view the report" />
+            ) :
+              queryLoading ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <Spin />
+                </Box>
+              ) : (
               <>
                 <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
                   <Typography fontWeight="bold">

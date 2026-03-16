@@ -97,7 +97,7 @@ export default function MonthlyDailyAttendanceReport() {
 
   const {
     data: response,
-    isLoading: queryLoading,
+    isLoading: isInitialLoading, isFetching
   } = useGetMonthlyEmployeeReportQuery(
     {
       ...filters,
@@ -105,6 +105,9 @@ export default function MonthlyDailyAttendanceReport() {
     },
     { skip: !clientId || !filters.fromDate || !filters.toDate }
   )
+
+  const queryLoading = isInitialLoading || isFetching
+
 
   const getShiftByTime = (inTime) => {
     const hour = Number(inTime.split(':')[0])

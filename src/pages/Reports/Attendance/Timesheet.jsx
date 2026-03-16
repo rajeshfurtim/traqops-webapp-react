@@ -93,7 +93,7 @@ export default function TimesheetReport() {
   }, [reports, searchText])
 
 
-  const { data: response, isLoading: queryLoading } = useGetMonthlyEmployeeReportQuery(
+  const { data: response, isLoading: isInitialLoading, isFetching } = useGetMonthlyEmployeeReportQuery(
     {
       fromDate: filters.fromDate,
       toDate: filters.toDate,
@@ -104,6 +104,7 @@ export default function TimesheetReport() {
     { skip: !clientId || !filters.fromDate || !filters.toDate }
   )
 
+  const queryLoading = isInitialLoading || isFetching
   //  const transformReportRow = (item) => {
   //   const dayMap = {}
 

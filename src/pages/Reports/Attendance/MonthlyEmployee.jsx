@@ -44,7 +44,7 @@ export default function MonthlyEmployeeAttendanceReport() {
 
   const {
     data: response,
-    isLoading: queryLoading,
+    isLoading: isInitialLoading,isFetching
   } = useGetMonthlyEmployeeReportQuery(
     {
       fromDate: filters.fromDate,
@@ -55,6 +55,8 @@ export default function MonthlyEmployeeAttendanceReport() {
     },
     { skip: !clientId || !shouldFetch }
   )
+
+  const queryLoading = isInitialLoading || isFetching
 
   // Shift Logic
   const getShiftByTime = (inTime) => {

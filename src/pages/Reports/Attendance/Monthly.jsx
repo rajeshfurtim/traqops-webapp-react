@@ -13,6 +13,7 @@ import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 
 export default function MonthlyAttendanceReport() {
   const [reports, setReports] = useState([])
+  const [loading, setLoading] = useState(false)
   const [shouldFetch, setShouldFetch] = useState(false)
   const [apiError, setApiError] = useState(null)
   const [filters, setFilters] = useState({
@@ -82,7 +83,7 @@ export default function MonthlyAttendanceReport() {
   }
 
   // RTK Query hook
-  const { data: response, isLoading: queryLoading, error: queryError, refetch } = useGetMonthlyEmployeeReportQuery(
+  const { data: response, isLoading: isInitialLoading, isFetching } = useGetMonthlyEmployeeReportQuery(
     {
       fromDate: filters.fromDate,
       toDate: filters.toDate,
@@ -93,6 +94,8 @@ export default function MonthlyAttendanceReport() {
     { skip: !shouldFetch || !clientId }
   )
 
+  const queryLoading = isInitialLoading || isFetching
+
   // Debug logging
   useEffect(() => {
     if (shouldFetch) {
@@ -101,35 +104,13 @@ export default function MonthlyAttendanceReport() {
         filters,
         clientId,
         queryLoading,
-        queryError,
         response
       })
     }
-  }, [shouldFetch, filters, clientId, queryLoading, queryError, response])
+  }, [shouldFetch, filters, clientId, queryLoading, response])
 
   // Handle API errors and timeouts
-  useEffect(() => {
-    if (queryError) {
-      console.error('API Error:', queryError)
-      const errorMsg = queryError?.data?.message ||
-        queryError?.error ||
-        queryError?.message ||
-        'Failed to fetch report. Please try again.'
-      setApiError(errorMsg)
-      message.error(errorMsg)
-      setReports([])
-      setShouldFetch(false)
-    } else if (response?.success === false) {
-      const errorMsg = response?.message || 'Server returned an error'
-      console.error('API Response Error:', errorMsg)
-      setApiError(errorMsg)
-      message.error(errorMsg)
-      setReports([])
-      setShouldFetch(false)
-    } else {
-      setApiError(null)
-    }
-  }, [queryError, response])
+  
 
   // Timeout handler removed - let API complete without timeout
   useEffect(() => {
@@ -179,7 +160,7 @@ export default function MonthlyAttendanceReport() {
       console.log('Mapped reports:', mappedReports)
       setReports(mappedReports)
       setApiError(null)
-      setShouldFetch(false)
+      // setShouldFetch(false)
     } else if (!queryLoading && response && !response.success) {
       const errorMsg = response.message || 'Failed to load monthly attendance report'
       console.error('API Response Error:', errorMsg)
@@ -430,7 +411,7 @@ export default function MonthlyAttendanceReport() {
                         onClick={handleSearch}
                         loading={queryLoading}
                       >
-                        Search
+                        Apply Filter
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>
                         Reset
@@ -467,22 +448,14 @@ export default function MonthlyAttendanceReport() {
 
         <Card>
           <CardContent>
-            {queryLoading ? (
-              <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" p={4}>
-                <Spin />
-                {/* <Typography variant="body2" sx={{ mt: 2 }}>Loading report...</Typography> */}
-              </Box>
-            ) : apiError ? (
-              <Empty
-                description={apiError}
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
-            ) : reports.length === 0 ? (
-              <Empty
-                // description="No attendance records found for the selected period"
-                image={Empty.PRESENTED_IMAGE_SIMPLE}
-              />
-            ) : (
+            {!shouldFetch ? (
+              <Empty description="Please apply filters to view the report" />
+            ) :
+              queryLoading ? (
+                <Box display="flex" justifyContent="center" p={4}>
+                  <Spin />
+                </Box>
+              ) : (
               <>
                 <Box
                   sx={{

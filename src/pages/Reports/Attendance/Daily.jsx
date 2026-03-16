@@ -50,19 +50,21 @@ export default function DailyAttendanceReport() {
   ]
 
 
-  const handleFilterChange = (field, value) => {
-    const newFilters = { ...filters }
-    if (field === 'date') {
-      newFilters.date = value
-    } else if (field === 'location') {
-      newFilters.location = value || undefined
-    } else if (field === 'type') {
-      newFilters.type = value
-    }
-    setFilters(newFilters)
-  }
+  // const handleFilterChange = (field, value) => {
+  //   const newFilters = { ...filters }
+  //   if (field === 'date') {
+  //     newFilters.date = value
+  //   } else if (field === 'location') {
+  //     newFilters.location = value || undefined
+  //   } else if (field === 'type') {
+  //     newFilters.type = value
+  //   }
+  //   setFilters(newFilters)
+  // }
 
   // Get current form values for RTK Query
+ 
+ 
   const formValues = Form.useWatch([], form)
   const selectedDate = formValues?.date || filters.date || dayjs()
   const selectedLocationName = formValues?.location || filters.location || 'All Locations'
@@ -345,7 +347,6 @@ export default function DailyAttendanceReport() {
                       format="MMM DD, YYYY"
                       style={{ width: '100%' }}
                       allowClear={false}
-                    // onChange={(date) => handleFilterChange('date', date)}
                     />
                   </Form.Item>
                 </Col>
@@ -356,7 +357,6 @@ export default function DailyAttendanceReport() {
                       placeholder="All Locations"
                       style={{ width: '100%' }}
                       loading={locationsLoading}
-                    // onChange={(value) => handleFilterChange('location', value)}
                     >
                       {locationOptions.map((location) => (
                         <Select.Option key={location.id} value={location.name}>
@@ -372,7 +372,6 @@ export default function DailyAttendanceReport() {
                     <Select
                       style={{ width: '100%' }}
                       loading={userTypesLoading}
-                    // onChange={(value) => handleFilterChange('type', value)}
                     >
                       {userTypeOptions.map((type) => (
                         <Select.Option key={type.id || 'all'} value={type.name}>
