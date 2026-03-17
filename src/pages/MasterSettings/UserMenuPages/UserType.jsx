@@ -37,17 +37,20 @@ export default function UserType() {
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Per Day Billing Amount',
             dataIndex: 'perDayBillingAmount',
-            key: 'perDayBillingAmount'
+            key: 'perDayBillingAmount',
+            sorter: (a, b) => a?.perDayBillingAmount - b?.perDayBillingAmount
         },
         {
             title: 'Remark',
             dataIndex: 'remark',
-            key: 'remark'
+            key: 'remark',
+            sorter: (a, b) => (a?.remark ?? '').localeCompare(b?.remark ?? '')
         }
     ]
 

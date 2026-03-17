@@ -35,17 +35,20 @@ export default function ExternalVendor() {
         {
             title: 'Name',
             dataIndex: 'vendorName',
-            key: 'vendorName'
+            key: 'vendorName',
+            sorter: (a, b) => (a?.vendorName ?? '').localeCompare(b?.vendorName ?? '')
         },
         {
             title: 'Service Name',
             dataIndex: 'service',
-            key: 'service'
+            key: 'service',
+            sorter: (a, b) => (a?.service ?? '').localeCompare(b?.service ?? '')
         },
         {
             title: 'Description',
             dataIndex: 'description',
-            key: 'description'
+            key: 'description',
+            sorter: (a, b) => (a?.description ?? '').localeCompare(b?.description ?? '')
         }
     ]
 

@@ -50,22 +50,26 @@ export default function Asset() {
         {
             title: 'Location',
             dataIndex: 'locationName',
-            key: 'locationName'
+            key: 'locationName',
+            sorter: (a, b) => (a?.locationName ?? '').localeCompare(b?.locationName ?? '')
         },
         {
             title: 'Category',
             dataIndex: 'categoryName',
-            key: 'categoryName'
+            key: 'categoryName',
+            sorter: (a, b) => (a?.categoryName ?? '').localeCompare(b?.categoryName ?? '')
         },
         {
             title: 'Item Name',
             dataIndex: 'assetName',
-            key: 'assetName'
+            key: 'assetName',
+            sorter: (a, b) => (a?.assetName ?? '').localeCompare(b?.assetName ?? '')
         },
         {
             title: 'Item Code',
             dataIndex: 'itemCode',
-            key: 'itemCode'
+            key: 'itemCode',
+            sorter: (a, b) => (a?.itemCode ?? '').localeCompare(b?.itemCode ?? '')
         },
         {
             title: 'Status',
@@ -80,7 +84,8 @@ export default function Asset() {
                     }}>
                     {record.action === 'Y' ? 'Active' : 'Inactive'}
                 </Tag>
-            )
+            ),
+            sorter: (a, b) => (a?.action ?? '').localeCompare(b?.action ?? '')
         }
     ]
 

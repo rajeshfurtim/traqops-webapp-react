@@ -41,7 +41,8 @@ export default function ShiftLocationMapping() {
             title: 'Date',
             dataIndex: 'date',
             key: 'date',
-            render: (_, record) => dayjs(record?.shiftLocationMapping?.date).format('DD-MM-YYYY') || ''
+            render: (_, record) => dayjs(record?.shiftLocationMapping?.date).format('DD-MM-YYYY') || '',
+            sorter: (a, b) => dayjs(a?.shiftLocationMapping?.date).valueOf() - dayjs(b?.shiftLocationMapping?.date).valueOf()
         },
         {
             title: 'Shift',
@@ -96,13 +97,15 @@ export default function ShiftLocationMapping() {
             title: 'Location',
             dataIndex: 'location',
             key: 'location',
-            render: (_, record) => record?.shiftLocationMapping?.location?.name || ''
+            render: (_, record) => record?.shiftLocationMapping?.location?.name || '',
+            sorter: (a, b) => (a?.shiftLocationMapping?.location?.name ?? '').localeCompare(b?.shiftLocationMapping?.location?.name ?? '')
         },
         {
             title: 'UserType',
             dataIndex: 'userType',
             key: 'userType',
-            render: (_, record) => record?.shiftLocationMapping?.userType?.name || ''
+            render: (_, record) => record?.shiftLocationMapping?.userType?.name || '',
+            sorter: (a, b) => (a?.shiftLocationMapping?.userType?.name ?? '').localeCompare(b?.shiftLocationMapping?.userType?.name ?? '')
         }
     ]
 

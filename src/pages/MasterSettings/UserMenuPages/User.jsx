@@ -106,7 +106,8 @@ export default function User() {
       dataIndex: 'empId',
       key: 'empId',
       width: 120,
-      render: (_, record) => record?.userName || ''
+      render: (_, record) => record?.userName || '',
+      sorter: (a, b) => a?.userName - b?.userName
     },
     {
       title: 'Name',
@@ -117,41 +118,47 @@ export default function User() {
         <>
           {record?.firstName} {record?.lastName}
         </>
-      )
+      ),
+      sorter: (a, b) => (a?.firstName ?? '').localeCompare(b?.firstName ?? '')
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      width: 250
+      width: 250,
+      sorter: (a, b) => (a?.email ?? '').localeCompare(b?.email ?? '')
     },
     {
       title: 'Phone',
       dataIndex: 'phone',
       key: 'phone',
       width: 200,
-      render: (_, record) => record?.contact || ''
+      render: (_, record) => record?.contact || '',
+      sorter: (a, b) => a?.contact - b?.contact
     },
     {
       title: 'User Type',
       dataIndex: 'userType',
       key: 'userType',
       width: 200,
-      render: (_, record) => record?.userType?.name || ''
+      render: (_, record) => record?.userType?.name || '',
+      sorter: (a, b) => (a?.userType?.name ?? '').localeCompare(b?.userType?.name ?? '')
     },
     {
       title: 'Login User',
       dataIndex: 'loginUser',
       key: 'loginUser',
       width: 150,
-      render: (_, record) => record?.isLoginUser === 'Y' ? 'Yes' : 'No'
+      render: (_, record) => record?.isLoginUser === 'Y' ? 'Yes' : 'No',
+      sorter: (a, b) => (a?.isLoginUser ?? '').localeCompare(b?.isLoginUser ?? '')
     },
     {
       title: 'Role',
       dataIndex: 'role',
       key: 'role',
       width: 200,
-      render: (_, record) => record?.userRole?.name || ''
+      render: (_, record) => record?.userRole?.name || '',
+      sorter: (a, b) => (a?.userRole?.name ?? '').localeCompare(b?.userRole?.name ?? '')
     },
     {
       title: 'Location',

@@ -37,12 +37,14 @@ export default function Area() {
             title: 'Location',
             dataIndex: 'location',
             key: 'location',
-            render: (_, record) => record?.location?.name || ''
+            render: (_, record) => record?.location?.name || '',
+            sorter: (a, b) => (a?.location?.name ?? '').localeCompare(b?.location?.name ?? '')
         },
         {
             title: 'Area',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         }
     ]
 

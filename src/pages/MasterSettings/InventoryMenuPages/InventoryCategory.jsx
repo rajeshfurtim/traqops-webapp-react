@@ -35,12 +35,14 @@ export default function InventoryCategory() {
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Description',
             dataIndex: 'description',
-            key: 'description'
+            key: 'description',
+            sorter: (a, b) => (a?.description ?? '').localeCompare(b?.description ?? '')
         }
     ]
 

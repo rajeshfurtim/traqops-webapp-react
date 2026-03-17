@@ -38,18 +38,21 @@ export default function SubArea() {
             title: 'Location',
             dataIndex: 'location',
             key: 'location',
-            render: (_, record) => record?.location?.name || ''
+            render: (_, record) => record?.location?.name || '',
+            sorter: (a, b) => (a?.location?.name ?? '').localeCompare(b?.location?.name ?? '')
         },
         {
             title: 'Area',
             dataIndex: 'area',
             key: 'area',
-            render: (_, record) => record?.area?.name || ''
+            render: (_, record) => record?.area?.name || '',
+            sorter: (a, b) => (a?.area?.name ?? '').localeCompare(b?.area?.name ?? '')
         },
         {
             title: 'Sub-Area',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         }
     ]
 

@@ -37,17 +37,20 @@ export default function Shift() {
         {
             title: 'Shift',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Start Time',
             dataIndex: 'startTime',
-            key: 'startTime'
+            key: 'startTime',
+            sorter: (a, b) => (a?.startTime ?? '').localeCompare(b?.startTime ?? '')
         },
         {
             title: 'End Time',
             dataIndex: 'endTime',
-            key: 'endTime'
+            key: 'endTime',
+            sorter: (a, b) => (a?.endTime ?? '').localeCompare(b?.endTime ?? '')
         }
     ]
 

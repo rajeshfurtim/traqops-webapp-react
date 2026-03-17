@@ -41,28 +41,33 @@ export default function FaultSubCategory() {
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Fault Category',
             dataIndex: 'faultCategory',
             key: 'faultCategory',
-            render: (_, record) => record?.faultCategory?.name || '-'
+            render: (_, record) => record?.faultCategory?.name || '-',
+            sorter: (a, b) => (a?.faultCategory?.name ?? '').localeCompare(b?.faultCategory?.name ?? '')
         },
         {
             title: 'Period Value',
             dataIndex: 'periodValue',
-            key: 'periodValue'
+            key: 'periodValue',
+            sorter: (a, b) => a?.periodValue - b?.periodValue
         },
         {
             title: 'Period Type',
             dataIndex: 'periodType',
-            key: 'periodType'
+            key: 'periodType',
+            sorter: (a, b) => (a?.periodType ?? '').localeCompare(b?.periodType ?? '')
         },
         {
             title: 'Description',
             dataIndex: 'description',
-            key: 'description'
+            key: 'description',
+            sorter: (a, b) => (a?.description ?? '').localeCompare(b?.description ?? '')
         }
     ]
 

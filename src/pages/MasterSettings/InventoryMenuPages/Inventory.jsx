@@ -50,23 +50,27 @@ export default function Inventory() {
             title: 'Location',
             dataIndex: 'location',
             key: 'location',
-            render: (_, record) => record?.location?.name || '-'
+            render: (_, record) => record?.location?.name || '-',
+            sorter: (a, b) => (a?.location?.name ?? '').localeCompare(b?.location?.name ?? '')
         },
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Category',
             dataIndex: 'inventoryCategory',
             key: 'inventoryCategory',
-            render: (_, record) => record?.inventoryCategory?.name || '-'
+            render: (_, record) => record?.inventoryCategory?.name || '-',
+            sorter: (a, b) => (a?.inventoryCategory?.name ?? '').localeCompare(b?.inventoryCategory?.name ?? '')
         },
         {
             title: 'Qty',
             dataIndex: 'quantity',
-            key: 'quantity'
+            key: 'quantity',
+            sorter: (a, b) => a?.quantity - b?.quantity
         }
     ]
 

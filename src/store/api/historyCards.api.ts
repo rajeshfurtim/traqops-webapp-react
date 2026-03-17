@@ -45,7 +45,7 @@ export const operationChecklistsApi = baseApi.injectEndpoints({
                 }
         
                 return {
-                  url: `http://voltas.local.site:4200/oneapp/report/faultlist`,
+                  url: `/oneapp/report/faultlist`,
                   method: 'GET',
                   params: {
                     start_date: fromDate,

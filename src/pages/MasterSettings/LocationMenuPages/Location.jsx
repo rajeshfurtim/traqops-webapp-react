@@ -50,28 +50,33 @@ export default function Location() {
                     <Typography.Text>{record?.code || ''} - {record?.name || ''}</Typography.Text>
                     <Typography.Text style={{ color: record?.locationGroup?.color || '#000000' }}>{record?.locationGroup?.name || ''}</Typography.Text>
                 </div>
-            )
+            ),
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Device Id',
             dataIndex: 'deviceId',
-            key: 'deviceId'
+            key: 'deviceId',
+            sorter: (a, b) => a?.deviceId - b?.deviceId
         },
         {
             title: 'Device Number',
             dataIndex: 'deviceSerialNumber',
-            key: 'deviceSerialNumber'
+            key: 'deviceSerialNumber',
+            sorter: (a, b) => (a?.deviceSerialNumber ?? '').localeCompare(b?.deviceSerialNumber ?? '')
         },
         {
             title: 'Is Store',
             dataIndex: 'isStore',
             key: 'isStore',
-            render: (_, record) => record?.isStore === 'Y' ? 'Yes' : 'No'
+            render: (_, record) => record?.isStore === 'Y' ? 'Yes' : 'No',
+            sorter: (a, b) => (a?.isStore ?? '').localeCompare(b?.isStore ?? '')
         },
         {
             title: 'Address',
             dataIndex: 'address',
-            key: 'address'
+            key: 'address',
+            sorter: (a, b) => (a?.address ?? '').localeCompare(b?.address ?? '')
         }
     ]
 

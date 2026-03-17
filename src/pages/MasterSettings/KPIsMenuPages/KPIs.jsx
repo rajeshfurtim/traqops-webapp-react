@@ -38,42 +38,49 @@ export default function KPIs() {
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'KPIs Type',
             dataIndex: 'kpiType',
             key: 'kpiType',
-            render: (_, report) => report?.kpisCategory?.kpiType?.name || ''
+            render: (_, report) => report?.kpisCategory?.kpiType?.name || '',
+            sorter: (a, b) => (a?.kpisCategory?.kpiType?.name ?? '').localeCompare(b?.kpisCategory?.kpiType?.name ?? '')
         },
         {
             title: 'Category',
             dataIndex: 'kpisCategory',
             key: 'kpisCategory',
-            render: (_, report) => report?.kpisCategory?.name || ''
+            render: (_, report) => report?.kpisCategory?.name || '',
+            sorter: (a, b) => (a?.kpisCategory?.name ?? '').localeCompare(b?.kpisCategory?.name ?? '')
         },
         {
             title: 'Type',
             dataIndex: 'type',
             key: 'type',
-            render: (_, report) => report?.type?.name || ''
+            render: (_, report) => report?.type?.name || '',
+            sorter: (a, b) => (a?.type?.name ?? '').localeCompare(b?.type?.name ?? '')
         },
         {
             title: 'Score',
             dataIndex: 'score',
-            key: 'score'
+            key: 'score',
+            sorter: (a, b) => a?.score - b?.score
         },
         {
             title: 'Frequency',
             dataIndex: 'frequency',
             key: 'frequency',
-            render: (_, report) => report?.frequency?.name || ''
+            render: (_, report) => report?.frequency?.name || '',
+            sorter: (a, b) => (a?.frequency?.name ?? '').localeCompare(b?.frequency?.name ?? '')
         },
         {
             title: 'Critical Attributes',
             dataIndex: 'isCritical',
             key: 'isCritical',
-            render: (_, record) => record?.isCritical === 'Y' ? 'Yes' : 'No'
+            render: (_, record) => record?.isCritical === 'Y' ? 'Yes' : 'No',
+            sorter: (a, b) => (a?.isCritical ?? '').localeCompare(b?.isCritical ?? '')
         }
     ]
 

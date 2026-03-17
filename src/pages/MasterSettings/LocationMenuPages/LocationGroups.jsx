@@ -38,7 +38,8 @@ export default function LocationGroups() {
             key: 'name',
             render: (_, record) => (
                 <Tag color={record?.color} style={{ borderRadius: 25, padding: '4px 8px', fontSize: 13 }}>{record?.name || ''}</Tag>
-            )
+            ),
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         }
     ]
 

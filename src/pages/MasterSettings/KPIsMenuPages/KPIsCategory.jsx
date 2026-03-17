@@ -36,28 +36,33 @@ export default function KPIsCategory() {
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'KPIs Type',
             dataIndex: 'kpiType',
             key: 'kpiType',
-            render: (_, report) => report?.kpiType?.name || '-'
+            render: (_, report) => report?.kpiType?.name || '-',
+            sorter: (a, b) => (a?.kpiType?.name ?? '').localeCompare(b?.kpiType?.name ?? '')
         },
         {
             title: 'Monthly Audit Frequency',
             dataIndex: 'kpiMinimumFrequency',
-            key: 'kpiMinimumFrequency'
+            key: 'kpiMinimumFrequency',
+            sorter: (a, b) => a?.kpiMinimumFrequency - b?.kpiMinimumFrequency
         },
         {
             title: 'Billing Rate',
             dataIndex: 'billingRate',
-            key: 'billingRate'
+            key: 'billingRate',
+            sorter: (a, b) => a?.billingRate - b?.billingRate
         },
         {
             title: 'Deduction Rate',
             dataIndex: 'deductionRate',
-            key: 'deductionRate'
+            key: 'deductionRate',
+            sorter: (a, b) => a?.deductionRate - b?.deductionRate
         }
     ]
 

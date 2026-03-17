@@ -36,13 +36,15 @@ export default function SkillLevel() {
         {
             title: 'Name',
             dataIndex: 'name',
-            key: 'name'
+            key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Skill',
             dataIndex: 'skill',
             key: 'skill',
-            render: (_, record) => record?.skill?.name || ''
+            render: (_, record) => record?.skill?.name || '',
+            sorter: (a, b) => (a?.skill?.name ?? '').localeCompare(b?.skill?.name ?? '')
         }
     ]
 

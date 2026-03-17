@@ -45,18 +45,21 @@ export default function CheckList() {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Type',
             dataIndex: 'type',
             key: 'type',
-            render: (_, record) => record?.checkListType?.name
+            render: (_, record) => record?.checkListType?.name,
+            sorter: (a, b) => (a?.checkListType?.name ?? '').localeCompare(b?.checkListType?.name ?? '')
         },
         {
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            render: (_, record) => record?.status === 'Y' ? "Enabled" : "Disabled"
+            render: (_, record) => record?.status === 'Y' ? "Enabled" : "Disabled",
+            sorter: (a, b) => (a?.status ?? '').localeCompare(b?.status ?? '')
         }
     ]
 

@@ -41,12 +41,14 @@ export default function AssetCategory() {
             dataIndex: 'name',
             key: 'name',
             width: 250,
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Description',
             dataIndex: 'description',
             key: 'description',
             width: 300,
+            sorter: (a, b) => (a?.description ?? '').localeCompare(b?.description ?? '')
         },
         {
             title: 'CheckList',

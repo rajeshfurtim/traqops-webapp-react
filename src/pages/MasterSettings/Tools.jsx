@@ -65,17 +65,20 @@ export default function ToolsMaster() {
     {
       title: 'Name',
       dataIndex: 'name',
-      key: 'name'
+      key: 'name',
+      sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
     },
     {
       title: 'Quantity',
       dataIndex: 'quantity',
-      key: 'quantity'
+      key: 'quantity',
+      sorter: (a, b) => a?.quantity - b?.quantity
     },
     {
       title: 'Description',
       dataIndex: 'description',
-      key: 'description'
+      key: 'description',
+      sorter: (a, b) => (a?.description ?? '').localeCompare(b?.description ?? '')
     },
   ]
 

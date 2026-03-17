@@ -1444,7 +1444,7 @@ getAllTypeList: build.query({
       query: () => {
 
         return {
-          url: `http://voltas.local.site:4200/unsecure/type/getalltype`,
+          url: `/unsecure/type/getalltype`,
           method: 'GET'
         }
       },

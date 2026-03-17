@@ -51,7 +51,8 @@ export default function CheckListElements() {
             title: 'Name',
             dataIndex: 'name',
             key: 'name',
-            width: 300
+            width: 300,
+            sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
         },
         {
             title: 'Type',
@@ -78,19 +79,22 @@ export default function CheckListElements() {
                     )}
 
                 </div>
-            )
+            ),
+            sorter: (a, b) => (a?.dataEntryType ?? '').localeCompare(b?.dataEntryType ?? '')
         },
         {
             title: 'Units',
             dataIndex: 'units',
             key: 'units',
-            width: 200
+            width: 200,
+            sorter: (a, b) => a?.units - b?.units
         },
         {
             title: 'Description',
             dataIndex: 'description',
             key: 'description',
-            width: 400
+            width: 400,
+            sorter: (a, b) => (a?.description ?? '').localeCompare(b?.description ?? '')
         }
     ]
 
