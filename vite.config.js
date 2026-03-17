@@ -44,19 +44,19 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/unsecure': {
           target: 'http://localhost:8080',
-          changeOrigin: true,
+          changeOrigin: false,
           secure: false,
           ws: true,
         },
         '/secure': {
           target: 'http://localhost:8080',
-          changeOrigin: true,
+          changeOrigin: false,
           secure: false,
           ws: true,
         },
         '/api': {
           target: 'http://localhost:8080',
-          changeOrigin: true,
+          changeOrigin: false,
           secure: false,
           ws: true,
         },
