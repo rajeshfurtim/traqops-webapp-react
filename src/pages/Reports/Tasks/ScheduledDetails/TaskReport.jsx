@@ -10,6 +10,8 @@ import useGetFreqencyList from '../../../../hooks/useGetFrequencyList'
 import { useAuth } from '../../../../context/AuthContext'
 import { useLocation } from 'react-router-dom'
 import { useNavigate } from "react-router-dom"
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+
 
 const { RangePicker } = DatePicker
 
@@ -66,26 +68,29 @@ export default function TaskReport() {
   const queryLoading = isInitialLoading || isFetching
 
   const reports = (reportData?.data || []).map((item, index) => {
-    const remark = item.scheduledCheckListDtos?.[0] || {}
-    return {
-      _rowKey: index,
-      index,
-      sno: index + 1,
-      raw: item,
-      pmTaskId: item.pmTaskId,
-      task: item.taskName || "-",
-      location: item.locationName || "-",
-      startdate: item.startDate,
-      enddate: item.endDate,
-      category: item.categoryName || '-',
-      checklist: remark.checkListName || '-',
-      status: item.taskStatus,
-      notlive: item.notLiveCount || 0,
-      open: item.openCount || 0,
-      completed: item.completedCount || 0,
-      verified: item.verifiedCount || 0
-    }
-  })
+
+  const checklistName = item.scheduledCheckListDtos?.[0]?.checkListName || "-"
+
+  return {
+    _rowKey: index,
+    index,
+    sno: index + 1,
+    raw: item,
+    pmTaskId: item.pmTaskId,
+    task: item.taskName || "-",
+    location: item.locationName || "-",
+    startdate: item.startDate ? dayjs(item.startDate).format("DD-MM-YYYY") : "-",
+    enddate: item.endDate ? dayjs(item.endDate).format("DD-MM-YYYY") : "-",
+    category: item.categoryName || "-",
+    checklist: checklistName,
+    status: item.taskStatus,
+    notlive: item.notLiveCount || 0,
+    open: item.openCount || 0,
+    completed: item.completedCount || 0,
+    verified: item.verifiedCount || 0
+  }
+
+})
 
   const stringSorter = (key) => (a, b) =>
     (a[key] || "").localeCompare(b[key] || "")
@@ -114,10 +119,17 @@ export default function TaskReport() {
     { title: 'S.No', dataIndex: 'sno', key: 'sno', ...getColumnSearchProps('sno'), sorter: (a, b) => a.sno - b.sno },
     { title: 'Task', dataIndex: 'task', key: 'task', ...getColumnSearchProps('task'), sorter: stringSorter("task") },
     { title: 'Location', dataIndex: 'location', key: 'location', ...getColumnSearchProps('location'), sorter: stringSorter("location") },
-    { title: 'Start Date', dataIndex: 'startdate', key: 'date', ...getColumnSearchProps('startdate'), sorter: stringSorter("startdate") },
-    { title: 'End Date', dataIndex: 'enddate', key: 'enddate', ...getColumnSearchProps('enddate'), sorter: stringSorter("enddate") },
-    { title: 'Category', dataIndex: 'category', key: 'category', ...getColumnSearchProps('category'), sorter: stringSorter("category") },
-    { title: 'Status', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status'), sorter: stringSorter("status") },
+    {
+      title: 'Start Date', dataIndex: 'startdate', key: 'date', ...getColumnSearchProps('startdate'), sorter: (a, b) =>
+        dayjs(a.startdate, "DD-MM-YYYY").unix() - dayjs(b.startdate, "DD-MM-YYYY").unix(),
+    },
+    {
+      title: 'End Date', dataIndex: 'enddate', key: 'enddate', ...getColumnSearchProps('enddate'), sorter: (a, b) =>
+        dayjs(a.enddate, "DD-MM-YYYY").unix() - dayjs(b.enddate, "DD-MM-YYYY").unix(),
+    },
+    { title: 'System', dataIndex: 'category', key: 'category', ...getColumnSearchProps('category'), sorter: stringSorter("category") },
+    {title:'Category', dataIndex: 'checklist',key: 'checklist',sorter: stringSorter("checklist")},
+    { title: 'CheckList', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status'), sorter: stringSorter("status") },
     {
       title: 'Asset Status',
       children: [
@@ -166,21 +178,33 @@ export default function TaskReport() {
       </Helmet>
 
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">Schedule Maintenance</Typography>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography variant="h4" fontWeight="bold">
+            Schedule Maintenance
+          </Typography>
+
+          <AntButton
+            type="primary"
+            icon={<ArrowBackIcon />}
+            onClick={() => navigate(-1)}
+          >
+            Back
+          </AntButton>
+        </Box>
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Form form={form} layout="vertical" onFinish={handleApplyFilters}>
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={8} lg={6}>
+              <Row gutter={[16, 16]} wrap={false}>
+                <Col flex="1">
                   <Form.Item name="dateRange" label="Date Range">
-                    <RangePicker style={{ width: '100%' }} />
+                    <RangePicker style={{ width: "100%" }} />
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col flex="1">
                   <Form.Item name="location" label="Location">
-                    <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
+                    <Select style={{ width: "100%" }} allowClear loading={locationsLoading}>
                       <Select.Option value={-1}>All Location</Select.Option>
                       {locations?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
@@ -191,9 +215,9 @@ export default function TaskReport() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col flex="1">
                   <Form.Item name="frequencyId" label="Frequency">
-                    <Select style={{ width: '100%' }} allowClear loading={frequencyLoading}>
+                    <Select style={{ width: "100%" }} allowClear loading={frequencyLoading}>
                       <Select.Option value={-1}>All Frequency</Select.Option>
                       {freqencyList?.map((fre) => (
                         <Select.Option key={fre.id} value={fre.id}>
@@ -204,9 +228,9 @@ export default function TaskReport() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col flex="1">
                   <Form.Item name="statusId" label="Status">
-                    <Select style={{ width: '100%' }} allowClear>
+                    <Select style={{ width: "100%" }} allowClear>
                       <Select.Option value={-1}>All Status</Select.Option>
                       <Select.Option value={640}>Open</Select.Option>
                       <Select.Option value={631}>Completed</Select.Option>
@@ -215,9 +239,9 @@ export default function TaskReport() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                <Col flex="1" style={{ display: "flex", alignItems: "center" }}>
                   <Form.Item style={{ marginBottom: 0 }}>
-                    <Space wrap>
+                    <Space>
                       <AntButton type="primary" htmlType="submit" loading={queryLoading}>
                         Apply Filters
                       </AntButton>

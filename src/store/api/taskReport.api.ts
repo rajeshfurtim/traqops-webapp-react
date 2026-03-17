@@ -198,6 +198,22 @@ export const taskReportApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+
+    bypmtaskid: build.query({
+      query: (params) => {
+        const { pmtaskId } = params || {}
+
+        return {
+          url: `${API_BASE_URL}/pmtaskdetails/bypmtaskid`,
+          method: 'GET',
+          params: {
+            ...(pmtaskId != null && { pmtaskId: pmtaskId.toString() }),
+          },
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -211,4 +227,5 @@ export const {
   useGettaskReportSummarycmQuery,
   useGetbyfrequencyQuery,
   useGetallpmtasklistQuery,
+  useBypmtaskidQuery,
 } = taskReportApi
