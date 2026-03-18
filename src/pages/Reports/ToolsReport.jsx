@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, Tooltip, message, Spin } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, message, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
@@ -37,8 +37,7 @@ export default function ToolsReport() {
 
   useEffect(() => {
     form.setFieldsValue({
-      date: [dayjs().startOf('month'), dayjs()],
-      location: 10339
+      date: [dayjs().startOf('month'), dayjs()]
     })
   }, [])
 
@@ -219,7 +218,10 @@ export default function ToolsReport() {
                 <Col xs={24} sm={24} md={24} lg={6}>
                   <Form.Item label=" ">
                     <Space>
-                      <AntButton type="primary" htmlType="submit">Filter</AntButton>
+                      <AntButton type="primary" htmlType="submit"
+                        icon={<SearchOutlined />}
+                        loading={toolsLoading || isFetching}
+                      >Search</AntButton>
                       <AntButton onClick={handleResetFilters}>Reset</AntButton>
                     </Space>
                   </Form.Item>
@@ -241,26 +243,23 @@ export default function ToolsReport() {
                   allowClear
                   style={{ width: 250 }}
                 />
-                <Tooltip title="Export Excel">
-                  <AntButton
-                    type="primary"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={toolsList?.data?.length === 0}
-                    style={{ backgroundColor: '#5bd71c', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
-                <Tooltip title="Export PDF">
-                  <AntButton
-                    type="primary"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={toolsList?.data?.length === 0}
-                    style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
+
+                <AntButton
+                  icon={<FileExcelOutlined />}
+                  onClick={handleExportExcel}
+                  disabled={!toolsList || toolsList?.data?.length === 0}
+                >
+                  Export Excel
+                </AntButton>
+
+                <AntButton
+                  icon={<FilePdfOutlined />}
+                  onClick={handleExportPDF}
+                  disabled={!toolsList || toolsList?.data?.length === 0}
+                >
+                  Export PDF
+                </AntButton>
+
               </Space>
             </Box>
             {toolsLoading ? (

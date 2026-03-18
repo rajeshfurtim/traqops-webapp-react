@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
-import { Form, Select, Space, Button as AntButton, Row, Col, DatePicker, Table, Spin, Tooltip } from 'antd'
-import { FilePdfOutlined } from '@ant-design/icons'
+import { Form, Select, Space, Button as AntButton, Row, Col, DatePicker, Table, Spin } from 'antd'
+import { FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery } from '../../../store/api/masterSettings.api'
 import { useGetHistoryCardsChecklistQuery } from '../../../store/api/historyCards.api'
@@ -765,8 +765,9 @@ export default function Vac() {
                                                 type="primary"
                                                 htmlType="submit"
                                                 loading={checklistLoading || isFetching}
+                                                icon={<SearchOutlined />}
                                             >
-                                                Get Report
+                                                Search
                                             </AntButton>
                                             <AntButton onClick={handleResetFilters}>
                                                 Reset
@@ -783,16 +784,15 @@ export default function Vac() {
                     <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
                             <Space>
-                                <Tooltip title="Export PDF">
-                                    <AntButton
-                                        type="primary"
-                                        icon={<FilePdfOutlined />}
-                                        onClick={handlePrint}
-                                        disabled={checklistData?.data?.length === 0}
-                                        style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
-                                    >
-                                    </AntButton>
-                                </Tooltip>
+
+                                <AntButton
+                                    icon={<FilePdfOutlined />}
+                                    onClick={handlePrint}
+                                    disabled={!checklistData || checklistData?.data?.length === 0}
+                                >
+                                    Export PDF
+                                </AntButton>
+
                             </Space>
                         </Box>
                         {(checklistLoading || isFetching) ? (

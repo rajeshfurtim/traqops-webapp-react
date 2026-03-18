@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, Tooltip, message, Spin, DatePicker } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Spin, DatePicker } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery, useGetAssetsLocationWiseQuery } from '../../../store/api/masterSettings.api'
@@ -259,8 +259,9 @@ export default function AssetHistoryReports() {
                         type="primary"
                         htmlType="submit"
                         loading={assetHistoryReportLoading || isFetching}
+                        icon={<SearchOutlined />}
                       >
-                        Filter
+                        Search
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>
                         Reset
@@ -285,26 +286,23 @@ export default function AssetHistoryReports() {
                   allowClear
                   style={{ width: 250 }}
                 />
-                <Tooltip title="Export Excel">
-                  <AntButton
-                    type="primary"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={assetHistoryReportData?.data?.content?.length === 0}
-                    style={{ backgroundColor: '#5bd71c', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
-                <Tooltip title="Export PDF">
-                  <AntButton
-                    type="primary"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={assetHistoryReportData?.data?.content?.length === 0}
-                    style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
+
+                <AntButton
+                  icon={<FileExcelOutlined />}
+                  onClick={handleExportExcel}
+                  disabled={!assetHistoryReportData || assetHistoryReportData?.data?.content?.length === 0}
+                >
+                  Export Excel
+                </AntButton>
+
+                <AntButton
+                  icon={<FilePdfOutlined />}
+                  onClick={handleExportPDF}
+                  disabled={!assetHistoryReportData || assetHistoryReportData?.data?.content?.length === 0}
+                >
+                  Export PDF
+                </AntButton>
+
               </Space>
             </Box>
             {assetHistoryReportLoading ? (

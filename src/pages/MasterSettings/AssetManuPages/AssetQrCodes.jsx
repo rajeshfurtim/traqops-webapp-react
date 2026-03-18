@@ -10,7 +10,7 @@ export default function AssetQrCode() {
     const { user } = useAuth()
     const clientId = user?.client?.id || user?.clientId
 
-    const [selectedHeaderLocationId, setSelectedHeaderLocationId] = useState(10339);
+    const [selectedHeaderLocationId, setSelectedHeaderLocationId] = useState(null);
 
     const { data: assetsListData, isLoading: assetsListLoading, isFetching } = useGetAssetsLocationWiseQuery({ clientId, pageNumber: 1, pageSize: 1000, locationId: selectedHeaderLocationId }, { skip: !selectedHeaderLocationId })
     const { data: locationList, loading: locationListLoading } = useGetLocationListQuery({ clientId, pageNumber: 1, pageSize: 1000 })

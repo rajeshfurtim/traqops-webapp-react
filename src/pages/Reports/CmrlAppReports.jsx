@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, Tooltip, message, Spin } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, message, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import { useGetLocationListQuery } from '../../store/api/masterSettings.api'
@@ -298,7 +298,10 @@ export default function CmrlAppReports() {
                 <Col xs={24} sm={24} md={24} lg={6}>
                   <Form.Item>
                     <Space>
-                      <AntButton type="primary" htmlType="submit">Filter</AntButton>
+                      <AntButton type="primary" htmlType="submit"
+                        icon={<SearchOutlined />}
+                        loading={reportLoading || isFetching}
+                      >Search</AntButton>
                       <AntButton onClick={handleResetFilters}>Reset</AntButton>
                     </Space>
                   </Form.Item>
@@ -320,26 +323,23 @@ export default function CmrlAppReports() {
                   allowClear
                   style={{ width: 250 }}
                 />
-                <Tooltip title="Export Excel">
-                  <AntButton
-                    type="primary"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={!appReportList || appReportList.length === 0}
-                    style={{ backgroundColor: '#5bd71c', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
-                <Tooltip title="Export PDF">
-                  <AntButton
-                    type="primary"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={!appReportList || appReportList.length === 0}
-                    style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
+
+                <AntButton
+                  icon={<FileExcelOutlined />}
+                  onClick={handleExportExcel}
+                  disabled={!appReportList || appReportList.length === 0}
+                >
+                  Export Excel
+                </AntButton>
+
+                <AntButton
+                  icon={<FilePdfOutlined />}
+                  onClick={handleExportPDF}
+                  disabled={!appReportList || appReportList.length === 0}
+                >
+                  Export PDF
+                </AntButton>
+
               </Space>
             </Box>
             {reportLoading ? (

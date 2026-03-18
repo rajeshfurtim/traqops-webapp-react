@@ -63,8 +63,8 @@ export default function DailyAttendanceReport() {
   // }
 
   // Get current form values for RTK Query
- 
- 
+
+
   const formValues = Form.useWatch([], form)
   const selectedDate = formValues?.date || filters.date || dayjs()
   const selectedLocationName = formValues?.location || filters.location || 'All Locations'
@@ -104,7 +104,7 @@ export default function DailyAttendanceReport() {
   const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
 
   // RTK Query hook
-  const { data: response,  isLoading: isInitialLoading, isFetching  } = useGetDailyLocationReportQuery(
+  const { data: response, isLoading: isInitialLoading, isFetching } = useGetDailyLocationReportQuery(
     {
       date: formattedDate,
       locationId: locationId,
@@ -391,7 +391,7 @@ export default function DailyAttendanceReport() {
                         onClick={handleSearch}
                         loading={queryLoading}
                       >
-                        Apply filter
+                        Search
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>
                         Reset

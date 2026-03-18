@@ -110,7 +110,7 @@ export default function MonthlyAttendanceReport() {
   }, [shouldFetch, filters, clientId, queryLoading, response])
 
   // Handle API errors and timeouts
-  
+
 
   // Timeout handler removed - let API complete without timeout
   useEffect(() => {
@@ -411,7 +411,7 @@ export default function MonthlyAttendanceReport() {
                         onClick={handleSearch}
                         loading={queryLoading}
                       >
-                        Apply Filter
+                        Search
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>
                         Reset
@@ -456,104 +456,104 @@ export default function MonthlyAttendanceReport() {
                   <Spin />
                 </Box>
               ) : (
-              <>
-                <Box
-                  sx={{
-                    mb: 2,
-                    pb: 2,
-                    borderBottom: '1px solid #f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
-                >
-                  {/* Left content */}
-                  <Typography
-                    variant="body2"
-                    fontWeight="bold"
-                    sx={{ fontSize: '1.2rem' }}
+                <>
+                  <Box
+                    sx={{
+                      mb: 2,
+                      pb: 2,
+                      borderBottom: '1px solid #f0f0f0',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
                   >
-                    Overall Employee Count:{' '}
-                    <span style={{ color: '#1890ff' }}>{reports.length}</span>
-                    {' | '}
-                    Total Duty:{' '}
-                    <span style={{ color: '#52c41a' }}>
-                      {reports.reduce((sum, report) => sum + report.totalDuty, 0)}
-                    </span>
-                  </Typography>
+                    {/* Left content */}
+                    <Typography
+                      variant="body2"
+                      fontWeight="bold"
+                      sx={{ fontSize: '1.2rem' }}
+                    >
+                      Overall Employee Count:{' '}
+                      <span style={{ color: '#1890ff' }}>{reports.length}</span>
+                      {' | '}
+                      Total Duty:{' '}
+                      <span style={{ color: '#52c41a' }}>
+                        {reports.reduce((sum, report) => sum + report.totalDuty, 0)}
+                      </span>
+                    </Typography>
 
-                  {/* Right buttons */}
-                  <Space style={{ marginLeft: 'auto' }} size={12}>
-                    <Input
-                      placeholder="Search"
-                      prefix={<SearchOutlined />}
-                      value={searchText}
-                      onChange={e => setSearchText(e.target.value)}
-                      allowClear
-                      style={{ width: 250 }}
-                    />
-                    <AntButton
-                      type="default"
-                      icon={<FileExcelOutlined />}
-                      onClick={handleExportExcel}
-                      disabled={reports.length === 0}
-                    // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                    >Export Excel
-                    </AntButton>
-                    <AntButton
-                      type="default"
-                      icon={<FilePdfOutlined />}
-                      onClick={handleExportPDF}
-                      disabled={reports.length === 0}
-                    // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                    >Export PDF
-                    </AntButton>
-                  </Space>
-                </Box>
+                    {/* Right buttons */}
+                    <Space style={{ marginLeft: 'auto' }} size={12}>
+                      <Input
+                        placeholder="Search"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                        style={{ width: 250 }}
+                      />
+                      <AntButton
+                        type="default"
+                        icon={<FileExcelOutlined />}
+                        onClick={handleExportExcel}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      >Export Excel
+                      </AntButton>
+                      <AntButton
+                        type="default"
+                        icon={<FilePdfOutlined />}
+                        onClick={handleExportPDF}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      >Export PDF
+                      </AntButton>
+                    </Space>
+                  </Box>
 
-                <Table
-                  dataSource={filteredReports}
-                  columns={columns}
-                  rowKey="id"
-                  pagination={{
-                    pageSize: 20,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} records`
-                  }}
-                  size="middle"
-                  scroll={{ x: 'max-content', y: 450 }}
-                  bordered
-                  components={{
-                    header: {
-                      cell: (props) => (
-                        <th
-                          {...props}
-                          style={{
-                            ...props.style,
-                            fontSize: '16px',
-                            fontWeight: 600,
-                            padding: '12px 8px'
-                          }}
-                        />
-                      )
-                    },
-                    body: {
-                      cell: (props) => (
-                        <td
-                          {...props}
-                          style={{
-                            ...props.style,
-                            fontSize: '15px',
-                            fontWeight: 400,
-                            padding: '12px 8px'
-                          }}
-                        />
-                      )
-                    }
-                  }}
-                />
+                  <Table
+                    dataSource={filteredReports}
+                    columns={columns}
+                    rowKey="id"
+                    pagination={{
+                      pageSize: 20,
+                      showSizeChanger: true,
+                      showTotal: (total) => `Total ${total} records`
+                    }}
+                    size="middle"
+                    scroll={{ x: 'max-content', y: 450 }}
+                    bordered
+                    components={{
+                      header: {
+                        cell: (props) => (
+                          <th
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '16px',
+                              fontWeight: 600,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      },
+                      body: {
+                        cell: (props) => (
+                          <td
+                            {...props}
+                            style={{
+                              ...props.style,
+                              fontSize: '15px',
+                              fontWeight: 400,
+                              padding: '12px 8px'
+                            }}
+                          />
+                        )
+                      }
+                    }}
+                  />
 
-              </>
-            )}
+                </>
+              )}
           </CardContent>
         </Card>
       </Box>

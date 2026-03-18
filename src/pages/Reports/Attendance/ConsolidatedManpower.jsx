@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Spin,Empty } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Spin, Empty } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -53,7 +53,7 @@ export default function ConsolidatedManpowerReport() {
   }
 
   // API Call
-  const { data: response, isLoading: isInitialLoading, isFetching} =
+  const { data: response, isLoading: isInitialLoading, isFetching } =
     useGetConsolidateManpowerReportQuery(
       { ...filters, clientId },
       { skip: !clientId || !filters.fromDate || !filters.toDate }
@@ -62,21 +62,21 @@ export default function ConsolidatedManpowerReport() {
   const queryLoading = isInitialLoading || isFetching
 
   // Build table rows
- const reports = useMemo(() => {
-  if (queryLoading) return []
-  if (!response?.data || !Array.isArray(response.data)) return []
+  const reports = useMemo(() => {
+    if (queryLoading) return []
+    if (!response?.data || !Array.isArray(response.data)) return []
 
-  return response.data.map(item => {
-    const row = { id: item.locationId, location: item.locationName, totalDuties: 0 }
+    return response.data.map(item => {
+      const row = { id: item.locationId, location: item.locationName, totalDuties: 0 }
 
-    Object.entries(item.counts || {}).forEach(([date, count]) => {
-      row[date] = count
-      row.totalDuties += count
+      Object.entries(item.counts || {}).forEach(([date, count]) => {
+        row[date] = count
+        row.totalDuties += count
+      })
+
+      return row
     })
-
-    return row
-  })
-}, [response, queryLoading])
+  }, [response, queryLoading])
 
   // Build date columns
   const dateColumns = useMemo(() => {
@@ -139,13 +139,13 @@ export default function ConsolidatedManpowerReport() {
   const handleExportExcel = async () => {
     try {
       setExporting(prev => ({ ...prev, excel: true }))
-  
+
       await exportToExcel(
-        columns,            
-        filteredReports,    
+        columns,
+        filteredReports,
         `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
       )
-  
+
       message.success('Excel exported successfully')
     } catch (err) {
       message.error('Excel export failed')
@@ -153,18 +153,18 @@ export default function ConsolidatedManpowerReport() {
       setExporting(prev => ({ ...prev, excel: false }))
     }
   }
-  
-  
-    const handleExportPDF = async () => {
+
+
+  const handleExportPDF = async () => {
     try {
       setExporting(prev => ({ ...prev, pdf: true }))
-  
+
       await exportToPDF(
-        columns,            
+        columns,
         filteredReports,
         `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
       )
-  
+
       message.success('PDF exported successfully')
     } catch (err) {
       message.error('PDF export failed')
@@ -172,18 +172,18 @@ export default function ConsolidatedManpowerReport() {
       setExporting(prev => ({ ...prev, pdf: false }))
     }
   }
-  
+
   const handleResetFilters = () => {
-      const currentMonth = dayjs()
-      setApiError(null)
-      setShouldFetch(false)
-      setReports([])
-      form.setFieldsValue({
-        month: currentMonth,
-        location: 'All Locations',
-        department: 'All Departments'
-      })
-    }
+    const currentMonth = dayjs()
+    setApiError(null)
+    setShouldFetch(false)
+    setReports([])
+    form.setFieldsValue({
+      month: currentMonth,
+      location: 'All Locations',
+      department: 'All Departments'
+    })
+  }
 
   return (
     <>
@@ -223,14 +223,17 @@ export default function ConsolidatedManpowerReport() {
               </Form.Item>
 
               <Form.Item>
-                <AntButton type="primary" htmlType="submit" loading={queryLoading}>
-                  Apply Filters
+                <AntButton type="primary" htmlType="submit"
+                  loading={queryLoading}
+                  icon={<SearchOutlined />}
+                >
+                  Search
                 </AntButton>
               </Form.Item>
               <Form.Item>
-              <AntButton onClick={handleResetFilters}>
-                Reset
-              </AntButton>
+                <AntButton onClick={handleResetFilters}>
+                  Reset
+                </AntButton>
               </Form.Item>
             </Form>
           </CardContent>
@@ -247,57 +250,57 @@ export default function ConsolidatedManpowerReport() {
                   <Spin />
                 </Box>
               ) : (
-              <>
-                <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-                  <Typography fontWeight="bold">
-                    Total Duty:{' '}
-                    <span style={{ color: '#52c41a' }}>
-                      {reportsWithTotal.find(r => r.id === 'total')?.totalDuties || 0}
-                    </span>
-                  </Typography>
-                  
-                  {/* Export buttons */}
-                    <Space style={{ marginLeft: 'auto' }} size={12}>
-                  <Input
-                    // placeholder="Search Location"
-                    prefix={<SearchOutlined />}
-                    value={searchText}
-                    onChange={e => setSearchText(e.target.value)}
-                    allowClear
-                    style={{ width: 250 }}
-                    className="custom-search-input"
-                  />
-                  <AntButton
-                    type="default"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={reports.length === 0}
-                    // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                  >Export Excel
-                  </AntButton>
-                  <AntButton
-                    type="default"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={reports.length === 0}
-                    // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                  >Export PDF
-                  </AntButton>
-                </Space>
-                </Box>
+                <>
+                  <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
+                    <Typography fontWeight="bold">
+                      Total Duty:{' '}
+                      <span style={{ color: '#52c41a' }}>
+                        {reportsWithTotal.find(r => r.id === 'total')?.totalDuties || 0}
+                      </span>
+                    </Typography>
 
-                <Table
-                  rowKey="id"
-                  dataSource={filteredReports}
-                  columns={columns}
-                  pagination={{ pageSize: 20 }}
-                  scroll={{ x: 'max-content' }}
-                  size="small"
-                  bordered
-                  rowClassName={record => (record.id === 'total' ? 'ant-table-row-total' : '')}
-                />
-              </>
-            )}
+                    {/* Export buttons */}
+                    <Space style={{ marginLeft: 'auto' }} size={12}>
+                      <Input
+                        // placeholder="Search Location"
+                        prefix={<SearchOutlined />}
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                        style={{ width: 250 }}
+                        className="custom-search-input"
+                      />
+                      <AntButton
+                        type="default"
+                        icon={<FileExcelOutlined />}
+                        onClick={handleExportExcel}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                      >Export Excel
+                      </AntButton>
+                      <AntButton
+                        type="default"
+                        icon={<FilePdfOutlined />}
+                        onClick={handleExportPDF}
+                        disabled={reports.length === 0}
+                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                      >Export PDF
+                      </AntButton>
+                    </Space>
+                  </Box>
+
+                  <Table
+                    rowKey="id"
+                    dataSource={filteredReports}
+                    columns={columns}
+                    pagination={{ pageSize: 20 }}
+                    scroll={{ x: 'max-content' }}
+                    size="small"
+                    bordered
+                    rowClassName={record => (record.id === 'total' ? 'ant-table-row-total' : '')}
+                  />
+                </>
+              )}
           </CardContent>
         </Card>
       </Box>

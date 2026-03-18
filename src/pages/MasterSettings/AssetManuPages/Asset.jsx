@@ -20,7 +20,7 @@ export default function Asset() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedRecord, setSelectedRecord] = useState(null)
     const [selectedLocationId, setSelectedLocationId] = useState(null);
-    const [selectedHeaderLocationId, setSelectedHeaderLocationId] = useState(10339);
+    const [selectedHeaderLocationId, setSelectedHeaderLocationId] = useState(null);
     const [selectedAreaId, setSelectedAreaId] = useState(null);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 

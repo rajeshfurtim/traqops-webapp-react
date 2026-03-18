@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, Tooltip, message, Spin } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Spin } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationByIsStoreQuery, useGetAllInventoryCategoryQuery } from '../../../store/api/masterSettings.api'
@@ -32,13 +32,6 @@ export default function QuantityReports() {
         skip: !filters.locationId || !filters.InventoryCategoryId
       }
     )
-
-  useEffect(() => {
-    form.setFieldsValue({
-      location: 11496,
-      inventoryCategory: -1
-    })
-  }, [])
 
   const handleFilterChange = (values) => {
     console.log('Filter values:', values)
@@ -220,7 +213,10 @@ export default function QuantityReports() {
                 <Col xs={24} sm={24} md={24} lg={6}>
                   <Form.Item label=" ">
                     <Space>
-                      <AntButton type="primary" htmlType="submit" loading={quantityReportLoading || isFetching}>Filter</AntButton>
+                      <AntButton type="primary" htmlType="submit"
+                        loading={quantityReportLoading || isFetching}
+                        icon={<SearchOutlined />}
+                      >Search</AntButton>
                       <AntButton onClick={handleResetFilters}>Reset</AntButton>
                     </Space>
                   </Form.Item>
@@ -242,26 +238,23 @@ export default function QuantityReports() {
                   allowClear
                   style={{ width: 250 }}
                 />
-                <Tooltip title="Export Excel">
-                  <AntButton
-                    type="primary"
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={quantityReportData?.data?.content?.length === 0}
-                    style={{ backgroundColor: '#5bd71c', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
-                <Tooltip title="Export PDF">
-                  <AntButton
-                    type="primary"
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={quantityReportData?.data?.content?.length === 0}
-                    style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
-                  >
-                  </AntButton>
-                </Tooltip>
+
+                <AntButton
+                  icon={<FileExcelOutlined />}
+                  onClick={handleExportExcel}
+                  disabled={!quantityReportData || quantityReportData?.data?.content?.length === 0}
+                >
+                  Export Excel
+                </AntButton>
+
+                <AntButton
+                  icon={<FilePdfOutlined />}
+                  onClick={handleExportPDF}
+                  disabled={!quantityReportData || quantityReportData?.data?.content?.length === 0}
+                >
+                  Export PDF
+                </AntButton>
+
               </Space>
             </Box>
             {quantityReportLoading ? (

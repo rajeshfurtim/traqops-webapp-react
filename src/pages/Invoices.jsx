@@ -182,8 +182,9 @@ export default function Invoices() {
                         type="primary"
                         htmlType="submit"
                         loading={invoiceLoading || isFetching}
+                        icon={<SearchOutlined />}
                       >
-                        Filter
+                        Search
                       </AntButton>
                       <AntButton onClick={handleResetFilters}>
                         Reset
