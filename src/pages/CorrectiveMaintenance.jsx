@@ -126,6 +126,9 @@ const data = [
 
 
 export default function CorrectiveMaintenance() {
+  const clientId =localStorage.getItem('clientId');
+  console.log(clientId)
+  const [activeTab, setActiveTab] = useState('1');
   const [loading, setLoading] = useState(true)
   const [tickets, setTickets] = useState([])
   const [selectedTicket, setSelectedTicket] = useState(null)
@@ -144,6 +147,13 @@ export default function CorrectiveMaintenance() {
       skip: !filters.startdate || !filters.enddate, refetchOnMountOrArgChange: false
     }
   )
+  const statusMap = {
+    '1': 640, // Open
+    '2': 804, // WorkDone
+    '3': 631, // Completed
+    '4': 15, // Verified
+    '5': 808  // Overdue
+  };
 
   useEffect(() => {
     console.log(locations)
@@ -164,15 +174,15 @@ export default function CorrectiveMaintenance() {
     {
       fromdate: filters.startdate,
       todate: filters.enddate,
-      locationId: 11477,
-      clientId:1090,
-       statusId:640,
+      locationId: 14474904,
+      clientId: clientId,
+      statusId: statusMap[activeTab],
     },
     {
       skip: !filters.startdate || !filters.enddate, refetchOnMountOrArgChange: false
     }
   )
-  
+
 
 
 
@@ -197,7 +207,7 @@ export default function CorrectiveMaintenance() {
       newFilters.enddate = values.dateRange[1].format('YYYY-MM-DD')
     }
     if (values.location == -1) {
-      newFilters.location = locations.map(x => (x.id)).join(',');
+      newFilters.location = locations.map(x => (x.id));
     } else {
       newFilters.location = values.location;
     }
@@ -263,65 +273,48 @@ export default function CorrectiveMaintenance() {
     });
 
     return tableDataArr;
-    // setCountlist(countlist)
-
-    // energylist.forEach(item => {
-    //   const locations = item.locations || []
-
-    //   locations.forEach((location,i )=> {
-    //     tableDataArr.push({
-    //       index:i+1,
-    //       name: location.locationName,
-    //       chillerValue: location.chillerValue,
-    //       date: dayjs(location.date).format('DD-MM-YYYY'),
-    //       tvsValue: location.tvsValue,
-    //       vacValue: location.vacValue,
-    //       total: location.total
-    //     })
-    //   })
-    // })
-
-    return countlist
   }, [response, queryLoading]);
-   const Cmreports = useMemo(() => {
+  const Cmreports = useMemo(() => {
     if (cmqueryLoading) return []
     if (!cmresponse?.data?.content) return []
     console.log(cmresponse)
+    var tableDataArr = [];
+    tableDataArr = cmresponse?.data?.content?.map((result) => {
+      return {
+        'id': result.id, 'name': result?.name, 'location': result.location.name, 'assets': result.assets?.name, 'cmKey': result?.cmKey,
+        'category': result.category != null ? result.category.name : null, 'status': result.status.name, 'technician': result.technician, 'priority': result.priority != null ? result.priority.name : null,
+        'faultCategory': result.faultCategory?.name, 'faultSubCategory': result.faultSubCategory?.name, 'time': '23-05-2023 11:31',
+        'allData': result, 'startTime': result.issueStartTime, 'endTime': result.issueEndTime, 'assignedTo': result.assignedTo != null ? result.assignedTo.firstName + " " + result.assignedTo.lastName : null, 'assignedId': result.assignedTo?.id
 
-    // const countlist = response.data;
-    // const tableDataArr = countlist.map((item) => {
-    //   const location = locations.find(loc => loc?.name?.trim() == item?.locationName?.trim());
-    //   console.log(location)
-    //   return {
-    //     ...item,
-    //     locationcode: location ? location.code : null
-    //   };
-    // });
+      }
+    });
+    console.log(tableDataArr)
 
-    // return tableDataArr;
-  
+    return tableDataArr;
+
   }, [cmresponse, cmqueryLoading]);
+  // console.log(Cmreports)
 
 
   const columns = [
     {
       title: 'Fault Id',
-      dataIndex: 'id',
-      key: 'id',
+      dataIndex: 'cmKey',
+      key: 'cmKey',
       width: 100
     },
     {
       title: 'Location',
-      dataIndex: 'title',
-      key: 'title',
-        width: 100
-    
+      dataIndex: 'location',
+      key: 'location',
+      width: 100
+
     },
     {
-      title: 'Fault Category',
-      dataIndex: 'priority',
-      key: 'priority',
-      width:100
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      width: 100
       // width: 120,
       // render: (priority) => (
       //   <Chip
@@ -333,18 +326,12 @@ export default function CorrectiveMaintenance() {
     },
     {
       title: 'Date',
-      dataIndex: 'priority',
-      key: 'priority',
+      dataIndex: 'startTime',
+      key: 'startTime',
       width: 120,
-      render: (priority) => (
-        <Chip
-          label={priority}
-          size="small"
-          sx={{ bgcolor: getPriorityColor(priority), color: 'white', fontWeight: 'bold' }}
-        />
-      )
+      render: (date) => dayjs(date).format('DD-MM-YYYY HH:mm')
     },
-  
+
     {
       title: 'Assigned To',
       dataIndex: 'assignedTo',
@@ -353,12 +340,12 @@ export default function CorrectiveMaintenance() {
     },
     {
       title: 'Priority',
-      dataIndex: 'location',
-      key: 'location',
+      dataIndex: 'priority',
+      key: 'priority',
       width: 200
     },
-   
-      {
+
+    {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
@@ -368,33 +355,67 @@ export default function CorrectiveMaintenance() {
       )
     },
   ]
-    const items = [
-  {
-    key: '1',
-    label: 'Open',
-    children: <Table dataSource={''} columns={columns} />
-  },
-  {
-    key: '2',
-    label: 'WorkDone',
-    children: <Table dataSource={''} columns={columns} />
-  },
-  {
-    key: '3',
-    label: 'Completed',
-    children: <Table dataSource={''} columns={columns} />
-  },
-  {
-    key: '4',
-    label: 'Verified',
-    children: <Table dataSource={''} columns={columns} />
-  },
-  {
-    key: '5',
-    label: 'Overdue',
-    children: <Table dataSource={''} columns={columns} />
-  }
-];
+  const items = [
+  { key: '1', label: 'Open' },
+  { key: '2', label: 'WorkDone' },
+  { key: '3', label: 'Completed' },
+  { key: '4', label: 'Verified' },
+  { key: '5', label: 'Overdue' }
+].map(tab => ({
+  ...tab,
+  children: (
+    <Table
+      key={activeTab}
+      dataSource={cmisFetching ? [] : Cmreports}
+      columns={columns}
+      loading={cmqueryLoading || cmisFetching}
+    />
+  )
+}));
+  // const items = [
+  //   {
+  //     key: '1',
+  //     label: 'Open',
+  //     children: <Table
+  //       key={activeTab}
+  //       dataSource={Cmreports} columns={columns}
+  //       loading={cmqueryLoading} />
+
+  //   },
+  //   {
+  //     key: '2',
+  //     label: 'WorkDone',
+  //     children: <Table
+  //       key={activeTab}
+  //       dataSource={Cmreports} columns={columns}
+  //       loading={cmqueryLoading} />
+  //   },
+  //   {
+  //     key: '3',
+  //     label: 'Completed',
+  //     children: <Table
+  //       key={activeTab}
+  //       dataSource={Cmreports} columns={columns}
+  //       loading={cmqueryLoading} />
+  //   },
+  //   {
+  //     key: '4',
+  //     label: 'Verified',
+  //     children: <Table
+  //       key={activeTab}
+  //       dataSource={Cmreports} columns={columns}
+  //       loading={cmqueryLoading && Cmreports.length === 0} />
+  //   },
+  //   {
+  //     key: '5',
+  //     label: 'Overdue',
+  //     children: <Table
+  //       key={activeTab}
+  //       dataSource={Cmreports} columns={columns}
+  //       loading={cmqueryLoading} />
+  //   }
+
+  // ];
   const CustomLegend = () => {
     const items = [
       { name: "Open", color: "#F3657F" },
@@ -523,7 +544,7 @@ export default function CorrectiveMaintenance() {
         </Card>
         <Card style={{ marginTop: '20px' }}>
           <CardContent>
-            <Tabs items={items} />
+            <Tabs items={items} onChange={(key) => setActiveTab(key)} />
           </CardContent>
         </Card>
         <>
@@ -532,27 +553,7 @@ export default function CorrectiveMaintenance() {
         </>
 
 
-        {/* <Card style={{marginTop:'20px'}}>
-        <CardContent>
-          {loading ? (
-            <Box display="flex" justifyContent="center" p={4}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <Table
-              dataSource={tickets}
-              columns={columns}
-              rowKey="id"
-              onRow={(record) => ({
-                onClick: () => handleRowClick(record),
-                style: { cursor: 'pointer' }
-              })}
-              pagination={{ pageSize: 10 }}
-              size="middle"
-            />
-          )}
-        </CardContent>
-      </Card> */}
+       
 
         <Dialog
           open={dialogOpen}
