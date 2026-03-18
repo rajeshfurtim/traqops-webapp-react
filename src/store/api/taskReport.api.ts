@@ -214,6 +214,36 @@ export const taskReportApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+    getElementsByCheckListId: build.query({
+      query: (params) => {
+        const { checkListId } = params || {}
+
+        return {
+          url: `${API_BASE_URL}/checklist/getelements/bychecklistid`,
+          method: 'GET',
+          params: {
+             checkListId: checkListId.toString(),
+          },
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
+    getPmCheckList: build.query({
+      query: (params) => {
+        const { pmTaskId } = params || {}
+
+        return {
+          url: `${API_BASE_URL}/getpmchecklist/bypmtask`,
+          method: 'GET',
+          params: {
+             pmTaskId: pmTaskId.toString(),
+          },
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -228,4 +258,6 @@ export const {
   useGetbyfrequencyQuery,
   useGetallpmtasklistQuery,
   useBypmtaskidQuery,
+  useGetElementsByCheckListIdQuery,
+  useGetPmCheckListQuery
 } = taskReportApi

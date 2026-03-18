@@ -15,6 +15,7 @@ export default function TaskReportDetails() {
 
   const navstate = location.state || {}
   const pmtaskId = navstate?.pmTaskId
+  const checkListId = navstate?.checkListId
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedAsset, setSelectedAsset] = useState(null)
@@ -170,7 +171,12 @@ export default function TaskReportDetails() {
               <AntButton
                 type="primary"
                 icon={<EyeOutlined />}
-                onClick={() => navigate(-1)}
+                onClick={() => navigate(
+                  '/reports/tasks/ScheduledDetails/task-checklist',
+                  {
+                    state: { pmTaskId: pmtaskId, checkListId: checkListId },
+                  }
+                )}
                 style={{ fontWeight: 500, borderRadius: "40px" }}
               >
                 Checklist Details

@@ -69,28 +69,30 @@ export default function TaskReport() {
 
   const reports = (reportData?.data || []).map((item, index) => {
 
-  const checklistName = item.scheduledCheckListDtos?.[0]?.checkListName || "-"
+    const checklistName = item.scheduledCheckListDtos?.[0]?.checkListName || "-"
+    const checkListId = item.scheduledCheckListDtos?.[0]?.checkListId || "-"
 
-  return {
-    _rowKey: index,
-    index,
-    sno: index + 1,
-    raw: item,
-    pmTaskId: item.pmTaskId,
-    task: item.taskName || "-",
-    location: item.locationName || "-",
-    startdate: item.startDate ? dayjs(item.startDate).format("DD-MM-YYYY") : "-",
-    enddate: item.endDate ? dayjs(item.endDate).format("DD-MM-YYYY") : "-",
-    category: item.categoryName || "-",
-    checklist: checklistName,
-    status: item.taskStatus,
-    notlive: item.notLiveCount || 0,
-    open: item.openCount || 0,
-    completed: item.completedCount || 0,
-    verified: item.verifiedCount || 0
-  }
+    return {
+      _rowKey: index,
+      index,
+      sno: index + 1,
+      raw: item,
+      pmTaskId: item.pmTaskId,
+      task: item.taskName || "-",
+      location: item.locationName || "-",
+      startdate: item.startDate ? dayjs(item.startDate).format("DD-MM-YYYY") : "-",
+      enddate: item.endDate ? dayjs(item.endDate).format("DD-MM-YYYY") : "-",
+      category: item.categoryName || "-",
+      checklist: checklistName,
+      checkListId: checkListId,
+      status: item.taskStatus,
+      notlive: item.notLiveCount || 0,
+      open: item.openCount || 0,
+      completed: item.completedCount || 0,
+      verified: item.verifiedCount || 0
+    }
 
-})
+  })
 
   const stringSorter = (key) => (a, b) =>
     (a[key] || "").localeCompare(b[key] || "")
@@ -128,7 +130,7 @@ export default function TaskReport() {
         dayjs(a.enddate, "DD-MM-YYYY").unix() - dayjs(b.enddate, "DD-MM-YYYY").unix(),
     },
     { title: 'System', dataIndex: 'category', key: 'category', ...getColumnSearchProps('category'), sorter: stringSorter("category") },
-    {title:'Category', dataIndex: 'checklist',key: 'checklist',sorter: stringSorter("checklist")},
+    { title: 'Category', dataIndex: 'checklist', key: 'checklist', sorter: stringSorter("checklist") },
     { title: 'CheckList', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status'), sorter: stringSorter("status") },
     {
       title: 'Asset Status',
@@ -279,7 +281,7 @@ export default function TaskReport() {
                       navigate(
                         "/reports/tasks/ScheduledDetails/TaskReportDetails",
                         {
-                          state: { pmTaskId: record.pmTaskId },
+                          state: { pmTaskId: record.pmTaskId, checkListId: record?.checkListId },
                         }
                       );
                     },
