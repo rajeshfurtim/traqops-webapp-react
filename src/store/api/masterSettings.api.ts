@@ -560,6 +560,33 @@ getSubAreaList: build.query({
       providesTags: ['SubArea'],
     }),
 
+    getAllShift: build.query({
+      query: (params) => {
+        const {
+          domainName: domainNameParam,
+          clientId,
+          pageNumber = 1,
+          pageSize = 1000,
+        } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getAllShift')
+        }
+
+        return {
+          url: `${API_BASE_URL}/shift/getallshift`,
+          method: 'GET',
+          params: {
+            domainName: domainNameParam || domainName,
+            clientId: clientId.toString(),
+            pn: pageNumber.toString(),
+            ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['Shift'],
+    }),
+
     addSubArea: build.mutation({
   query: (payload) => {
     if (!payload?.clientId) {
@@ -1529,6 +1556,7 @@ export const {
   useAddAreaMutation,
   useDeleteAreaMutation,
   useGetSubAreaListQuery,
+  useGetAllShiftQuery,
   useAddSubAreaMutation,
   useDeleteSubAreaMutation,
   useAddShiftMutation,
