@@ -35,6 +35,7 @@ import CorrectiveMaintenanceReports from '../pages/Reports/Tasks/Corrective'
 import CorrectiveMaintenanceDetailsReports from '../pages/Reports/Tasks/CorrectiveDetails'
 import TaskReport from '../pages/Reports/Tasks/ScheduledDetails/TaskReport'
 import TaskReportDetails from '../pages/Reports/Tasks/ScheduledDetails/TaskReportDetails'
+import Cmreports from '../pages/Reports/Tasks/ScheduledDetails/Cmreports'
 // Inventory Reports
 import InventoryReportsIndex from '../pages/Reports/Inventory/index'
 import QuantityReports from '../pages/Reports/Inventory/Quantity'
@@ -130,6 +131,8 @@ function App() {
               <Route path="reports/tasks/corrective-details" element={<CorrectiveMaintenanceDetailsReports />} />
               <Route path='reports/tasks/ScheduledDetails/TaskReport' element={<TaskReport />} />
               <Route path='reports/tasks/ScheduledDetails/TaskReportDetails' element={<TaskReportDetails />} />
+              <Route path='reports/tasks/ScheduledDetails/Cmreports' element={<Cmreports />} />
+
               {/* Catch-all for task reports - redirect to scheduled */}
               <Route path="reports/tasks/*" element={<Navigate to="/reports/tasks/scheduled" replace />} />
               {/* Inventory Reports nested routes */}

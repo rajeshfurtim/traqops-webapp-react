@@ -21,12 +21,14 @@ import {
 } from 'recharts'
 import CountUp from "react-countup"
 import { SearchOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 
 const { RangePicker } = DatePicker
 
 export default function ScheduledMaintenanceReports() {
   const [form] = Form.useForm()
   const { user } = useAuth()
+  const navigate = useNavigate()
 
   const { locations = [], loading: locationsLoading } = useGetLocationList()
   const [loading, setLoading] = useState(false)
@@ -40,12 +42,12 @@ export default function ScheduledMaintenanceReports() {
 
   const clientId = user?.client?.id || user?.clientId
 
-  const { data: reportData,  isLoading: isInitialLoading, isFetching  } =
+  const { data: reportData, isLoading: isInitialLoading, isFetching } =
     useGetCmReportSummaryQuery(
       { ...filters, clientId },
       { skip: !filters.fromDate || !filters.toDate }
     )
-    const queryLoading = isInitialLoading || isFetching
+  const queryLoading = isInitialLoading || isFetching
 
   /* ---------------- APPLY FILTERS ---------------- */
   const handleApplyFilters = (values) => {
@@ -134,7 +136,7 @@ export default function ScheduledMaintenanceReports() {
   const totalTasks = totalOpen + totalCompleted + totalVerified + totalWorkDone + totalOverdue
 
   /* ---------------- SAMPLE & BAR CHART DATA ---------------- */
-  // Sample dataset (20+ records) used when API has no data
+
   const sampleBarData = [
     { location: 'Loc 01', open: 5, workDone: 3, completed: 2, verified: 1, overdueCount: 0 },
     { location: 'Loc 02', open: 2, workDone: 4, completed: 6, verified: 3, overdueCount: 1 },
@@ -360,7 +362,7 @@ export default function ScheduledMaintenanceReports() {
         const renderPill = (label, value, type) => {
           const color = getStatusColor(type, value)
           return (
-            <div style={pillStyle} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+            <div style={pillStyle}   onClick={() => handleclicknavigate(record, type)} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
               <span style={{ backgroundColor: color, color: 'white', padding: '3px 8px' }}>{label}</span>
               <span style={countStyle}>{value}</span>
             </div>
@@ -379,6 +381,18 @@ export default function ScheduledMaintenanceReports() {
       }
     },
   ]
+
+  const handleclicknavigate = (payload, statusType) => {
+    navigate('/reports/tasks/ScheduledDetails/Cmreports', {
+      state: {
+        fromDate: filters.fromDate,
+        toDate: filters.toDate,
+        locationId: payload?.locationId || filters.locationId,
+        locationName: payload?.location || null,
+        statusType,
+      }
+    })
+  }
 
   return (
     <>
@@ -444,11 +458,11 @@ export default function ScheduledMaintenanceReports() {
         {/* SUMMARY BOXES */}
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
           <SummaryBox label="TOTAL" value={totalTasks} color="#2E8B57" icon={<FaClipboardList size={32} />} />
-          <SummaryBox label="OPEN" value={totalOpen} color="#8A9EFF" icon={<FaExternalLinkAlt size={32} />} />
-          <SummaryBox label="WORK DONE" value={totalWorkDone} color="#5cdbd3" icon={<FaTasks size={32} />} />
-          <SummaryBox label="COMPLETED" value={totalCompleted} color="#555555" icon={<FaCheckSquare size={32} />} />
-          <SummaryBox label="VERIFIED" value={totalVerified} color="#66CC33" icon={<FaCheckCircle size={32} />} />
-          <SummaryBox label="OVERDUE" value={totalOverdue} color="#ffa940" icon={<FaClock size={32} />} />
+          <SummaryBox label="OPEN" value={totalOpen} color="#8A9EFF" icon={<FaExternalLinkAlt size={32} onClick={() => handleclicknavigate(null, 'open')} />} />
+          <SummaryBox label="WORK DONE" value={totalWorkDone} color="#5cdbd3" icon={<FaTasks size={32} />} onClick={() => handleclicknavigate(null, 'workDone')} />
+          <SummaryBox label="COMPLETED" value={totalCompleted} color="#555555" icon={<FaCheckSquare size={32} />} onClick={() => handleclicknavigate(null, 'completed')} />
+          <SummaryBox label="VERIFIED" value={totalVerified} color="#66CC33" icon={<FaCheckCircle size={32} />} onClick={() => handleclicknavigate(null, 'verified')} />
+          <SummaryBox label="OVERDUE" value={totalOverdue} color="#ffa940" icon={<FaClock size={32} />} onClick={() => handleclicknavigate(null, 'overdueCount')} />
         </Box>
 
         {/* TABLE + CHART */}
@@ -516,6 +530,12 @@ export default function ScheduledMaintenanceReports() {
                             <BarChart
                               data={barChartData}
                               margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                              onClick={(e) => {
+                                if (e?.activePayload?.length) {
+                                  const clickedData = e.activePayload[0]
+                                  handleclicknavigate(clickedData.payload, clickedData.dataKey)
+                                }
+                              }}
                             >
                               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                               <XAxis
