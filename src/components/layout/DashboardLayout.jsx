@@ -105,6 +105,14 @@ const convertMenuConfigToItems = (config) => {
   })
 }
 
+const normalizePathForMenu = (pathname) => {
+  if (pathname.startsWith('/reports/tasks/ScheduledDetails')) {
+    return '/reports/tasks/scheduled'
+  }
+
+  return pathname
+}
+
 // Find open keys based on current path
 const getOpenKeysFromPath = (pathname) => {
   const openKeys = []
@@ -131,16 +139,18 @@ export default function DashboardLayout() {
   const { user, logout } = useAuth()
   const { collapsed, toggleSidebar } = useSidebar()
   const { clientId, changeClient, isChanging } = useClient()
-  const [selectedKeys, setSelectedKeys] = useState([location.pathname])
-  const [openKeys, setOpenKeys] = useState(() => getOpenKeysFromPath(location.pathname))
+  const [selectedKeys, setSelectedKeys] = useState([normalizePathForMenu(location.pathname)])
+  const [openKeys, setOpenKeys] = useState(() =>
+    getOpenKeysFromPath(normalizePathForMenu(location.pathname))
+  )
   const [clients, setClients] = useState([])
 
   // Use menu config directly without client filtering
   const filteredMenuConfig = sidebarMenuConfig
 
   useEffect(() => {
-    setSelectedKeys([location.pathname])
-    setOpenKeys(getOpenKeysFromPath(location.pathname))
+    setSelectedKeys([normalizePathForMenu(location.pathname)])
+    setOpenKeys(getOpenKeysFromPath(normalizePathForMenu(location.pathname)))
   }, [location.pathname])
 
   const domainNameParam = user?.domain?.name || domainName
@@ -208,8 +218,7 @@ export default function DashboardLayout() {
     navigate('/login')
   }
 
-  // Use full menu config for breadcrumbs to ensure accuracy
-  const breadcrumbs = getBreadcrumbsFromPath(location.pathname, sidebarMenuConfig)
+  const breadcrumbs = getBreadcrumbsFromPath(normalizePathForMenu(location.pathname), sidebarMenuConfig)
 
   const handleUserMenuClick = ({ key }) => {
     if (key === 'profile') {
@@ -340,13 +349,16 @@ export default function DashboardLayout() {
             <Breadcrumb
               items={breadcrumbs.map((crumb, index) => ({
                 title: index === 0 ? (
-                  <span onClick={() => navigate(crumb.path)} style={{ cursor: 'pointer' }}>
+                  <span onClick={() => crumb.path && navigate(crumb.path)} style={{ cursor: 'pointer' }}>
                     {crumb.label}
                   </span>
                 ) : index === breadcrumbs.length - 1 ? (
                   <span>{crumb.label}</span>
                 ) : (
-                  <span onClick={() => navigate(crumb.path)} style={{ cursor: 'pointer', color: '#1890ff' }}>
+                  <span
+                    onClick={() => crumb.path && navigate(crumb.path)}
+                    style={{ cursor: crumb.path ? 'pointer' : 'default', color: crumb.path ? '#1890ff' : undefined }}
+                  >
                     {crumb.label}
                   </span>
                 )
