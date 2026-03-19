@@ -244,6 +244,41 @@ export const taskReportApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+    getSystemCategorys: build.query({
+      query: (params) => {
+        const { clientId, system } = params || {}
+
+        return {
+          url: `${API_BASE_URL}/bmrcl/getsystem/categorys`,
+          method: 'GET',
+          params: {
+            clientId: clientId.toString(),
+            system: system.toString(),
+          },
+        }
+      },
+      providesTags: ['BMRCL'],
+    }),
+
+    getTaskDetailedReport: build.query({
+      query: (params) => {
+        const { system, categoryId, locationId, fromDate, toDate } = params || {}
+
+        return {
+          url: `${API_BASE_URL}/bmrcl/gettask/detailedreports`,
+          method: 'GET',
+          params: {
+            system: system.toString(),
+            ...(categoryId != null && { categoryId: categoryId.toString() }),
+            locationId: locationId.toString(),
+            fromDate: fromDate.toString(),
+            toDate: toDate.toString(),
+          },
+        }
+      },
+      providesTags: ['BMRCL'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -259,5 +294,7 @@ export const {
   useGetallpmtasklistQuery,
   useBypmtaskidQuery,
   useGetElementsByCheckListIdQuery,
-  useGetPmCheckListQuery
+  useGetPmCheckListQuery,
+  useGetSystemCategorysQuery,
+  useGetTaskDetailedReportQuery
 } = taskReportApi

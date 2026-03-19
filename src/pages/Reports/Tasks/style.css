@@ -1,0 +1,25 @@
+.report-table th,
+.report-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.report-table th{
+    background-color: #f1f0f0;
+}
+
+.available {
+  background-color: #26e452;
+  color: #fff;
+}
+
+.standBY {
+  background-color: #4045ea;
+  color: #fff;
+}
+
+.Breakdown {
+    background-color: #f3bb07;
+    color: #fff;
+}
