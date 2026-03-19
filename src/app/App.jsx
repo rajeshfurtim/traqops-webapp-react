@@ -12,6 +12,7 @@ import CorrectiveMaintenance from '../pages/CorrectiveMaintenance'
 import ScheduledMaintenance from '../pages/ScheduledMaintenance'
 import Inventory from '../pages/Inventory'
 import ReportsIndex from '../pages/Reports/index'
+import CyclicCheck from '../pages/CyclicCheck'
 // Daily Reports
 import DailyReportsIndex from '../pages/Reports/Daily/index'
 import EnergyConsumption from '../pages/Reports/Daily/EnergyConsumption';
@@ -23,9 +24,9 @@ import TemperatureRunStatus from '../pages/Reports/Daily/TemperatureRunStatus'
 import DailyAttendanceReport from '../pages/Reports/Attendance/Daily'
 import MonthlyAttendanceReport from '../pages/Reports/Attendance/Monthly'
 import MonthlyEmployeeAttendanceReport from '../pages/Reports/Attendance/MonthlyEmployee'
-import MonthlyDailyAttendanceReport from '../pages/Reports/Attendance/MonthlyDaily'
+import MonthlyAttendance from '../pages/Reports/Attendance/MonthlyAttendance'
 import TimesheetReport from '../pages/Reports/Attendance/Timesheet'
-import ConsolidatedManpowerReport from '../pages/Reports/Attendance/ConsolidatedManpower'
+import StationWise from '../pages/Reports/Attendance/StationWise'
 // Task Reports
 import TasksIndex from '../pages/Reports/Tasks/index'
 import ScheduledMaintenanceReports from '../pages/Reports/Tasks/Scheduled'
@@ -106,6 +107,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="corrective-maintenance" element={<CorrectiveMaintenance />} />
+              <Route path="cyclic-check" element={<CyclicCheck />} />
               <Route path="scheduled-maintenance" element={<ScheduledMaintenance />} />
               <Route path="inventory" element={<Inventory />} />
               <Route path="reports" element={<ReportsIndex />} />
@@ -120,9 +122,9 @@ function App() {
               <Route path="reports/attendance/daily" element={<DailyAttendanceReport />} />
               <Route path="reports/attendance/monthly" element={<MonthlyAttendanceReport />} />
               <Route path="reports/attendance/monthly-employee" element={<MonthlyEmployeeAttendanceReport />} />
-              <Route path="reports/attendance/monthly-daily" element={<MonthlyDailyAttendanceReport />} />
+              <Route path="reports/attendance/monthly-attendance" element={<MonthlyAttendance />} />
               <Route path="reports/attendance/timesheet" element={<TimesheetReport />} />
-              <Route path="reports/attendance/consolidated-manpower" element={<ConsolidatedManpowerReport />} />
+              <Route path="reports/attendance/station-wise" element={<StationWise />} />
               {/* Task Reports nested routes */}
               <Route path="reports/tasks" element={<TasksIndex />} />
               <Route path="reports/tasks/scheduled" element={<ScheduledMaintenanceReports />} />

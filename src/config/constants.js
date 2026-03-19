@@ -11,6 +11,7 @@ export const PAGE_TITLES = {
   dashboard: 'Dashboard',
   'corrective-maintenance': 'Corrective Maintenance',
   'scheduled-maintenance': 'Scheduled Maintenance',
+  'cyclic-check': 'Cyclic Check',
   inventory: 'Inventory Management',
   reports: 'Reports',
   // Daily Reports
@@ -25,9 +26,9 @@ export const PAGE_TITLES = {
   'reports/attendance/daily': 'Daily Attendance Report',
   'reports/attendance/monthly': 'Monthly Attendance Report',
   'reports/attendance/monthly-employee': 'Monthly Employee Attendance Report',
-  'reports/attendance/monthly-daily': 'Monthly Daily Attendance Report',
+  'reports/attendance/monthly-attendance': 'Monthly Daily Attendance Report',
   'reports/attendance/timesheet': 'Monthly Attendance Timesheet Report',
-  'reports/attendance/consolidated-manpower': 'Consolidated Manpower Report',
+  'reports/attendance/station-wise': 'Consolidated Manpower Report',
   // Task Reports
   'reports/tasks': 'Task Reports',
   'reports/tasks/scheduled': 'Scheduled Maintenance Reports',

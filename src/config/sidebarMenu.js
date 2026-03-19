@@ -13,17 +13,36 @@ export const sidebarMenuConfig = [
   },
   {
     key: '/corrective-maintenance',
-    icon: 'ToolOutlined',
+    icon: 'BuildOutlined',
     label: 'Corrective Maintenance',
     path: '/corrective-maintenance',
     allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
   },
+  // {
+  //   key: '/reports/tasks/corrective',
+  //   icon: 'BuildOutlined',
+  //   label: 'Corrective Maintenance Reports',
+  //   path: '/reports/tasks/corrective'
+  // },
+  // {
+  //   key: '/scheduled-maintenance',
+  //   icon: 'CalendarOutlined',
+  //   label: 'Scheduled Maintenance',
+  //   path: '/scheduled-maintenance',
+  //   allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
+  // },
+
   {
-    key: '/scheduled-maintenance',
-    icon: 'CalendarOutlined',
-    label: 'Scheduled Maintenance',
-    path: '/scheduled-maintenance',
-    allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
+    key: '/cyclic-check',
+    icon: 'SyncOutlined',
+    label: 'Cyclic Check',
+    path: '/cyclic-check'
+  },
+  {
+    key: '/reports/tasks/scheduled',
+    icon: 'ScheduleOutlined',
+    label: 'Scheduled Maintenance Reports',
+    path: '/reports/tasks/scheduled'
   },
   {
     key: '/inventory',
@@ -39,44 +58,44 @@ export const sidebarMenuConfig = [
     path: '/reports',
     allowedClients: ['CMRL', 'KCIC'], // CMRL and KCIC only
     children: [
-      {
-        key: '/reports/daily',
-        icon: 'FileTextOutlined',
-        label: 'Daily Reports',
-        path: '/reports/daily',
-        children: [
-          {
-            key: '/reports/daily/energy-consumption',
-            icon: 'ThunderboltOutlined',
-            label: 'Energy Consumption Details',
-            path: '/reports/daily/energy-consumption'
-          },
-          {
-            key: '/reports/daily/Tvs-Status',
-            icon: 'ThunderboltOutlined',
-            label: 'Tvs Status',
-            path: '/reports/daily/Tvs-Status'
-          },
-          {
-            key: '/reports/daily/equipment-run-status',
-            icon: 'DesktopOutlined',
-            label: 'Equipment Run Status',
-            path: '/reports/daily/equipment-run-status'
-          },
-          {
-            key: '/reports/daily/chiller-run-hour',
-            icon: 'ClockCircleOutlined',
-            label: 'Chiller Run Hour',
-            path: '/reports/daily/chiller-run-hour'
-          },
-          {
-            key: '/reports/daily/temperature-run-status',
-            icon: 'LineChartOutlined',
-            label: 'Temperature Run Status',
-            path: '/reports/daily/temperature-run-status'
-          }
-        ]
-      },
+      // {
+      //   key: '/reports/daily',
+      //   icon: 'FileTextOutlined',
+      //   label: 'Daily Reports',
+      //   path: '/reports/daily',
+      //   children: [
+      //     {
+      //       key: '/reports/daily/energy-consumption',
+      //       icon: 'ThunderboltOutlined',
+      //       label: 'Energy Consumption Details',
+      //       path: '/reports/daily/energy-consumption'
+      //     },
+      //     {
+      //       key: '/reports/daily/Tvs-Status',
+      //       icon: 'ThunderboltOutlined',
+      //       label: 'Tvs Status',
+      //       path: '/reports/daily/Tvs-Status'
+      //     },
+      //     {
+      //       key: '/reports/daily/equipment-run-status',
+      //       icon: 'DesktopOutlined',
+      //       label: 'Equipment Run Status',
+      //       path: '/reports/daily/equipment-run-status'
+      //     },
+      //     {
+      //       key: '/reports/daily/chiller-run-hour',
+      //       icon: 'ClockCircleOutlined',
+      //       label: 'Chiller Run Hour',
+      //       path: '/reports/daily/chiller-run-hour'
+      //     },
+      //     {
+      //       key: '/reports/daily/temperature-run-status',
+      //       icon: 'LineChartOutlined',
+      //       label: 'Temperature Run Status',
+      //       path: '/reports/daily/temperature-run-status'
+      //     }
+      //   ]
+      // },
       {
         key: '/reports/attendance',
         icon: 'TeamOutlined',
@@ -89,34 +108,34 @@ export const sidebarMenuConfig = [
             label: 'Daily Attendance Report',
             path: '/reports/attendance/daily'
           },
-          {
-            key: '/reports/attendance/monthly',
-            icon: 'FileTextOutlined',
-            label: 'Monthly Attendance Report',
-            path: '/reports/attendance/monthly'
-          },
-          {
-            key: '/reports/attendance/monthly-employee',
-            icon: 'UserOutlined',
-            label: 'Monthly Employee Attendance Report',
-            path: '/reports/attendance/monthly-employee'
-          },
+          // {
+          //   key: '/reports/attendance/monthly',
+          //   icon: 'FileTextOutlined',
+          //   label: 'Monthly Attendance Report',
+          //   path: '/reports/attendance/monthly'
+          // },
+          // {
+          //   key: '/reports/attendance/monthly-employee',
+          //   icon: 'UserOutlined',
+          //   label: 'Monthly Employee Attendance Report',
+          //   path: '/reports/attendance/monthly-employee'
+          // },
           {
             key: '/reports/attendance/monthly-daily',
             icon: 'FileTextOutlined',
-            label: 'Monthly Daily Attendance Report',
+            label: 'Monthly Attendance Report',
             path: '/reports/attendance/monthly-daily'
           },
-          {
-            key: '/reports/attendance/timesheet',
-            icon: 'ClockCircleOutlined',
-            label: 'Monthly Attendance Timesheet Report',
-            path: '/reports/attendance/timesheet'
-          },
+          // {
+          //   key: '/reports/attendance/timesheet',
+          //   icon: 'ClockCircleOutlined',
+          //   label: 'Monthly Attendance Report',
+          //   path: '/reports/attendance/timesheet'
+          // },
           {
             key: '/reports/attendance/consolidated-manpower',
             icon: 'TeamOutlined',
-            label: 'Consolidated Manpower Report',
+            label: 'Station Wise Report',
             path: '/reports/attendance/consolidated-manpower'
           }
         ]
@@ -127,36 +146,80 @@ export const sidebarMenuConfig = [
         label: 'Task Reports',
         path: '/reports/tasks',
         children: [
-          {
-            key: '/reports/tasks/scheduled',
-            icon: 'ScheduleOutlined',
-            label: 'Scheduled Maintenance Reports',
-            path: '/reports/tasks/scheduled'
-          },
+          // {
+          //   key: '/reports/tasks/scheduled',
+          //   icon: 'ScheduleOutlined',
+          //   label: 'Scheduled Maintenance Reports',
+          //   path: '/reports/tasks/scheduled'
+          // },
           {
             key: '/reports/tasks/scheduled-details',
             icon: 'FileTextOutlined',
             label: 'Scheduled Maintenance Details Reports',
             path: '/reports/tasks/scheduled-details'
           },
-          {
-            key: '/reports/tasks/scheduled-consolidated',
-            icon: 'BarChartOutlined',
-            label: 'Consolidated Scheduled Maintenance Report',
-            path: '/reports/tasks/scheduled-consolidated'
-          },
-          {
-            key: '/reports/tasks/corrective',
-            icon: 'BuildOutlined',
-            label: 'Corrective Maintenance Reports',
-            path: '/reports/tasks/corrective'
-          },
+          // {
+          //   key: '/reports/tasks/scheduled-consolidated',
+          //   icon: 'BarChartOutlined',
+          //   label: 'Consolidated Scheduled Maintenance Report',
+          //   path: '/reports/tasks/scheduled-consolidated'
+          // },
+          // {
+          //   key: '/reports/tasks/corrective',
+          //   icon: 'BuildOutlined',
+          //   label: 'Corrective Maintenance Reports',
+          //   path: '/reports/tasks/corrective'
+          // },
           {
             key: '/reports/tasks/corrective-details',
             icon: 'FileTextOutlined',
             label: 'Corrective Maintenance Details Reports',
             path: '/reports/tasks/corrective-details'
-          }
+          },
+          {
+            key: '/reports/tasks/checklist',
+            icon: 'FileTextOutlined',
+            label: 'CheckList Report',
+            path: '/reports/tasks/checklist'
+          },
+          {
+            key: '/reports/tasks/taskReport',
+            icon: 'FileTextOutlined',
+            label: 'Task Report',
+            path: '/reports/tasks/details'
+          },
+          {
+            key: '/reports/inventory/asset-history',
+            icon: 'FileTextOutlined',
+            label: 'Asset History Reports',
+            path: '/reports/inventory/asset-history'
+          },
+      //      {
+      //   key: '/reports/history-card',
+      //   icon: 'FileTextOutlined',
+      //   label: 'History Cards',
+      //   path: '/reports/history-card',
+      //   children: [
+      //     // {
+      //     //   key: '/reports/history-card/tvs',
+      //     //   icon: 'FileTextOutlined',
+      //     //   label: 'TVS',
+      //     //   path: '/reports/history-card/tvs'
+      //     // },
+      //     // {
+      //     //   key: '/reports/history-card/vac',
+      //     //   icon: 'FileTextOutlined',
+      //     //   label: 'VAC',
+      //     //   path: '/reports/history-card/vac'
+      //     // },
+      //     // {
+      //     //   key: '/reports/inventory/asset-history',
+      //     //   icon: 'FileTextOutlined',
+      //     //   label: 'Asset History Reports',
+      //     //   path: '/reports/inventory/asset-history'
+      //     // }
+      //   ]
+      // },
         ]
       },
       {
@@ -177,20 +240,20 @@ export const sidebarMenuConfig = [
             label: 'Spare Usage Reports',
             path: '/reports/inventory/spare-usage'
           },
-          {
-            key: '/reports/inventory/asset-history',
-            icon: 'FileTextOutlined',
-            label: 'Asset History Reports',
-            path: '/reports/inventory/asset-history'
-          }
+          // {
+          //   key: '/reports/inventory/asset-history',
+          //   icon: 'FileTextOutlined',
+          //   label: 'Asset History Reports',
+          //   path: '/reports/inventory/asset-history'
+          // }
         ]
       },
       {
         key: '/reports/evaluation',
         icon: 'BarChartOutlined',
-        label: 'Evaluation & Penalty',
+        label: 'Audit & Evaluation Reports',
         path: '/reports/evaluation',
-        allowedClients: ['KCIC'], // KCIC only
+        // allowedClients: ['KCIC'], // KCIC only
         children: [
           {
             key: '/reports/evaluation/penalty-summary',
@@ -203,47 +266,59 @@ export const sidebarMenuConfig = [
             icon: 'FileTextOutlined',
             label: 'Penalty Details',
             path: '/reports/evaluation/penalty-details'
-          }
-        ]
-      },
-      {
-        key: '/reports/history-card',
-        icon: 'FileTextOutlined',
-        label: 'History Cards',
-        path: '/reports/history-card',
-        children: [
-          {
-            key: '/reports/history-card/tvs',
-            icon: 'FileTextOutlined',
-            label: 'TVS',
-            path: '/reports/history-card/tvs'
           },
           {
-            key: '/reports/history-card/vac',
+            key: '/reports/evaluation/penalty-details',
             icon: 'FileTextOutlined',
-            label: 'VAC',
-            path: '/reports/history-card/vac'
+            label: 'Audit Report',
+            path: '/reports/evaluation/penalty-details'
           }
         ]
       },
+      // {
+      //   key: '/reports/history-card',
+      //   icon: 'FileTextOutlined',
+      //   label: 'History Cards',
+      //   path: '/reports/history-card',
+      //   children: [
+      //     {
+      //       key: '/reports/history-card/tvs',
+      //       icon: 'FileTextOutlined',
+      //       label: 'TVS',
+      //       path: '/reports/history-card/tvs'
+      //     },
+      //     {
+      //       key: '/reports/history-card/vac',
+      //       icon: 'FileTextOutlined',
+      //       label: 'VAC',
+      //       path: '/reports/history-card/vac'
+      //     },
+      //     {
+      //       key: '/reports/inventory/asset-history',
+      //       icon: 'FileTextOutlined',
+      //       label: 'Asset History Reports',
+      //       path: '/reports/inventory/asset-history'
+      //     }
+      //   ]
+      // },
       {
         key: '/reports/tools',
         icon: 'ToolOutlined',
         label: 'Tools Report',
         path: '/reports/tools'
       },
-      {
-        key: '/reports/operation-checklist',
-        icon: 'UnorderedListOutlined',
-        label: 'Operation Checklists',
-        path: '/reports/operation-checklist'
-      },
-      {
-        key: '/reports/cmrl-app-reports',
-        icon: 'FolderOpenOutlined',
-        label: 'CMRL App Reports',
-        path: '/reports/cmrl-app-reports'
-      }
+      // {
+      //   key: '/reports/operation-checklist',
+      //   icon: 'UnorderedListOutlined',
+      //   label: 'Operation Checklists',
+      //   path: '/reports/operation-checklist'
+      // },
+      // {
+      //   key: '/reports/cmrl-app-reports',
+      //   icon: 'FolderOpenOutlined',
+      //   label: 'CMRL App Reports',
+      //   path: '/reports/cmrl-app-reports'
+      // }
     ]
   },
   {
@@ -253,13 +328,13 @@ export const sidebarMenuConfig = [
     path: '/invoices',
     allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
   },
-  {
-    key: '/documents',
-    icon: 'FolderOpenOutlined',
-    label: 'Documents',
-    path: '/documents',
-    allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
-  },
+  // {
+  //   key: '/documents',
+  //   icon: 'FolderOpenOutlined',
+  //   label: 'Documents',
+  //   path: '/documents',
+  //   allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
+  // },
   {
     type: 'divider'
   },
@@ -323,7 +398,14 @@ export const sidebarMenuConfig = [
         icon: 'LineChartOutlined',
         label: 'KPIs',
         path: '/master-settings/kpis'
-      }
+      },
+      {
+        key: '/scheduled-maintenance',
+        icon: 'CalendarOutlined',
+        label: 'Scheduled Maintenance',
+        path: '/scheduled-maintenance',
+        allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
+      },
     ]
   }
 ]

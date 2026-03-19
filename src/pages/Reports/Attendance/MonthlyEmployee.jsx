@@ -246,13 +246,13 @@ export default function MonthlyEmployeeAttendanceReport() {
         <title>{getPageTitle('reports/attendance/monthly-employee')}</title>
         <meta
           name="description"
-          content={`${APP_CONFIG.name} - Monthly Employee Attendance Report`}
+          content={`${APP_CONFIG.name} - Station wise Report`}
         />
       </Helmet>
 
       <Box>
         <Typography variant="h4" gutterBottom fontWeight="bold">
-          Monthly Employee Attendance Report
+          Station Wise Report
         </Typography>
 
         <Card sx={{ mb: 3 }}>
