@@ -15,6 +15,8 @@ const { RangePicker } = DatePicker
 import { SearchOutlined } from '@ant-design/icons';
 import { correctiveApi } from '../store/api/correctivemaintenance.api';
 import { color } from 'framer-motion'
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+
 
 export default function CorrectiveMaintenance() {
   const clientId = localStorage.getItem('clientId');
@@ -348,15 +350,34 @@ export default function CorrectiveMaintenance() {
       }
     },
   ]
-  const items = [
-    { key: '1', label: 'Open' },
-    { key: '2', label: 'WorkDone' },
-    { key: '3', label: 'Completed' },
-    { key: '4', label: 'Verified' },
-    { key: '5', label: 'Overdue' }
-  ].map(tab => ({
-    ...tab,
-    children: (
+
+const items = [
+  { key: '1', label: 'Open' },
+  { key: '2', label: 'WorkDone' },
+  { key: '3', label: 'Completed' },
+  { key: '4', label: 'Verified' },
+  { key: '5', label: 'Overdue' }
+].map(tab => ({
+  ...tab,
+  children: (
+    <>
+      {/* ✅ Buttons only for Open tab */}
+      {tab.key === '1' && (
+        <div style={{ marginBottom: 12 }}>
+          <Space>
+            <AntButton type="primary" icon={<PlusOutlined />}>
+              Add
+            </AntButton>
+            <AntButton icon={<EditOutlined />}>
+              Edit
+            </AntButton>
+            <AntButton danger icon={<DeleteOutlined />}>
+              Delete
+            </AntButton>
+          </Space>
+        </div>
+      )}
+
       <Table
         rowKey="id"
         dataSource={Cmreports}
@@ -364,9 +385,9 @@ export default function CorrectiveMaintenance() {
         loading={cmisFetching || cmqueryLoading}
         bordered
       />
-    )
-  }))
-
+    </>
+  )
+}))
   return (
     <>
       <Helmet>
