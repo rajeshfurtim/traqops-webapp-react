@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip, Select, Tag, Spin, Badge } from 'antd'
+import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip, Select, Tag, Spin, Badge, ConfigProvider } from 'antd'
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -94,8 +94,7 @@ function SidebarMenuItemIcon({ menuItem }) {
   const rawIcon = IconComponent ? <IconComponent /> : <DefaultIcon />
   const badgeCount = menuItem.path ? badgeCounts[menuItem.path] : undefined
   const showBadge = typeof badgeCount === 'number' && badgeCount > 0
-
-    if (collapsed && showBadge) {
+  if (collapsed && showBadge) {
     return (
       <Badge
         className="sidebar-menu-collapsed-badge"
@@ -136,6 +135,10 @@ function SidebarMenuItemLabel({ menuItem }) {
   return <EllipsisTooltip text={menuItem.label} />
 }
 
+const SIDEBAR_SUBMENU_POPUP_CLASS = 'traqops-sidebar-submenu-popup'
+
+const SIDEBAR_MENU_THEME = 'dark'
+
 // Convert menu config to AntD Menu items — stable reference unless sidebarMenuConfig changes
 const convertMenuConfigToItems = (config) => {
   return config.map((item) => {
@@ -150,6 +153,7 @@ const convertMenuConfigToItems = (config) => {
     }
 
     if (item.children) {
+      menuItem.popupClassName = SIDEBAR_SUBMENU_POPUP_CLASS
       menuItem.children = convertMenuConfigToItems(item.children)
     }
 
@@ -310,21 +314,37 @@ export default function DashboardLayout() {
   // Render sidebar menu (always show menu since "All" is default)
   const renderSidebarContent = () => {
     return (
-      <Menu
-        mode="inline"
-        theme="dark"
-        rootClassName="traqops-sidebar-menu-root"
-        inlineCollapsed={collapsed}
-        selectedKeys={selectedKeys}
-        openKeys={openKeys}
-        onOpenChange={setOpenKeys}
-        items={menuItems}
-        onClick={handleMenuClick}
-        style={{
-          height: 'calc(100vh - 64px)',
-          borderRight: 0
+      <ConfigProvider
+        theme={{
+          components: {
+            Menu: {
+              darkItemColor: 'rgba(255, 255, 255, 0.92)',
+              darkItemHoverColor: '#ffffff',
+              darkItemSelectedColor: '#ffffff',
+              darkGroupTitleColor: 'rgba(255, 255, 255, 0.65)',
+              darkPopupBg: '#001529',
+              darkSubMenuItemBg: '#000c17',
+            },
+          },
         }}
-      />
+      >
+        <Menu
+          mode="inline"
+          theme={SIDEBAR_MENU_THEME}
+          rootClassName="traqops-sidebar-menu-root"
+          _internalDisableMenuItemTitleTooltip
+          inlineCollapsed={collapsed}
+          selectedKeys={selectedKeys}
+          openKeys={openKeys}
+          onOpenChange={setOpenKeys}
+          items={menuItems}
+          onClick={handleMenuClick}
+          style={{
+            height: 'calc(100vh - 64px)',
+            borderRight: 0
+          }}
+        />
+      </ConfigProvider>
     )
   }
 

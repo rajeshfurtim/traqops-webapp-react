@@ -165,12 +165,13 @@
   line-height: 1;
 }
 
-/* Badge count on icon — readable and not cut off */
 .traqops-sidebar .sidebar-menu-collapsed-badge.ant-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0;
+  line-height: 1;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .traqops-sidebar .sidebar-menu-collapsed-badge.ant-badge .ant-badge-count {

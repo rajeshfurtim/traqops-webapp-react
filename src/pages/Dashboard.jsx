@@ -5,14 +5,12 @@ import { Table, Tabs, Form, DatePicker, Select, Button, Row, Col } from 'antd'
 import dayjs from 'dayjs'
 import { mockApi } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
-import MaintenanceStatusChart from '../components/charts/MaintenanceStatusChart'
-import InventoryStockChart from '../components/charts/InventoryStockChart'
 import { useGetLocationListQuery, useGetAllShiftQuery } from '../store/api/masterSettings.api'
 import { useAuth } from '../context/AuthContext'
 import { domainName as fallbackDomainName } from '../config/apiConfig'
 import { UserOutlined } from '@ant-design/icons'
+import RechartsResponsiveBox from '../components/charts/RechartsResponsiveBox'
 import {
-  ResponsiveContainer,
   BarChart,
   Bar,
   LineChart,
@@ -598,8 +596,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       FAILURE Rate by System
                     </Typography>
-                    <Box sx={{ width: '100%', height: 280 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={280}>
                         <BarChart data={failureRateBySystem} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="system" tick={{ fontSize: 12 }} />
@@ -607,8 +604,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="failureRate" fill="#1677ff" radius={[6, 6, 0, 0]} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -619,8 +615,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       Top 10 Asset by Failure
                     </Typography>
-                    <Box sx={{ width: '100%', height: 280 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={280}>
                         <BarChart
                           layout="vertical"
                           data={top10AssetsByFailure}
@@ -632,8 +627,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="failures" fill="#52c41a" radius={[0, 8, 8, 0]} barSize={14} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -683,8 +677,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       FAILURE Rate by System
                     </Typography>
-                    <Box sx={{ width: '100%', height: 280 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={280}>
                         <BarChart data={tvsFailureRateBySystem} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="system" tick={{ fontSize: 12 }} />
@@ -692,8 +685,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="failureRate" fill="#722ed1" radius={[6, 6, 0, 0]} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -704,8 +696,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       Top 10 Asset by Failure
                     </Typography>
-                    <Box sx={{ width: '100%', height: 280 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={280}>
                         <BarChart
                           layout="vertical"
                           data={tvsTop10AssetsByFailure}
@@ -717,8 +708,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="failures" fill="#fa8c16" radius={[0, 8, 8, 0]} barSize={14} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -846,8 +836,7 @@ export default function Dashboard() {
 
             <Card sx={{ borderRadius: 2, border: '1px solid #eef2f7', boxShadow: 'none' }}>
               <CardContent>
-                <Box sx={{ width: '100%', height: 320 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <RechartsResponsiveBox height={320}>
                     <BarChart data={scheduleTaskChartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="label" tick={ScheduleTaskXAxisTick} />
@@ -861,8 +850,7 @@ export default function Dashboard() {
                         onClick={(data) => handleScheduleTaskBarClick(data?.payload)}
                       />
                     </BarChart>
-                  </ResponsiveContainer>
-                </Box>
+                  </RechartsResponsiveBox>
               </CardContent>
             </Card>
           </CardContent>
@@ -930,8 +918,7 @@ export default function Dashboard() {
 
             <Card sx={{ borderRadius: 2, border: '1px solid #eef2f7', boxShadow: 'none' }}>
               <CardContent>
-                <Box sx={{ width: '100%', height: 320 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <RechartsResponsiveBox height={320}>
                     <BarChart data={correctiveTaskChartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                       <XAxis dataKey="label" tick={{ fontSize: 12 }} />
@@ -941,8 +928,7 @@ export default function Dashboard() {
                       <Bar dataKey="completed" stackId="a" fill="#52c41a" />
                       <Bar dataKey="verified" stackId="a" fill="#13c2c2" />
                     </BarChart>
-                  </ResponsiveContainer>
-                </Box>
+                  </RechartsResponsiveBox>
               </CardContent>
             </Card>
           </CardContent>
@@ -958,8 +944,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       Top 10 Most Used Spares
                     </Typography>
-                    <Box sx={{ width: '100%', height: 340 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={340}>
                         <BarChart
                           layout="vertical"
                           data={top10MostUsedSpares}
@@ -983,8 +968,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="timesUsed" fill="#1677ff" radius={[0, 8, 8, 0]} barSize={14} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -995,8 +979,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       Spare Consumption Trend by Station
                     </Typography>
-                    <Box sx={{ width: '100%', height: 340 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={340}>
                         <LineChart data={spareConsumptionTrendByStation} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis
@@ -1014,8 +997,7 @@ export default function Dashboard() {
                           <Line type="monotone" dataKey="stationB" name="Station B" stroke="#1677ff" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
                           <Line type="monotone" dataKey="stationC" name="Station C" stroke="#52c41a" strokeWidth={2} dot={{ r: 2 }} activeDot={{ r: 4 }} />
                         </LineChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -1029,8 +1011,7 @@ export default function Dashboard() {
             <Typography variant="subtitle1" gutterBottom fontWeight="bold">
               Low in Stock Spares Across Stations
             </Typography>
-            <Box sx={{ width: '100%', height: 340 }}>
-              <ResponsiveContainer width="100%" height="100%">
+            <RechartsResponsiveBox height={340}>
                 <BarChart data={lowStockSparesAcrossStations} margin={{ top: 10, right: 20, left: 10, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis
@@ -1069,8 +1050,7 @@ export default function Dashboard() {
                     activeBar={{ fill: '#95de64', stroke: '#52c41a' }}
                   />
                 </BarChart>
-              </ResponsiveContainer>
-            </Box>
+              </RechartsResponsiveBox>
           </CardContent>
         </Card>
 
@@ -1084,8 +1064,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       Attendance / ENGINEER
                     </Typography>
-                    <Box sx={{ width: '100%', height: 260 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={260}>
                         <BarChart data={attendanceEngineerData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="label" tick={{ fontSize: 12 }} />
@@ -1097,8 +1076,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="value" fill="#1677ff" radius={[10, 10, 0, 0]} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -1109,8 +1087,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       Attendance / TECHNICIAN
                     </Typography>
-                    <Box sx={{ width: '100%', height: 260 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={260}>
                         <BarChart data={attendanceTechnicianData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="label" tick={{ fontSize: 12 }} />
@@ -1122,8 +1099,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="value" fill="#52c41a" radius={[10, 10, 0, 0]} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
@@ -1134,8 +1110,7 @@ export default function Dashboard() {
                     <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                       Attendance / Helpdesk
                     </Typography>
-                    <Box sx={{ width: '100%', height: 260 }}>
-                      <ResponsiveContainer width="100%" height="100%">
+                    <RechartsResponsiveBox height={260}>
                         <BarChart data={attendanceHelpdeskData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                           <XAxis dataKey="label" tick={{ fontSize: 12 }} />
@@ -1147,8 +1122,7 @@ export default function Dashboard() {
                           <Tooltip />
                           <Bar dataKey="value" fill="#722ed1" radius={[10, 10, 0, 0]} />
                         </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
+                      </RechartsResponsiveBox>
                   </CardContent>
                 </Card>
               </Grid>
