@@ -81,7 +81,8 @@ export const baseApi = createApi({
     'AssetsList',
     'Voltas',
     'OneApp',
-    'Folders'
+    'Folders',
+    'BMRCL'
   ],
   endpoints: () => ({}),
 })

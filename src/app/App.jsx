@@ -29,6 +29,7 @@ import TimesheetReport from '../pages/Reports/Attendance/Timesheet'
 import ConsolidatedManpowerReport from '../pages/Reports/Attendance/ConsolidatedManpower'
 // Task Reports
 import TasksIndex from '../pages/Reports/Tasks/index'
+import TaskReportExtended from '../pages/Reports/Tasks/TaskReportExtended'
 import ScheduledMaintenanceReports from '../pages/Reports/Tasks/Scheduled'
 import ScheduledMaintenanceDetailsReports from '../pages/Reports/Tasks/ScheduledDetails'
 import ConsolidatedScheduledMaintenanceReport from '../pages/Reports/Tasks/ScheduledConsolidated'
@@ -133,6 +134,7 @@ function App() {
               />
               {/* Task Reports nested routes */}
               <Route path="reports/tasks" element={<TasksIndex />} />
+              <Route path="reports/tasks/task-report-extended" element={<TaskReportExtended />} />
               <Route path="reports/tasks/scheduled" element={<ScheduledMaintenanceReports />} />
               <Route path="reports/tasks/scheduled-details" element={<ScheduledMaintenanceDetailsReports />} />
               <Route path="reports/tasks/scheduled-consolidated" element={<ConsolidatedScheduledMaintenanceReport />} />

@@ -136,6 +136,12 @@ export const sidebarMenuConfig = [
           //   path: '/reports/tasks/scheduled'
           // },
           {
+            key: '/reports/tasks/task-report-extended',
+            icon: 'FileTextOutlined',
+            label: 'Task Report Extended',
+            path: '/reports/tasks/task-report-extended'
+          },
+          {
             key: '/reports/tasks/scheduled-details',
             icon: 'FileTextOutlined',
             label: 'Scheduled Maintenance Details Reports',
