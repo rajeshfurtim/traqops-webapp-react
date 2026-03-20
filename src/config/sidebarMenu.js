@@ -178,10 +178,10 @@ export const sidebarMenuConfig = [
             path: '/reports/tasks/task-report'
           },
           {
-            key: '/reports/inventory/asset-history',
+            key: '/reports/tasks/asset-history',
             icon: 'FileTextOutlined',
             label: 'Asset History Reports',
-            path: '/reports/inventory/asset-history'
+            path: '/reports/tasks/asset-history'
           }
         ]
       },
@@ -225,10 +225,10 @@ export const sidebarMenuConfig = [
             path: '/reports/evaluation/penalty-details'
           },
           {
-            key: '/reports/audit',
+            key: '/reports/evaluation/audit',
             icon: 'FileTextOutlined',
             label: 'Audit Report',
-            path: '/reports/audit'
+            path: '/reports/evaluation/audit'
           }
         ]
       },
@@ -351,10 +351,10 @@ export const sidebarMenuConfig = [
         path: '/master-settings/kpis'
       },
       {
-        key: '/scheduled-maintenance',
+        key: '/master-settings/scheduled-maintenance',
         icon: 'CalendarOutlined',
         label: 'Scheduled Maintenance',
-        path: '/scheduled-maintenance',
+        path: '/master-settings/scheduled-maintenance',
         allowedClients: ['CMRL', 'KCIC', 'A1'] // All clients
       }
     ]

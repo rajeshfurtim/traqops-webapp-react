@@ -110,7 +110,7 @@ export default function AuditReport() {
   return (
     <>
       <Helmet>
-        <title>{getPageTitle('reports/audit')}</title>
+        <title>{getPageTitle('reports/evaluation/audit')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Audit Report`} />
       </Helmet>
       <Box>

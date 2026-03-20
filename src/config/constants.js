@@ -10,7 +10,7 @@ export const APP_CONFIG = {
 export const PAGE_TITLES = {
   dashboard: 'Dashboard',
   'corrective-maintenance': 'Corrective Maintenance',
-  'scheduled-maintenance': 'Scheduled Maintenance',
+  'master-settings/scheduled-maintenance': 'Scheduled Maintenance',
   inventory: 'Inventory Management',
   'inventory/cyclic-check': 'Cyclic Check',
   reports: 'Reports',
@@ -42,7 +42,7 @@ export const PAGE_TITLES = {
   'reports/inventory': 'Inventory Reports',
   'reports/inventory/quantity': 'Quantity Reports',
   'reports/inventory/spare-usage': 'Spare Usage Reports',
-  'reports/inventory/asset-history': 'Asset History Reports',
+  'reports/tasks/asset-history': 'Asset History Reports',
   // Evaluation & Penalty
   'reports/evaluation': 'Evaluation & Penalty',
   'reports/evaluation/penalty-summary': 'Penalty Summary',
@@ -50,7 +50,7 @@ export const PAGE_TITLES = {
   // Legacy report routes (keep for backward compatibility)
   'reports/attendance-old': 'Attendance Report',
   'reports/tasks-old': 'Task Report',
-  'reports/audit': 'Audit Report',
+  'reports/evaluation/audit': 'Audit Report',
   'reports/tools': 'Tools Report',
   'reports/maintenance-checklist': 'Maintenance Checklist',
   'reports/operation-checklist': 'Operation Checklist',

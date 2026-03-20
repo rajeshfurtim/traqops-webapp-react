@@ -178,7 +178,7 @@ export default function AssetHistoryReports() {
   return (
     <>
       <Helmet>
-        <title>{getPageTitle('reports/inventory/asset-history')}</title>
+        <title>{getPageTitle('reports/tasks/asset-history')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Asset History Reports`} />
       </Helmet>
       <Box>

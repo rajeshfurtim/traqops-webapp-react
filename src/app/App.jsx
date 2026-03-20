@@ -110,7 +110,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
               <Route path="corrective-maintenance" element={<CorrectiveMaintenance />} />
-              <Route path="scheduled-maintenance" element={<ScheduledMaintenance />} />
+              <Route path="master-settings/scheduled-maintenance" element={<ScheduledMaintenance />} />
               <Route path="inventory" element={<Inventory />} />
               <Route path="inventory/cyclic-check" element={<InventoryCyclicCheck />} />
               <Route path="reports" element={<ReportsIndex />} />
@@ -153,7 +153,7 @@ function App() {
               <Route path="reports/inventory" element={<InventoryReportsIndex />} />
               <Route path="reports/inventory/quantity" element={<QuantityReports />} />
               <Route path="reports/inventory/spare-usage" element={<SpareUsageReports />} />
-              <Route path="reports/inventory/asset-history" element={<AssetHistoryReports />} />
+              <Route path="reports/tasks/asset-history" element={<AssetHistoryReports />} />
               {/* Catch-all for inventory reports - redirect to quantity */}
               <Route path="reports/inventory/*" element={<Navigate to="/reports/inventory/quantity" replace />} />
               {/* Evaluation Reports nested routes */}
@@ -165,7 +165,7 @@ function App() {
               {/* Legacy report routes (backward compatibility) */}
               <Route path="reports/daily-old" element={<DailyReports />} />
               <Route path="reports/attendance" element={<AttendanceReport />} />
-              <Route path="reports/audit" element={<AuditReport />} />
+              <Route path="reports/evaluation/audit" element={<AuditReport />} />
               <Route path="reports/inventory-old" element={<InventoryReport />} />
               <Route path="reports/tools" element={<ToolsReport />} />
               <Route path="reports/maintenance-checklist" element={<MaintenanceChecklist />} />

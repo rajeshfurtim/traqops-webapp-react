@@ -779,7 +779,7 @@ export default function ScheduledMaintenance() {
   return (
     <>
       <Helmet>
-        <title>{getPageTitle('scheduled-maintenance')}</title>
+        <title>{getPageTitle('master-settings/scheduled-maintenance')}</title>
         <meta name="description" content={`${APP_CONFIG.name} - Scheduled Maintenance Management`} />
       </Helmet>
       <Box>
