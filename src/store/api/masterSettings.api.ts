@@ -42,6 +42,14 @@ export const masterSettingsApi = baseApi.injectEndpoints({
       providesTags:['Frequency'],
     }),
 
+    getAllStatus: build.query({
+      query: () => ({
+        url: `/unsecure/getallstatus`,
+        method: `GET`,
+      }),
+      providesTags: ['MasterSettings'],
+    }),
+
     getLocationByIsStore: build.query({
       query: (params) => {
         const { clientId, pageNumber = 1, pageSize = 1000 } = params ?? {}
@@ -1527,6 +1535,7 @@ getPenaltyByCategoryId: build.query({
 export const {
   useGetLocationListQuery,
   useGetAllFrequencyQuery,
+  useGetAllStatusQuery,
   useGetLocationByIsStoreQuery,
   useGetAllUserTypeQuery,
   useGetAllClientListQuery,

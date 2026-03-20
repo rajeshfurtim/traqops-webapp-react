@@ -9,16 +9,24 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { Table, Tabs, Form, DatePicker, Select, Button, Row, Col } from "antd";
+import { Skeleton, Empty } from "antd";
 import dayjs from "dayjs";
 import { mockApi } from "../services/api";
 import { getPageTitle, APP_CONFIG } from "../config/constants";
 import {
   useGetLocationListQuery,
   useGetAllShiftQuery,
+  useGetAllStatusQuery,
+  useGetAllFrequencyQuery,
 } from "../store/api/masterSettings.api";
 import {
   useLazyGetFailureRateSystemQuery,
   useLazyGetTopAssetsFailureQuery,
+  useLazyGetTopUsedSparesQuery,
+  useLazyGetSpareConsumptionByLocationTrendQuery,
+  useLazyGetLowStockSparesQuery,
+  useLazyGetPmCountByFrequencyQuery,
+  useLazyGetCmGraphCountQuery,
 } from "../store/api/dashboard.api";
 import { useAuth } from "../context/AuthContext";
 import { domainName as fallbackDomainName } from "../config/apiConfig";
@@ -42,13 +50,22 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [activeTab, setActiveTab] = useState("consolidate");
+  const [consolidateChartsLoading, setConsolidateChartsLoading] = useState(false);
   const [ecsFailureRateBySystemData, setEcsFailureRateBySystemData] = useState([]);
   const [tvsFailureRateBySystemData, setTvsFailureRateBySystemData] = useState([]);
   const [ecsTop10AssetsByFailureData, setEcsTop10AssetsByFailureData] = useState([]);
   const [tvsTop10AssetsByFailureData, setTvsTop10AssetsByFailureData] = useState([]);
+  const [topUsedSparesData, setTopUsedSparesData] = useState([]);
+  const [spareConsumptionTrendByStationData, setSpareConsumptionTrendByStationData] = useState([]);
+  const [lowStockSparesAcrossStationsData, setLowStockSparesAcrossStationsData] = useState([]);
   const { user } = useAuth();
   const [triggerGetFailureRateSystem] = useLazyGetFailureRateSystemQuery();
   const [triggerGetTopAssetsFailureSystem] = useLazyGetTopAssetsFailureQuery();
+  const [triggerGetTopUsedSpares] = useLazyGetTopUsedSparesQuery();
+  const [triggerGetSpareConsumptionByLocationTrend] = useLazyGetSpareConsumptionByLocationTrendQuery();
+  const [triggerGetLowStockSpares] = useLazyGetLowStockSparesQuery();
+  const [triggerGetPmCountByFrequency] = useLazyGetPmCountByFrequencyQuery();
+  const [triggerGetCmGraphCount] = useLazyGetCmGraphCountQuery();
 
   const clientId = user?.client?.id || user?.clientId;
   const domainNameParam = user?.domain?.name || fallbackDomainName;
@@ -68,6 +85,35 @@ export default function Dashboard() {
     );
 
   const shiftOptions = shiftListResponse?.data?.content ?? [];
+
+  const { data: frequenciesResponse, isLoading: frequenciesLoading } =
+    useGetAllFrequencyQuery();
+  const frequencyOptions =
+    frequenciesResponse?.success && Array.isArray(frequenciesResponse.data)
+      ? frequenciesResponse.data
+      : [];
+
+  const { data: statusResponse, isLoading: statusesLoading } =
+    useGetAllStatusQuery();
+
+  const statusOptions = Array.isArray(statusResponse?.data)
+    ? statusResponse.data
+    : [];
+
+  const correctiveStatusSelectOptions = statusOptions
+    .filter((s) =>
+      ["OPEN", "COMPLETED", "VERIFIED"].includes((s?.value || s?.name || "").trim())
+    )
+    .map((s) => {
+      const v = (s?.value || s?.name || "").trim();
+      return { label: v, value: v };
+    })
+    // API can return the same status value for multiple `type`s (e.g., VERIFIED twice).
+    // Keep only 1 option per `value`.
+    .reduce((acc, opt) => {
+      if (!acc.some((x) => x.value === opt.value)) acc.push(opt);
+      return acc;
+    }, []);
 
   useEffect(() => {
     loadDashboardData();
@@ -115,33 +161,6 @@ export default function Dashboard() {
     },
   ];
 
-  const activityColumns = [
-    {
-      title: "Type",
-      dataIndex: "type",
-      key: "type",
-      width: 120,
-    },
-    {
-      title: "Description",
-      dataIndex: "description",
-      key: "description",
-    },
-    {
-      title: "User",
-      dataIndex: "user",
-      key: "user",
-      width: 150,
-    },
-    {
-      title: "Timestamp",
-      dataIndex: "timestamp",
-      key: "timestamp",
-      width: 180,
-      render: (text) => dayjs(text).format("MMM DD, YYYY HH:mm"),
-    },
-  ];
-
   const tabItems = [
     { key: "consolidate", label: "Consolidate" },
     { key: "locationWise", label: "Location Wise" },
@@ -154,6 +173,10 @@ export default function Dashboard() {
     const toDate = values?.fromDate?.endOf?.("month")?.format?.("YYYY-MM-DD")
     const locationIds = Array.isArray(values?.locationIds) ? values.locationIds : []
 
+    // Spare consumption trend API always uses the full current year range (Jan 1 → Dec 31).
+    const yearFromDate = dayjs().startOf("year").format("YYYY-MM-DD")
+    const yearToDate = dayjs().endOf("year").format("YYYY-MM-DD")
+
     console.log("Dashboard filters", {
       fromDate,
       toDate,
@@ -165,8 +188,17 @@ export default function Dashboard() {
     if (!fromDate || !toDate || !locationIds.length) return
 
     ;(async () => {
+      setConsolidateChartsLoading(true)
       try {
-        const [ecsFailureRes, tvsFailureRes, ecsTopRes, tvsTopRes] = await Promise.all([
+        const [
+          ecsFailureRes,
+          tvsFailureRes,
+          ecsTopRes,
+          tvsTopRes,
+          topSparesRes,
+          spareTrendRes,
+          lowStockRes,
+        ] = await Promise.all([
           triggerGetFailureRateSystem({
             system: "ECS",
             fromDate,
@@ -189,6 +221,19 @@ export default function Dashboard() {
             system: "TVS",
             fromDate,
             toDate,
+            locationId: locationIds,
+          }).unwrap(),
+          triggerGetTopUsedSpares({
+            fromDate,
+            toDate,
+            locationIds,
+          }).unwrap(),
+          triggerGetSpareConsumptionByLocationTrend({
+            fromDate: yearFromDate,
+            toDate: yearToDate,
+            locationIds,
+          }).unwrap(),
+          triggerGetLowStockSpares({
             locationId: locationIds,
           }).unwrap(),
         ])
@@ -221,8 +266,102 @@ export default function Dashboard() {
             failures: x?.count,
           }))
         )
+
+        setTopUsedSparesData(
+          (topSparesRes?.data || []).map((x) => ({
+            sparePart: x?.spareName,
+            timesUsed: x?.usedCount,
+          }))
+        )
+
+        const trendRows = spareTrendRes?.data || []
+        if (trendRows.length) {
+          // Render lines for every `stations` key (CKPE, VDSA, CBPK, ...)
+          setSpareConsumptionTrendByStationData(
+            trendRows.map((row) => {
+              const stations = row?.stations || {}
+              return {
+                month: row?.month,
+                ...Object.fromEntries(
+                  Object.entries(stations).map(([k, v]) => [
+                    k,
+                    Number(v ?? 0),
+                  ])
+                ),
+              }
+            })
+          )
+        } else {
+          setSpareConsumptionTrendByStationData([])
+        }
+
+        // API: low stock spares -> Chart: [{ sparePart, stationA, stationB, stationC }]
+        const lowStockItems = lowStockRes?.data || []
+        if (lowStockItems.length) {
+          const normalizeLocationName = (name) =>
+            String(name || "Unknown").replace(/\r?\n/g, " ").trim()
+
+          // pick top 3 stations by total shortage
+          const shortageByStation = {}
+          lowStockItems.forEach((it) => {
+            const stationName = normalizeLocationName(it?.locationName)
+            const shortage = Number(it?.shortage || 0)
+            shortageByStation[stationName] =
+              (shortageByStation[stationName] || 0) + shortage
+          })
+
+          const topStations = Object.entries(shortageByStation)
+            .sort((a, b) => b[1] - a[1])
+            .map(([name]) => name)
+            .slice(0, 3)
+
+          const [stationAName, stationBName, stationCName] = topStations
+
+          const spareMap = new Map()
+          lowStockItems.forEach((it) => {
+            const spareName = it?.spareName || ""
+            if (!spareName) return
+
+            if (!spareMap.has(spareName)) {
+              spareMap.set(spareName, {
+                sparePart: spareName,
+                [stationAName]: 0,
+                [stationBName]: 0,
+                [stationCName]: 0,
+              })
+            }
+
+            const row = spareMap.get(spareName)
+            const stationName = normalizeLocationName(it?.locationName)
+            const shortage = Number(it?.shortage || 0)
+
+            if (stationName === stationAName) row[stationAName] += shortage
+            else if (stationName === stationBName)
+              row[stationBName] += shortage
+            else if (stationName === stationCName)
+              row[stationCName] += shortage
+          })
+
+          const chartRows = Array.from(spareMap.values())
+            .map((r) => ({
+              ...r,
+              __total:
+                (r[stationAName] || 0) +
+                (r[stationBName] || 0) +
+                (r[stationCName] || 0),
+            }))
+            .sort((a, b) => b.__total - a.__total)
+            .slice(0, 6)
+            .map(({ __total, ...rest }) => rest)
+
+          setLowStockSparesAcrossStationsData(chartRows)
+        } else {
+          setLowStockSparesAcrossStationsData([])
+        }
       } catch (err) {
         console.error("Failure rate API error:", err)
+      } finally {
+        setConsolidateChartsLoading(false)
       }
     })()
   };
@@ -243,29 +382,8 @@ export default function Dashboard() {
   const avgMtbfMins = ecs.avgMtbfMins ?? ecs.avgMtbfMinutes ?? 0;
   const avgMttrMins = ecs.avgMttrMins ?? ecs.avgMttrMinutes ?? 0;
 
-  const fallbackFailureRateBySystem = ecs.failureRateBySystem || [
-    { system: "Lifts", failureRate: 12 },
-    { system: "Escalators", failureRate: 9 },
-    { system: "AFC", failureRate: 6 },
-    { system: "HVAC", failureRate: 4 },
-    { system: "Fire Alarm", failureRate: 3 },
-  ];
-
-  const failureRateBySystem = ecsFailureRateBySystemData.length
-    ? ecsFailureRateBySystemData
-    : fallbackFailureRateBySystem;
-
-  const fallbackTop10AssetsByFailure = ecs.top10AssetsByFailure || [
-    { asset: "Asset 1", failures: 14 },
-    { asset: "Asset 2", failures: 12 },
-    { asset: "Asset 3", failures: 10 },
-    { asset: "Asset 4", failures: 9 },
-    { asset: "Asset 5", failures: 8 },
-  ];
-
-  const top10AssetsByFailure = ecsTop10AssetsByFailureData.length
-    ? ecsTop10AssetsByFailureData
-    : fallbackTop10AssetsByFailure;
+  const failureRateBySystem = ecsFailureRateBySystemData
+  const top10AssetsByFailure = ecsTop10AssetsByFailureData
 
   const ecsMetricBoxes = [
     { label: "Availability", value: `${availability}%` },
@@ -281,29 +399,8 @@ export default function Dashboard() {
   const tvsAvgMtbfMins = tvs.avgMtbfMins ?? tvs.avgMtbfMinutes ?? 0;
   const tvsAvgMttrMins = tvs.avgMttrMins ?? tvs.avgMttrMinutes ?? 0;
 
-  const fallbackTvsFailureRateBySystem = tvs.failureRateBySystem || [
-    { system: "TVS-1", failureRate: 8 },
-    { system: "TVS-2", failureRate: 6 },
-    { system: "TVS-3", failureRate: 5 },
-    { system: "TVS-4", failureRate: 3 },
-    { system: "TVS-5", failureRate: 2 },
-  ];
-
-  const tvsFailureRateBySystem = tvsFailureRateBySystemData.length
-    ? tvsFailureRateBySystemData
-    : fallbackTvsFailureRateBySystem;
-
-  const fallbackTvsTop10AssetsByFailure = tvs.top10AssetsByFailure || [
-    { asset: "TVS Asset 1", failures: 10 },
-    { asset: "TVS Asset 2", failures: 9 },
-    { asset: "TVS Asset 3", failures: 7 },
-    { asset: "TVS Asset 4", failures: 6 },
-    { asset: "TVS Asset 5", failures: 5 },
-  ];
-
-  const tvsTop10AssetsByFailure = tvsTop10AssetsByFailureData.length
-    ? tvsTop10AssetsByFailureData
-    : fallbackTvsTop10AssetsByFailure;
+  const tvsFailureRateBySystem = tvsFailureRateBySystemData
+  const tvsTop10AssetsByFailure = tvsTop10AssetsByFailureData
 
   const tvsMetricBoxes = [
     { label: "Availability", value: `${tvsAvailability}%` },
@@ -315,32 +412,12 @@ export default function Dashboard() {
   const [scheduleTaskFrequency, setScheduleTaskFrequency] = useState("DAILY");
   const [scheduleTaskDate, setScheduleTaskDate] = useState(dayjs());
   const [scheduleTaskView, setScheduleTaskView] = useState(() => ({
-    totals: { total: 120, open: 36, completed: 62, verified: 22 },
-    chartData: [
-      { label: "Open", value: 36 },
-      { label: "Completed", value: 62 },
-      { label: "Verified", value: 22 },
-    ],
+    totals: { total: 0, open: 0, completed: 0, verified: 0 },
+    chartData: [],
   }));
 
-  const getMockScheduleTaskView = (frequency) => {
-    const map = {
-      DAILY: { total: 120, open: 36, completed: 62, verified: 22 },
-      WEEKLY: { total: 520, open: 140, completed: 290, verified: 90 },
-      MONTHLY: { total: 2100, open: 580, completed: 1100, verified: 420 },
-      YEARLY: { total: 24500, open: 6300, completed: 14000, verified: 4200 },
-      CUSTOM: { total: 800, open: 210, completed: 430, verified: 160 },
-    };
-    const totals = map[frequency] || map.DAILY;
-    return {
-      totals,
-      chartData: [
-        { label: "Open", value: totals.open },
-        { label: "Completed", value: totals.completed },
-        { label: "Verified", value: totals.verified },
-      ],
-    };
-  };
+  const [scheduleTaskPmCountLoading, setScheduleTaskPmCountLoading] =
+    useState(false);
 
   const scheduleTaskMetricBoxes = [
     { label: "Total", value: scheduleTaskView.totals.total, color: "#1677ff" },
@@ -399,16 +476,13 @@ export default function Dashboard() {
     );
   };
 
-  const [correctiveTaskDate, setCorrectiveTaskDate] = useState(dayjs());
+  const [correctiveTaskStatus, setCorrectiveTaskStatus] = useState("COMPLETED");
   const [correctiveTaskView, setCorrectiveTaskView] = useState(() => ({
-    totals: { total: 64, open: 18, completed: 34, verified: 12 },
-    chartData: [
-      { label: "Corrective", open: 18, completed: 34, verified: 12 },
-      { label: "Test", open: 18, completed: 34, verified: 12 },
-      { label: "Test 2", open: 18, completed: 34, verified: 12 },
-      { label: "Test 3", open: 18, completed: 34, verified: 12 },
-    ],
+    totals: { total: 0, open: 0, completed: 0, verified: 0 },
+    chartData: [],
   }));
+  const [correctiveCmGraphCountLoading, setCorrectiveCmGraphCountLoading] =
+    useState(false);
 
   const correctiveTaskMetricBoxes = [
     {
@@ -432,36 +506,155 @@ export default function Dashboard() {
   const correctiveTaskChartData = correctiveTaskView.chartData;
 
   const handleCorrectiveTaskSubmit = () => {
-    // mock: change values slightly each click
-    const base = {
-      total: 64,
-      open: 18,
-      completed: 34,
-      verified: 12,
-    };
-    const bump = (n) => Math.max(0, n + Math.floor(Math.random() * 7) - 3);
-    const totals = {
-      total: bump(base.total),
-      open: bump(base.open),
-      completed: bump(base.completed),
-      verified: bump(base.verified),
-    };
-    setCorrectiveTaskView({
-      totals,
-      chartData: [
-        {
-          label: "Corrective",
-          open: totals.open,
-          completed: totals.completed,
-          verified: totals.verified,
-        },
-      ],
-    });
+    const selectedStatusObj = statusOptions.find(
+      (s) =>
+        (s?.value || s?.name || "").trim() ===
+        (correctiveTaskStatus || "").trim()
+    );
+
+    const statusId = selectedStatusObj?.id;
+
+    const selectedLocationIds =
+      filterForm?.getFieldValue?.("locationIds") ?? [];
+
+    const locationIds =
+      Array.isArray(selectedLocationIds) && selectedLocationIds.length > 0
+        ? selectedLocationIds
+        : Array.isArray(locationOptions)
+            ? locationOptions
+                .map((l) => l?.id)
+                .filter((id) => id !== undefined && id !== null)
+            : [];
+
+    if (!clientId || locationIds.length === 0 || !statusId) {
+      setCorrectiveTaskView({
+        totals: { total: 0, open: 0, completed: 0, verified: 0 },
+        chartData: [],
+      });
+      return;
+    }
+
+    setCorrectiveCmGraphCountLoading(true);
+    (async () => {
+      try {
+        const response = await triggerGetCmGraphCount({
+          clientId,
+          locationId: locationIds,
+          statusId,
+        }).unwrap();
+
+        const rows = Array.isArray(response?.data) ? response.data : [];
+
+        const chartData = rows.map((r) => ({
+          label: String(r?.locationName ?? r?.locationId ?? "").trim(),
+          open: r?.openCount ?? 0,
+          completed: r?.completedCount ?? 0,
+          verified: r?.verifiedCount ?? 0,
+        }));
+
+        const totals = chartData.reduce(
+          (acc, d) => {
+            acc.open += d.open || 0;
+            acc.completed += d.completed || 0;
+            acc.verified += d.verified || 0;
+            return acc;
+          },
+          { open: 0, completed: 0, verified: 0 }
+        );
+
+        const total = totals.open + totals.completed + totals.verified;
+
+        setCorrectiveTaskView({
+          totals: { total, ...totals },
+          chartData,
+        });
+      } catch (err) {
+        console.error("Failed to load cmgraphcount:", err);
+        setCorrectiveTaskView({
+          totals: { total: 0, open: 0, completed: 0, verified: 0 },
+          chartData: [],
+        });
+      } finally {
+        setCorrectiveCmGraphCountLoading(false);
+      }
+    })();
   };
 
-  const handleScheduleTaskSubmit = () => {
-    setScheduleTaskView(getMockScheduleTaskView(scheduleTaskFrequency));
-    setScheduleTaskChartFilter(null);
+  const handleScheduleTaskSubmit = async () => {
+    const fromDate = scheduleTaskDate?.format?.("YYYY-MM-DD");
+    const toDate = scheduleTaskDate?.format?.("YYYY-MM-DD");
+
+    const frequencyObj =
+      frequencyOptions?.find((f) => f?.name === scheduleTaskFrequency) ??
+      null;
+    const frequencyId = frequencyObj?.id;
+
+    const selectedLocationIds =
+      filterForm?.getFieldValue?.("locationIds") ?? [];
+
+    const locationIds =
+      Array.isArray(selectedLocationIds) && selectedLocationIds.length > 0
+        ? selectedLocationIds
+        : Array.isArray(locationOptions)
+            ? locationOptions
+                .map((l) => l?.id)
+                .filter((id) => id !== undefined && id !== null)
+            : [];
+
+    if (!fromDate || !toDate || !frequencyId || locationIds.length === 0) {
+      setScheduleTaskView({
+        totals: { total: 0, open: 0, completed: 0, verified: 0 },
+        chartData: [],
+      });
+      setScheduleTaskChartFilter(null);
+      return;
+    }
+
+    setScheduleTaskPmCountLoading(true);
+    try {
+      const response = await triggerGetPmCountByFrequency({
+        fromDate,
+        toDate,
+        locationId: locationIds,
+        frequencyId,
+      }).unwrap();
+
+      const rows = Array.isArray(response?.data) ? response.data : [];
+
+      const totals = rows.reduce(
+        (acc, row) => {
+          acc.open += row?.openCount ?? 0;
+          acc.completed += row?.completedCount ?? 0;
+          acc.verified += row?.verifiedCount ?? 0;
+          return acc;
+        },
+        { open: 0, completed: 0, verified: 0 }
+      );
+
+      const total = totals.open + totals.completed + totals.verified;
+
+      setScheduleTaskView({
+        totals: { total, ...totals },
+        chartData:
+          total > 0
+            ? [
+                { label: "Open", value: totals.open },
+                { label: "Completed", value: totals.completed },
+                { label: "Verified", value: totals.verified },
+              ]
+            : [],
+      });
+      setScheduleTaskChartFilter(null);
+    } catch (err) {
+      console.error("Failed to load PM count by frequency:", err);
+      setScheduleTaskView({
+        totals: { total: 0, open: 0, completed: 0, verified: 0 },
+        chartData: [],
+      });
+      setScheduleTaskChartFilter(null);
+    } finally {
+      setScheduleTaskPmCountLoading(false);
+    }
   };
 
   const handleScheduleTaskExportPdf = () => {
@@ -479,41 +672,40 @@ export default function Dashboard() {
     { label: "TECHNICIAN (P/A)", value: "0/0", color: "#fa8c16" },
   ];
 
-  const top10MostUsedSpares = [
-    { sparePart: "Brake Pad", timesUsed: 58 },
-    { sparePart: "V-Belt", timesUsed: 52 },
-    { sparePart: "Fuse", timesUsed: 47 },
-    { sparePart: "LED Lamp", timesUsed: 44 },
-    { sparePart: "Contactor", timesUsed: 41 },
-    { sparePart: "Relay", timesUsed: 37 },
-    { sparePart: "Limit Switch", timesUsed: 33 },
-    { sparePart: "Bearing", timesUsed: 29 },
-    { sparePart: "Wire", timesUsed: 25 },
-    { sparePart: "Connector", timesUsed: 21 },
+  const top10MostUsedSpares = topUsedSparesData;
+
+  const spareConsumptionTrendByStation = spareConsumptionTrendByStationData;
+  const spareConsumptionStationKeys =
+    spareConsumptionTrendByStationData?.[0] &&
+    typeof spareConsumptionTrendByStationData[0] === "object"
+      ? Object.keys(spareConsumptionTrendByStationData[0]).filter(
+          (k) => k !== "month"
+        )
+      : [];
+
+  const spareConsumptionStationColors = [
+    "#722ed1",
+    "#1677ff",
+    "#52c41a",
+    "#fa8c16",
+    "#13c2c2",
+    "#eb2f96",
+    "#595959",
   ];
 
-  const spareConsumptionTrendByStation = [
-    { month: "Jan", stationA: 8, stationB: 6, stationC: 10 },
-    { month: "Feb", stationA: 12, stationB: 9, stationC: 14 },
-    { month: "Mar", stationA: 16, stationB: 12, stationC: 18 },
-    { month: "Apr", stationA: 10, stationB: 8, stationC: 12 },
-    { month: "May", stationA: 18, stationB: 14, stationC: 20 },
-    { month: "Jun", stationA: 22, stationB: 16, stationC: 24 },
-    { month: "Jul", stationA: 24, stationB: 18, stationC: 26 },
-    { month: "Aug", stationA: 20, stationB: 15, stationC: 22 },
-    { month: "Sep", stationA: 14, stationB: 11, stationC: 16 },
-    { month: "Oct", stationA: 16, stationB: 13, stationC: 18 },
-    { month: "Nov", stationA: 12, stationB: 9, stationC: 14 },
-    { month: "Dec", stationA: 8, stationB: 6, stationC: 10 },
-  ];
+  const lowStockSparesAcrossStations = lowStockSparesAcrossStationsData;
+  const lowStockStationKeys = Array.isArray(lowStockSparesAcrossStations) &&
+    lowStockSparesAcrossStations.length > 0
+    ? Object.keys(lowStockSparesAcrossStations[0]).filter((k) => k !== "sparePart")
+    : [];
 
-  const lowStockSparesAcrossStations = [
-    { sparePart: "Fuse", stationA: 3, stationB: 2, stationC: 1 },
-    { sparePart: "Relay", stationA: 6, stationB: 4, stationC: 3 },
-    { sparePart: "V-Belt", stationA: 2, stationB: 3, stationC: 2 },
-    { sparePart: "Bearing", stationA: 9, stationB: 7, stationC: 5 },
-    { sparePart: "Connector", stationA: 4, stationB: 5, stationC: 3 },
-    { sparePart: "LED Lamp", stationA: 12, stationB: 10, stationC: 8 },
+  const lowStockStationColors = [
+    "#1677ff",
+    "#722ed1",
+    "#52c41a",
+    "#fa8c16",
+    "#13c2c2",
+    "#595959",
   ];
 
   const attendanceEngineerData = [
@@ -778,33 +970,39 @@ export default function Dashboard() {
                             >
                               FAILURE Rate by System
                             </Typography>
-                            <RechartsResponsiveBox height={280}>
-                              <BarChart
-                                data={failureRateBySystem}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 0,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis
-                                  dataKey="system"
-                                  tick={{ fontSize: 12 }}
-                                />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="failureRate"
-                                  fill="#1677ff"
-                                  radius={[6, 6, 0, 0]}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                            {consolidateChartsLoading ? (
+                              <Skeleton active style={{ height: 280 }} />
+                            ) : failureRateBySystem?.length ? (
+                              <RechartsResponsiveBox height={280}>
+                                <BarChart
+                                  data={failureRateBySystem}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    dataKey="system"
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <YAxis tick={{ fontSize: 12 }} />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="failureRate"
+                                    fill="#1677ff"
+                                    radius={[6, 6, 0, 0]}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty description="No data" />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -825,37 +1023,43 @@ export default function Dashboard() {
                             >
                               Top 10 Asset by Failure
                             </Typography>
-                            <RechartsResponsiveBox height={280}>
-                              <BarChart
-                                layout="vertical"
-                                data={top10AssetsByFailure}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 10,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis type="number" tick={{ fontSize: 12 }} />
-                                <YAxis
-                                  type="category"
-                                  dataKey="asset"
-                                  width={120}
-                                  tick={{ fontSize: 12 }}
-                                />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="failures"
-                                  fill="#52c41a"
-                                  radius={[0, 8, 8, 0]}
-                                  barSize={14}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                            {consolidateChartsLoading ? (
+                              <Skeleton active style={{ height: 280 }} />
+                            ) : top10AssetsByFailure?.length ? (
+                              <RechartsResponsiveBox height={280}>
+                                <BarChart
+                                  layout="vertical"
+                                  data={top10AssetsByFailure}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 10,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                                  <YAxis
+                                    type="category"
+                                    dataKey="asset"
+                                    width={120}
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="failures"
+                                    fill="#52c41a"
+                                    radius={[0, 8, 8, 0]}
+                                    barSize={14}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty description="No data" />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -922,33 +1126,39 @@ export default function Dashboard() {
                             >
                               FAILURE Rate by System
                             </Typography>
-                            <RechartsResponsiveBox height={280}>
-                              <BarChart
-                                data={tvsFailureRateBySystem}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 0,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis
-                                  dataKey="system"
-                                  tick={{ fontSize: 12 }}
-                                />
-                                <YAxis tick={{ fontSize: 12 }} />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="failureRate"
-                                  fill="#722ed1"
-                                  radius={[6, 6, 0, 0]}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                            {consolidateChartsLoading ? (
+                              <Skeleton active style={{ height: 280 }} />
+                            ) : tvsFailureRateBySystem?.length ? (
+                              <RechartsResponsiveBox height={280}>
+                                <BarChart
+                                  data={tvsFailureRateBySystem}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    dataKey="system"
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <YAxis tick={{ fontSize: 12 }} />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="failureRate"
+                                    fill="#722ed1"
+                                    radius={[6, 6, 0, 0]}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty description="No data" />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -969,37 +1179,43 @@ export default function Dashboard() {
                             >
                               Top 10 Asset by Failure
                             </Typography>
-                            <RechartsResponsiveBox height={280}>
-                              <BarChart
-                                layout="vertical"
-                                data={tvsTop10AssetsByFailure}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 10,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis type="number" tick={{ fontSize: 12 }} />
-                                <YAxis
-                                  type="category"
-                                  dataKey="asset"
-                                  width={120}
-                                  tick={{ fontSize: 12 }}
-                                />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="failures"
-                                  fill="#fa8c16"
-                                  radius={[0, 8, 8, 0]}
-                                  barSize={14}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                            {consolidateChartsLoading ? (
+                              <Skeleton active style={{ height: 280 }} />
+                            ) : tvsTop10AssetsByFailure?.length ? (
+                              <RechartsResponsiveBox height={280}>
+                                <BarChart
+                                  layout="vertical"
+                                  data={tvsTop10AssetsByFailure}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 10,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                                  <YAxis
+                                    type="category"
+                                    dataKey="asset"
+                                    width={120}
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="failures"
+                                    fill="#fa8c16"
+                                    radius={[0, 8, 8, 0]}
+                                    barSize={14}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty description="No data" />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -1114,14 +1330,15 @@ export default function Dashboard() {
                           <Select
                             value={scheduleTaskFrequency}
                             onChange={setScheduleTaskFrequency}
+                            loading={frequenciesLoading}
+                            options={(frequencyOptions?.length
+                              ? frequencyOptions
+                              : [{ name: scheduleTaskFrequency }]
+                            ).map((f) => ({
+                              label: f.name,
+                              value: f.name,
+                            }))}
                             style={{ width: 170 }}
-                            options={[
-                              { label: "DAILY", value: "DAILY" },
-                              { label: "WEEKLY", value: "WEEKLY" },
-                              { label: "MONTHLY", value: "MONTHLY" },
-                              { label: "YEARLY", value: "YEARLY" },
-                              { label: "CUSTOM", value: "CUSTOM" },
-                            ]}
                           />
                         </Form.Item>
 
@@ -1189,32 +1406,43 @@ export default function Dashboard() {
                       }}
                     >
                       <CardContent>
-                        <RechartsResponsiveBox height={320}>
-                          <BarChart
-                            data={scheduleTaskChartData}
-                            margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              stroke="#f0f0f0"
-                            />
-                            <XAxis
-                              dataKey="label"
-                              tick={ScheduleTaskXAxisTick}
-                            />
-                            <YAxis tick={{ fontSize: 12 }} />
-                            <Tooltip />
-                            <Bar
-                              dataKey="value"
-                              fill="#1677ff"
-                              radius={[6, 6, 0, 0]}
-                              style={{ cursor: "pointer" }}
-                              onClick={(data) =>
-                                handleScheduleTaskBarClick(data?.payload)
-                              }
-                            />
-                          </BarChart>
-                        </RechartsResponsiveBox>
+                        {scheduleTaskPmCountLoading ? (
+                          <Skeleton active style={{ height: 320 }} />
+                        ) : scheduleTaskChartData?.length ? (
+                          <RechartsResponsiveBox height={320}>
+                            <BarChart
+                              data={scheduleTaskChartData}
+                              margin={{
+                                top: 10,
+                                right: 20,
+                                left: 0,
+                                bottom: 10,
+                              }}
+                            >
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="#f0f0f0"
+                              />
+                              <XAxis
+                                dataKey="label"
+                                tick={ScheduleTaskXAxisTick}
+                              />
+                              <YAxis tick={{ fontSize: 12 }} />
+                              <Tooltip />
+                              <Bar
+                                dataKey="value"
+                                fill="#1677ff"
+                                radius={[6, 6, 0, 0]}
+                                style={{ cursor: "pointer" }}
+                                onClick={(data) =>
+                                  handleScheduleTaskBarClick(data?.payload)
+                                }
+                              />
+                            </BarChart>
+                          </RechartsResponsiveBox>
+                        ) : (
+                          <Empty />
+                        )}
                       </CardContent>
                     </Card>
                   </CardContent>
@@ -1234,7 +1462,7 @@ export default function Dashboard() {
                       }}
                     >
                       <Typography variant="h6" fontWeight="bold" sx={{ m: 0 }}>
-                        Corrective Task - Upto Date
+                        Corrective Task - Status
                       </Typography>
                     </Box>
 
@@ -1249,13 +1477,23 @@ export default function Dashboard() {
                         }}
                       >
                         <Form.Item
-                          label="Upto Date"
+                          label="Status"
                           style={{ marginBottom: 0 }}
                         >
-                          <DatePicker
-                            value={correctiveTaskDate}
-                            onChange={(val) => setCorrectiveTaskDate(val)}
-                            style={{ width: 170 }}
+                          <Select
+                            value={correctiveTaskStatus}
+                            onChange={setCorrectiveTaskStatus}
+                            loading={statusesLoading}
+                            style={{ width: 200 }}
+                            options={
+                              correctiveStatusSelectOptions?.length
+                                ? correctiveStatusSelectOptions
+                                : [
+                                    { label: "OPEN", value: "OPEN" },
+                                    { label: "COMPLETED", value: "COMPLETED" },
+                                    { label: "VERIFIED", value: "VERIFIED" },
+                                  ]
+                            }
                           />
                         </Form.Item>
 
@@ -1309,36 +1547,50 @@ export default function Dashboard() {
                       }}
                     >
                       <CardContent>
-                        <RechartsResponsiveBox height={320}>
-                          <BarChart
-                            data={correctiveTaskChartData}
-                            margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
-                          >
-                            <CartesianGrid
-                              strokeDasharray="3 3"
-                              stroke="#f0f0f0"
-                            />
-                            <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-                            <YAxis tick={{ fontSize: 12 }} />
-                            <Tooltip />
-                            <Bar
-                              dataKey="open"
-                              stackId="a"
-                              fill="#fa8c16"
-                              radius={[6, 6, 0, 0]}
-                            />
-                            <Bar
-                              dataKey="completed"
-                              stackId="a"
-                              fill="#52c41a"
-                            />
-                            <Bar
-                              dataKey="verified"
-                              stackId="a"
-                              fill="#13c2c2"
-                            />
-                          </BarChart>
-                        </RechartsResponsiveBox>
+                        {correctiveCmGraphCountLoading ? (
+                          <Skeleton active style={{ height: 320 }} />
+                        ) : correctiveTaskChartData?.length ? (
+                          <RechartsResponsiveBox height={320}>
+                            <BarChart
+                              data={correctiveTaskChartData}
+                              margin={{
+                                top: 10,
+                                right: 20,
+                                left: 0,
+                                bottom: 10,
+                              }}
+                            >
+                              <CartesianGrid
+                                strokeDasharray="3 3"
+                                stroke="#f0f0f0"
+                              />
+                              <XAxis
+                                dataKey="label"
+                                tick={{ fontSize: 12 }}
+                              />
+                              <YAxis tick={{ fontSize: 12 }} />
+                              <Tooltip />
+                              <Bar
+                                dataKey="open"
+                                stackId="a"
+                                fill="#fa8c16"
+                                radius={[6, 6, 0, 0]}
+                              />
+                              <Bar
+                                dataKey="completed"
+                                stackId="a"
+                                fill="#52c41a"
+                              />
+                              <Bar
+                                dataKey="verified"
+                                stackId="a"
+                                fill="#13c2c2"
+                              />
+                            </BarChart>
+                          </RechartsResponsiveBox>
+                        ) : (
+                          <Empty />
+                        )}
                       </CardContent>
                     </Card>
                   </CardContent>
@@ -1364,52 +1616,58 @@ export default function Dashboard() {
                             >
                               Top 10 Most Used Spares
                             </Typography>
-                            <RechartsResponsiveBox height={340}>
-                              <BarChart
-                                layout="vertical"
-                                data={top10MostUsedSpares}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 10,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis
-                                  type="number"
-                                  domain={[0, 60]}
-                                  ticks={[0, 20, 40, 60]}
-                                  tick={{ fontSize: 12 }}
-                                  label={{
-                                    value: "Number of time used",
-                                    position: "insideBottom",
-                                    offset: -6,
+                            {consolidateChartsLoading ? (
+                              <Skeleton active style={{ height: 340 }} />
+                            ) : top10MostUsedSpares?.length ? (
+                              <RechartsResponsiveBox height={340}>
+                                <BarChart
+                                  layout="vertical"
+                                  data={top10MostUsedSpares}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 10,
+                                    bottom: 10,
                                   }}
-                                />
-                                <YAxis
-                                  type="category"
-                                  dataKey="sparePart"
-                                  width={140}
-                                  tick={{ fontSize: 12 }}
-                                  label={{
-                                    value: "Spare part",
-                                    angle: -90,
-                                    position: "insideLeft",
-                                  }}
-                                />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="timesUsed"
-                                  fill="#1677ff"
-                                  radius={[0, 8, 8, 0]}
-                                  barSize={14}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    type="number"
+                                    domain={[0, 60]}
+                                    ticks={[0, 20, 40, 60]}
+                                    tick={{ fontSize: 12 }}
+                                    label={{
+                                      value: "Number of time used",
+                                      position: "insideBottom",
+                                      offset: -6,
+                                    }}
+                                  />
+                                  <YAxis
+                                    type="category"
+                                    dataKey="sparePart"
+                                    width={140}
+                                    tick={{ fontSize: 12 }}
+                                    label={{
+                                      value: "Spare part",
+                                      angle: -90,
+                                      position: "insideLeft",
+                                    }}
+                                  />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="timesUsed"
+                                    fill="#1677ff"
+                                    radius={[0, 8, 8, 0]}
+                                    barSize={14}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty description="No data" />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -1430,68 +1688,68 @@ export default function Dashboard() {
                             >
                               Spare Consumption Trend by Station
                             </Typography>
-                            <RechartsResponsiveBox height={340}>
-                              <LineChart
-                                data={spareConsumptionTrendByStation}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 0,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis
-                                  dataKey="month"
-                                  tick={{ fontSize: 12 }}
-                                  label={{
-                                    value: "Month",
-                                    position: "insideBottom",
-                                    offset: -6,
+                            {consolidateChartsLoading ? (
+                              <Skeleton active style={{ height: 340 }} />
+                            ) : spareConsumptionTrendByStation?.length ? (
+                              <RechartsResponsiveBox height={340}>
+                                <LineChart
+                                  data={spareConsumptionTrendByStation}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 10,
                                   }}
-                                />
-                                <YAxis
-                                  tick={{ fontSize: 12 }}
-                                  ticks={[0, 8, 16, 24, 32]}
-                                  label={{
-                                    value: "Units consumed",
-                                    angle: -90,
-                                    position: "insideLeft",
-                                  }}
-                                />
-                                <Tooltip />
-                                <Line
-                                  type="monotone"
-                                  dataKey="stationA"
-                                  name="Station A"
-                                  stroke="#722ed1"
-                                  strokeWidth={2}
-                                  dot={{ r: 2 }}
-                                  activeDot={{ r: 4 }}
-                                />
-                                <Line
-                                  type="monotone"
-                                  dataKey="stationB"
-                                  name="Station B"
-                                  stroke="#1677ff"
-                                  strokeWidth={2}
-                                  dot={{ r: 2 }}
-                                  activeDot={{ r: 4 }}
-                                />
-                                <Line
-                                  type="monotone"
-                                  dataKey="stationC"
-                                  name="Station C"
-                                  stroke="#52c41a"
-                                  strokeWidth={2}
-                                  dot={{ r: 2 }}
-                                  activeDot={{ r: 4 }}
-                                />
-                              </LineChart>
-                            </RechartsResponsiveBox>
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    dataKey="month"
+                                    tick={{ fontSize: 12 }}
+                                    label={{
+                                      value: "Month",
+                                      position: "insideBottom",
+                                      offset: -6,
+                                    }}
+                                  />
+                                  <YAxis
+                                    tick={{ fontSize: 12 }}
+                                    ticks={[0, 8, 16, 24, 32]}
+                                    label={{
+                                      value: "Units consumed",
+                                      angle: -90,
+                                      position: "insideLeft",
+                                    }}
+                                  />
+                                  <Tooltip />
+                                  {spareConsumptionStationKeys.map(
+                                    (stationKey, idx) => (
+                                      <Line
+                                        // One line per `stations` key (CKPE, VDSA, CBPK, ...)
+                                        key={stationKey}
+                                        type="monotone"
+                                        dataKey={stationKey}
+                                        name={stationKey}
+                                        stroke={
+                                          spareConsumptionStationColors[
+                                            idx %
+                                              spareConsumptionStationColors
+                                                .length
+                                          ]
+                                        }
+                                        strokeWidth={2}
+                                        dot={{ r: 2 }}
+                                        activeDot={{ r: 4 }}
+                                      />
+                                    )
+                                  )}
+                                </LineChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty description="No data" />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -1509,57 +1767,53 @@ export default function Dashboard() {
                     >
                       Low in Stock Spares Across Stations
                     </Typography>
-                    <RechartsResponsiveBox height={340}>
-                      <BarChart
-                        data={lowStockSparesAcrossStations}
-                        margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                        <XAxis
-                          dataKey="sparePart"
-                          tick={{ fontSize: 12 }}
-                          label={{
-                            value: "Spare part",
-                            position: "insideBottom",
-                            offset: -10,
-                          }}
-                        />
-                        <YAxis
-                          tick={{ fontSize: 12 }}
-                          ticks={[0, 3, 6, 9, 12]}
-                          label={{
-                            value: "Quantity(units)",
-                            angle: -90,
-                            position: "insideLeft",
-                          }}
-                        />
-                        <Tooltip />
-                        <Bar
-                          dataKey="stationA"
-                          name="Station A"
-                          fill="#1677ff"
-                          radius={[10, 10, 0, 0]}
-                          barSize={12}
-                          activeBar={{ fill: "#69b1ff", stroke: "#1677ff" }}
-                        />
-                        <Bar
-                          dataKey="stationB"
-                          name="Station B"
-                          fill="#722ed1"
-                          radius={[10, 10, 0, 0]}
-                          barSize={12}
-                          activeBar={{ fill: "#b37feb", stroke: "#722ed1" }}
-                        />
-                        <Bar
-                          dataKey="stationC"
-                          name="Station C"
-                          fill="#52c41a"
-                          radius={[10, 10, 0, 0]}
-                          barSize={12}
-                          activeBar={{ fill: "#95de64", stroke: "#52c41a" }}
-                        />
-                      </BarChart>
-                    </RechartsResponsiveBox>
+                    {consolidateChartsLoading ? (
+                      <Skeleton active style={{ height: 340 }} />
+                    ) : lowStockSparesAcrossStations?.length ? (
+                      <RechartsResponsiveBox height={340}>
+                        <BarChart
+                          data={lowStockSparesAcrossStations}
+                          margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis
+                            dataKey="sparePart"
+                            tick={{ fontSize: 12 }}
+                            label={{
+                              value: "Spare part",
+                              position: "insideBottom",
+                              offset: -10,
+                            }}
+                          />
+                          <YAxis
+                            tick={{ fontSize: 12 }}
+                            ticks={[0, 3, 6, 9, 12]}
+                            label={{
+                              value: "Quantity(units)",
+                              angle: -90,
+                              position: "insideLeft",
+                            }}
+                          />
+                          <Tooltip />
+                          {lowStockStationKeys.map((stationKey, idx) => (
+                            <Bar
+                              key={stationKey}
+                              dataKey={stationKey}
+                              name={stationKey}
+                              fill={
+                                lowStockStationColors[
+                                  idx % lowStockStationColors.length
+                                ]
+                              }
+                              radius={[10, 10, 0, 0]}
+                              barSize={12}
+                            />
+                          ))}
+                        </BarChart>
+                      </RechartsResponsiveBox>
+                    ) : (
+                      <Empty description="No data" />
+                    )}
                   </CardContent>
                 </Card>
 

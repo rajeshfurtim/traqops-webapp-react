@@ -3,8 +3,14 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 // Environment-based API base URL
 // .env.development → VITE_API_BASE_URL=/secure
 // .env.production  → VITE_API_BASE_URL=https://voltas.traqops.com/secure
-// Default to '/secure' so local dev still works even if env is missing
-export const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || '/secure'
+// Default to '/secure' so local dev still works even if env is missing.
+// Some environments accidentally set VITE_API_BASE_URL with `/secure/secure`.
+// Normalize to avoid double-prefix 404s like: `/secure/secure/...`.
+const rawApiBaseUrl = (import.meta as any).env.VITE_API_BASE_URL || '/secure'
+export const API_BASE_URL = String(rawApiBaseUrl)
+  .replace(/\/+$/, '')
+  .replace(/\/secure\/secure\//g, '/secure/')
+  .replace(/\/secure\/secure$/g, '/secure')
 
 /**
  * Base API configuration for RTK Query
