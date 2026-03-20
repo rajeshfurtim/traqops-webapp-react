@@ -1,114 +1,99 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, Row, Col, Empty, Spin } from 'antd'
+import {
+  Table, Form, Select, DatePicker, Space, Button as AntButton,
+  Input, Row, Col, Empty, Spin, message
+} from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { getPageTitle, APP_CONFIG } from '../../../config/constants'
+import { getPageTitle } from '../../../config/constants'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useAuth } from '../../../context/AuthContext'
 import { useGetMonthlyEmployeeReportQuery } from '../../../store/api/reports.api'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
+
 const { RangePicker } = DatePicker
 
 export default function MonthlyDailyAttendanceReport() {
   const [form] = Form.useForm()
   const { user } = useAuth()
   const clientId = user?.client?.id || user?.clientId
-  const [shouldFetch, setShouldFetch] = useState(false)
 
+  const [shouldFetch, setShouldFetch] = useState(false)
   const [reports, setReports] = useState([])
+  const [searchText, setSearchText] = useState('')
+
   const [filters, setFilters] = useState({
     fromDate: null,
     toDate: null,
     locationId: [],
     userTypeId: null,
+    filterType: 'attendance',
   })
-  const [loading, setLoading] = useState(false)
 
   const { userTypes, loading: userTypesLoading } = useGetAllUserType()
   const { locations, loading: locationsLoading } = useGetLocationList()
 
-  const locationIds = Array.isArray(locations)
-    ? locations.map(l => l?.id).filter(Boolean)
-    : []
+  const locationIds = locations?.map(l => l?.id).filter(Boolean) || []
 
-  const typeOptions = [
-    { id: -1, name: 'All User Types' },
-    ...(userTypes || []),
-  ]
-
-  const locationOptions = [
-    { id: -1, name: 'All Locations' },
-    ...(locations || []),
-  ]
-
-  const [searchText, setSearchText] = useState('') // search input state
+  const typeOptions = [{ id: -1, name: 'All User Types' }, ...(userTypes || [])]
+  const locationOptions = [{ id: -1, name: 'All Locations' }, ...(locations || [])]
 
   useEffect(() => {
     const today = dayjs()
-
     form.setFieldsValue({
       dateRange: [today, today],
       location: -1,
       type: -1,
+      filter: 'attendance',
     })
-
-    // setFilters({
-    //   fromDate: today.format('YYYY-MM-DD'),
-    //   toDate: today.format('YYYY-MM-DD'),
-    //   locationId: locationIds,
-    //   userTypeId: null,
-    // })
   }, [locations])
 
-  //filter 
+  // 🔍 GLOBAL SEARCH
   const filteredReports = useMemo(() => {
     if (!searchText) return reports
-    const lowerSearch = searchText.toLowerCase()
-    return reports.filter(r =>
-      (r.employeeId && r.employeeId.toLowerCase().includes(lowerSearch)) ||
-      (r.employeeName && r.employeeName.toLowerCase().includes(lowerSearch)) ||
-      (r.userType && r.userType.toLowerCase().includes(lowerSearch)) ||
-      (r.location && r.location.toLowerCase().includes(lowerSearch))
+
+    const lower = searchText.toLowerCase()
+
+    return reports.filter(row =>
+      Object.values(row).some(value => {
+        if (!value) return false
+        if (typeof value === 'object') {
+          return JSON.stringify(value).toLowerCase().includes(lower)
+        }
+        return String(value).toLowerCase().includes(lower)
+      })
     )
   }, [reports, searchText])
 
-
+  // FILTER
   const handleFilterChange = (values) => {
     const newFilters = {}
 
     if (values.dateRange?.length === 2) {
-      const [from, to] = values.dateRange
-      newFilters.fromDate = from.format('YYYY-MM-DD')
-      newFilters.toDate = to.format('YYYY-MM-DD')
+      newFilters.fromDate = values.dateRange[0].format('YYYY-MM-DD')
+      newFilters.toDate = values.dateRange[1].format('YYYY-MM-DD')
     }
 
-    newFilters.locationId =
-      values.location === -1 ? locationIds : values.location
-
-    newFilters.userTypeId =
-      values.type === -1 ? null : values.type
+    newFilters.locationId = values.location === -1 ? locationIds : values.location
+    newFilters.userTypeId = values.type === -1 ? null : values.type
+    newFilters.filterType = values.filter || 'attendance'
 
     setFilters(prev => ({ ...prev, ...newFilters }))
     setShouldFetch(true)
   }
 
-  const {
-    data: response,
-    isLoading: isInitialLoading, isFetching
-  } = useGetMonthlyEmployeeReportQuery(
-    {
-      ...filters,
-      clientId,
-    },
-    { skip: !clientId || !filters.fromDate || !filters.toDate }
-  )
+  const { data: response, isLoading, isFetching } =
+    useGetMonthlyEmployeeReportQuery(
+      { ...filters, clientId },
+      { skip: !clientId || !filters.fromDate || !filters.toDate }
+    )
 
-  const queryLoading = isInitialLoading || isFetching
+  const queryLoading = isLoading || isFetching
 
-
+  // ATTENDANCE LOGIC
   const getShiftByTime = (inTime) => {
     const hour = Number(inTime.split(':')[0])
     if (hour >= 5 && hour < 8) return 'A'
@@ -118,7 +103,7 @@ export default function MonthlyDailyAttendanceReport() {
     return 'P'
   }
 
-  const transformReportRow = (item) => {
+  const transformAttendanceRow = (item) => {
     const dayMap = {}
 
     item.monthWiseShift?.forEach(shift => {
@@ -145,56 +130,121 @@ export default function MonthlyDailyAttendanceReport() {
     }
   }
 
+  const transformTimeRow = (item, index) => {
+    const dayMap = {}
+
+    item.monthWiseShift?.forEach(shift => {
+      if (!shift?.createdAt) return
+
+      const day = String(dayjs(shift.createdAt).date())
+
+      if (!dayMap[day]) dayMap[day] = []
+
+      dayMap[day].push({
+        inTime: shift?.inTime || '-',
+        outTime: shift?.outTime || '-',
+      })
+    })
+
+    return {
+      id: `${item.employeeCode}-${index}`,
+      employeeId: item.employeeCode,
+      employeeName: item.userName,
+      userType: item.userTypeName,
+      location: item.locationName,
+      totalDuties: item.monthWiseShift?.length || 0,
+      shifts: dayMap,
+    }
+  }
+
   useEffect(() => {
     if (queryLoading) return
 
     if (response?.success && Array.isArray(response?.data)) {
-      setReports(response.data.map(transformReportRow))
+      const formatted =
+        filters.filterType === 'time'
+          ? response.data.map(transformTimeRow)
+          : response.data.map(transformAttendanceRow)
+
+      setReports(formatted)
     } else {
       setReports([])
     }
-  }, [response, queryLoading])
+  }, [response, queryLoading, filters.filterType])
 
+  // DATE COLUMNS
   const getDateColumns = () => {
     if (!filters.fromDate || !filters.toDate) return []
 
     const start = dayjs(filters.fromDate)
     const end = dayjs(filters.toDate)
-    const cols = []
 
+    const cols = []
     let current = start
 
     while (current.isBefore(end, 'day') || current.isSame(end, 'day')) {
-      const d = current.date()
-      cols.push({
-        title: d,
-        dataIndex: d,
-        width: 45,
-        align: 'center',
-      })
+      const day = current.date()
+      const key = String(day)
+
+      if (filters.filterType === 'attendance') {
+        cols.push({
+          title: day,
+          dataIndex: day,
+          align: 'center',
+          width: 50,
+        })
+      } else {
+        cols.push({
+          title: day,
+          key,
+          children: [
+            {
+              title: 'IN',
+              key: `${key}-in`,
+              align: 'center',
+              render: (_, record) => {
+                const shifts = record.shifts?.[key] || []
+                return shifts.map((s, i) => <div key={i}>{s.inTime}</div>)
+              },
+            },
+            {
+              title: 'OUT',
+              key: `${key}-out`,
+              align: 'center',
+              render: (_, record) => {
+                const shifts = record.shifts?.[key] || []
+                return shifts.map((s, i) => <div key={i}>{s.outTime}</div>)
+              },
+            },
+          ],
+        })
+      }
+
       current = current.add(1, 'day')
     }
 
     return cols
   }
 
-  const columns = [
-    { title: 'Emp ID', dataIndex: 'employeeId', fixed: 'left', width: 120 },
-    { title: 'Employee Name', dataIndex: 'employeeName', fixed: 'left', width: 200 },
-    { title: 'User Type', dataIndex: 'userType', width: 120 },
-    { title: 'Location', dataIndex: 'location', width: 120 },
-    { title: 'Total Duties', dataIndex: 'totalDuties', width: 120, align: 'center' },
-    ...getDateColumns(),
-  ]
-
+  // SUMMARY
   const getSummaryData = () => {
     const summary = { totalDuties: 0, dayCounts: {} }
 
-    reports.forEach(row => {
+    filteredReports.forEach(row => {
       summary.totalDuties += row.totalDuties || 0
-      Object.keys(row).forEach(k => {
-        if (!isNaN(k) && row[k]) {
-          summary.dayCounts[k] = (summary.dayCounts[k] || 0) + 1
+
+      Object.keys(row).forEach(key => {
+        if (!isNaN(key) && row[key]) {
+          if (typeof row[key] === 'string') {
+            summary.dayCounts[key] = (summary.dayCounts[key] || 0) + 1
+          }
+        }
+
+        if (row.shifts) {
+          Object.keys(row.shifts).forEach(day => {
+            summary.dayCounts[day] =
+              (summary.dayCounts[day] || 0) + row.shifts[day].length
+          })
         }
       })
     })
@@ -202,141 +252,67 @@ export default function MonthlyDailyAttendanceReport() {
     return summary
   }
 
-  const [exporting, setExporting] = useState({ excel: false, pdf: false })
-  const handleExportExcel = async () => {
-    try {
-      setExporting(prev => ({ ...prev, excel: true }))
-
-      await exportToExcel(
-        columns,
-        filteredReports,
-        `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
-      )
-
-      message.success('Excel exported successfully')
-    } catch (err) {
-      message.error('Excel export failed')
-    } finally {
-      setExporting(prev => ({ ...prev, excel: false }))
-    }
-  }
-
-
-  const handleExportPDF = async () => {
-    try {
-      setExporting(prev => ({ ...prev, pdf: true }))
-
-      await exportToPDF(
-        columns,            // ✅ same column order
-        filteredReports,
-        `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
-      )
-
-      message.success('PDF exported successfully')
-    } catch (err) {
-      message.error('PDF export failed')
-    } finally {
-      setExporting(prev => ({ ...prev, pdf: false }))
-    }
-  }
-
-  const handlereset = () => {
-    const today = dayjs()
-
-    form.setFieldsValue({
-      dateRange: [today, today],
-      location: -1,
-      type: -1,
-    })
-
-    setReports([])
-    setShouldFetch(false)
-    setSearchText('')
-  }
-
+  const columns = [
+    { title: 'S.No', render: (_, __, i) => i + 1, width: 80, fixed: 'left' },
+    { title: 'Emp ID', dataIndex: 'employeeId', width: 140, fixed: 'left' },
+    { title: 'Employee Name', dataIndex: 'employeeName', width: 240, fixed: 'left' },
+    { title: 'User Type', dataIndex: 'userType', width: 140 , fixed: 'left'},
+    { title: 'Location', dataIndex: 'location', width: 250 , fixed: 'left' },
+    { title: 'Total Duties', dataIndex: 'totalDuties', align: 'center', width: 120 , fixed: 'left'},
+    ...getDateColumns(),
+  ]
 
   return (
     <>
       <Helmet>
-        <title>{getPageTitle('reports/attendance/monthly-daily')}</title>
-        <meta
-          name="description"
-          content={`${APP_CONFIG.name} - Monthly Daily Attendance Report`}
-        />
+        <title>{getPageTitle('reports/attendance')}</title>
       </Helmet>
 
       <Box>
         <Typography variant="h4" gutterBottom fontWeight="bold">
-          Monthly Daily Attendance Report
+          Monthly Attendance Report
         </Typography>
 
-        {/* FILTERS */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Form form={form} layout="vertical" onFinish={handleFilterChange}>
               <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item
-                    name="dateRange"
-                    label="Date Range"
-                  // rules={[{ required: true }]}
-                  >
-                    <RangePicker
-                      format="DD-MM-YYYY"
-                      disabledDate={(c) => c && c > dayjs().endOf('day')}
-                      allowClear={false}
-                      style={{ width: '100%' }}
-                    />
+                <Col span={6}>
+                  <Form.Item name="dateRange" label="Date Range">
+                    <RangePicker style={{ width: '100%' }} />
                   </Form.Item>
                 </Col>
-
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="location" label="Location" className="filter-item">
-                    <Select
-                      loading={locationsLoading}
-                      style={{ width: '100%' }}
-                      placeholder="All Locations"
-                    >
-                      {locationOptions.map((l) => (
-                        <Select.Option key={l.id} value={l.id}>
-                          {l.name}
-                        </Select.Option>
-                      ))}
+                <Col span={6}>
+                  <Form.Item name="location" label="Location">
+                    <Select loading={locationsLoading}>
+                      {locationOptions.map(l =>
+                        <Select.Option key={l.id} value={l.id}>{l.name}</Select.Option>
+                      )}
                     </Select>
                   </Form.Item>
                 </Col>
-
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="type" label="User Type" className="filter-item">
-                    <Select
-                      loading={userTypesLoading}
-                      style={{ width: '100%' }}
-                    >
-                      {typeOptions.map((t) => (
-                        <Select.Option key={t.id} value={t.id}>
-                          {t.name}
-                        </Select.Option>
-                      ))}
+                <Col span={4}>
+                  <Form.Item name="type" label="User Type">
+                    <Select loading={userTypesLoading}>
+                      {typeOptions.map(t =>
+                        <Select.Option key={t.id} value={t.id}>{t.name}</Select.Option>
+                      )}
                     </Select>
                   </Form.Item>
                 </Col>
-
-                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
-                  <Form.Item style={{ marginBottom: 0 }}>
-                    <Space wrap>
-                      <AntButton
-                        type="primary"
-                        htmlType="submit"
-                        icon={<SearchOutlined />}
-                        loading={queryLoading}
-                      >
-                        Search
-                      </AntButton>
-                      <AntButton onClick={handlereset}>
-                        Reset
-                      </AntButton>
-                    </Space>
+                <Col span={4}>
+                  <Form.Item name="filter" label="Filter">
+                    <Select>
+                      <Select.Option value="attendance">Attendance</Select.Option>
+                      <Select.Option value="time">Time</Select.Option>
+                    </Select>
                   </Form.Item>
+                </Col>
+                <Col span={4} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Space>
+                    <AntButton type="primary" htmlType="submit">Apply</AntButton>
+                    <AntButton onClick={() => form.resetFields()}>Reset</AntButton>
+                  </Space>
                 </Col>
               </Row>
             </Form>
@@ -348,58 +324,26 @@ export default function MonthlyDailyAttendanceReport() {
             {!shouldFetch ? (
               <Empty description="Click search to view data" />
             ) : queryLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
-              </Box>
+              <Box display="flex" justifyContent="center" p={4}><Spin /></Box>
             ) : (
               <>
-                {/* SUMMARY HEADER */}
-                <Box
-                  sx={{
-                    mb: 2,
-                    pb: 1.5,
-                    borderBottom: '1px solid #f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography fontWeight="bold">
-                    Overall Employee Count:{' '}
-                    <span style={{ color: '#1890ff' }}>
-                      {reports.length}
-                    </span>
-                    {'  |  '}
-                    Total Duty:{' '}
-                    <span style={{ color: '#52c41a' }}>
-                      {reports.reduce((sum, r) => sum + (r.totalDuties || 0), 0)}
-                    </span>
-                  </Typography>
+                {/* TOOLBAR */}
+                <Box display="flex" justifyContent="flex-end" mb={2} gap={2}>
+                  <Input
+                    placeholder="Search..."
+                    prefix={<SearchOutlined />}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    style={{ width: 250 }}
+                  />
 
-                  <Space style={{ marginLeft: 'auto' }} size={12}>
-                    <Input
-                      prefix={<SearchOutlined />}
-                      value={searchText}
-                      onChange={e => setSearchText(e.target.value)}
-                      allowClear
-                      style={{ width: 250 }}
-                    />
-                    <AntButton
-                      type="default"
-                      icon={<FileExcelOutlined />}
-                      onClick={handleExportExcel}
-                      disabled={reports.length === 0}
-                    // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                    >Export Excel
-                    </AntButton>
-                    <AntButton
-                      type="default"
-                      icon={<FilePdfOutlined />}
-                      onClick={handleExportPDF}
-                      disabled={reports.length === 0}
-                    // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                    >Export PDF
-                    </AntButton>
-                  </Space>
+                  <AntButton icon={<FileExcelOutlined />} onClick={() => exportToExcel(filteredReports)}>
+                    Export Excel
+                  </AntButton>
+
+                  <AntButton icon={<FilePdfOutlined />} onClick={() => exportToPDF(filteredReports)}>
+                    Export PDF
+                  </AntButton>
                 </Box>
 
                 {/* TABLE */}
@@ -407,33 +351,44 @@ export default function MonthlyDailyAttendanceReport() {
                   dataSource={filteredReports}
                   columns={columns}
                   rowKey="id"
-                  pagination={{ pageSize: 20 }}
-                  scroll={{ x: 'max-content' }}
-                  size="small"
                   bordered
+                  scroll={{ x: 'max-content', y: 450 }}
+                  pagination={{
+                    defaultPageSize: 10,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100', '200', '1000'],
+                  }}
+                  locale={{
+                    emptyText: searchText
+                      ? 'No matching records found'
+                      : 'No data available'
+                  }}
                   summary={() => {
-                    const { totalDuties, dayCounts } = getSummaryData()
+                    const summary = getSummaryData()
+
                     return (
                       <Table.Summary fixed>
-                        <Table.Summary.Row
-                          style={{ fontWeight: 'bold', background: '#fafafa' }}
-                        >
-                          <Table.Summary.Cell colSpan={4}>
-                            Total
+                        <Table.Summary.Row>
+                          <Table.Summary.Cell index={0} />
+                          <Table.Summary.Cell index={1} />
+                          <Table.Summary.Cell index={2} />
+                          <Table.Summary.Cell index={3} />
+                          <Table.Summary.Cell index={4}> Total</Table.Summary.Cell>
+
+                          {/* Total Duties */}
+                          <Table.Summary.Cell index={5} align="center">
+                            {summary.totalDuties}
                           </Table.Summary.Cell>
 
-                          <Table.Summary.Cell align="center">
-                            {totalDuties}
-                          </Table.Summary.Cell>
-
-                          {getDateColumns().map(col => (
-                            <Table.Summary.Cell
-                              key={col.dataIndex}
-                              align="center"
-                            >
-                              {dayCounts[col.dataIndex] || 0}
-                            </Table.Summary.Cell>
-                          ))}
+                          {/* Dynamic Days */}
+                          {getDateColumns().map((col, i) => {
+                            const day = col.dataIndex || col.key
+                            return (
+                              <Table.Summary.Cell key={i} align="center">
+                                {summary.dayCounts?.[day] || 0}
+                              </Table.Summary.Cell>
+                            )
+                          })}
                         </Table.Summary.Row>
                       </Table.Summary>
                     )
@@ -443,7 +398,6 @@ export default function MonthlyDailyAttendanceReport() {
             )}
           </CardContent>
         </Card>
-
       </Box>
     </>
   )
