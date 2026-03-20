@@ -106,15 +106,15 @@ export const sidebarMenuConfig = [
           {
             key: '/reports/attendance/monthly-daily',
             icon: 'FileTextOutlined',
-            label: 'Monthly Daily Attendance Report',
+            label: 'Monthly Attendance Report',
             path: '/reports/attendance/monthly-daily'
           },
-          {
-            key: '/reports/attendance/timesheet',
-            icon: 'ClockCircleOutlined',
-            label: 'Monthly Attendance Timesheet Report',
-            path: '/reports/attendance/timesheet'
-          },
+          // {
+          //   key: '/reports/attendance/timesheet',
+          //   icon: 'ClockCircleOutlined',
+          //   label: 'Monthly Attendance Timesheet Report',
+          //   path: '/reports/attendance/timesheet'
+          // },
           {
             key: '/reports/attendance/station-wise-report',
             icon: 'TeamOutlined',
