@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip, Select, Tag, Spin } from 'antd'
+import { Layout, Menu, Avatar, Dropdown, Breadcrumb, Tooltip, Select, Tag, Spin, Badge } from 'antd'
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -28,9 +28,11 @@ import {
   ScheduleOutlined,
   BarChartOutlined,
   BuildOutlined,
-  AppstoreOutlined
+  AppstoreOutlined,
+  SyncOutlined
 } from '@ant-design/icons'
 import { useAuth } from '../../context/AuthContext'
+import { useSidebarNotifications } from '../../context/SidebarNotificationContext'
 import { useSidebar } from '../../context/SidebarContext'
 import { useClient } from '../../context/ClientContext'
 import { sidebarMenuConfig, getBreadcrumbsFromPath } from '../../config/sidebarMenu'
@@ -67,34 +69,84 @@ const iconMap = {
   TeamOutlined,
   ScheduleOutlined,
   BarChartOutlined,
-  BuildOutlined
+  BuildOutlined,
+  SyncOutlined
 }
 
 // Fallback icon for missing icons
 const DefaultIcon = AppstoreOutlined
 
-// Convert menu config to AntD Menu items format
+/**
+ * Icon + optional badge (collapsed). Subscribes to sidebar + notifications context
+ * so the Menu `items` tree stays stable — avoids rebuilding the whole menu on toggle (major perf win).
+ */
+function SidebarMenuItemIcon({ menuItem }) {
+  const { collapsed } = useSidebar()
+  const { badgeCounts } = useSidebarNotifications()
+  const IconComponent = iconMap[menuItem.icon]
+
+  if (!IconComponent && process.env.NODE_ENV === 'development') {
+    console.warn(
+      `[Sidebar] Icon "${menuItem.icon}" not found in iconMap for menu item "${menuItem.label}". Using fallback icon.`
+    )
+  }
+
+  const rawIcon = IconComponent ? <IconComponent /> : <DefaultIcon />
+  const badgeCount = menuItem.path ? badgeCounts[menuItem.path] : undefined
+  const showBadge = typeof badgeCount === 'number' && badgeCount > 0
+
+    if (collapsed && showBadge) {
+    return (
+      <Badge
+        className="sidebar-menu-collapsed-badge"
+        count={badgeCount}
+        size="small"
+        overflowCount={99}
+      >
+        <span className="sidebar-menu-icon-badge-wrap">{rawIcon}</span>
+      </Badge>
+    )
+  }
+  return rawIcon
+}
+
+/** Label row + optional end badge (expanded). Same stable-items pattern as icon. */
+function SidebarMenuItemLabel({ menuItem }) {
+  const { collapsed } = useSidebar()
+  const { badgeCounts } = useSidebarNotifications()
+  const badgeCount = menuItem.path ? badgeCounts[menuItem.path] : undefined
+  const showBadge = typeof badgeCount === 'number' && badgeCount > 0
+
+  if (!collapsed && showBadge) {
+    return (
+      <div className="sidebar-menu-item-label-row">
+        <div className="sidebar-menu-item-label-text">
+          <EllipsisTooltip text={menuItem.label} />
+        </div>
+        <Badge
+          className="sidebar-menu-end-badge"
+          count={badgeCount}
+          size="small"
+          overflowCount={99}
+          showZero={false}
+        />
+      </div>
+    )
+  }
+  return <EllipsisTooltip text={menuItem.label} />
+}
+
+// Convert menu config to AntD Menu items — stable reference unless sidebarMenuConfig changes
 const convertMenuConfigToItems = (config) => {
-  return config.map(item => {
+  return config.map((item) => {
     if (item.type === 'divider') {
       return { type: 'divider' }
     }
 
-    const IconComponent = iconMap[item.icon]
-    
-    // Safe icon handling with fallback
-    if (!IconComponent) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          `[Sidebar] Icon "${item.icon}" not found in iconMap for menu item "${item.label}". Using fallback icon.`
-        )
-      }
-    }
-    
     const menuItem = {
       key: item.key,
-      icon: IconComponent ? <IconComponent /> : <DefaultIcon />,
-      label: <EllipsisTooltip text={item.label} />
+      icon: <SidebarMenuItemIcon menuItem={item} />,
+      label: <SidebarMenuItemLabel menuItem={item} />
     }
 
     if (item.children) {
@@ -252,7 +304,8 @@ export default function DashboardLayout() {
     }
   ]
 
-  const menuItems = convertMenuConfigToItems(filteredMenuConfig)
+  // Do not depend on `collapsed` or badgeCounts here — wrappers read context (smooth toggle, fewer Menu reconciliations)
+  const menuItems = useMemo(() => convertMenuConfigToItems(filteredMenuConfig), [filteredMenuConfig])
 
   // Render sidebar menu (always show menu since "All" is default)
   const renderSidebarContent = () => {
@@ -260,6 +313,8 @@ export default function DashboardLayout() {
       <Menu
         mode="inline"
         theme="dark"
+        rootClassName="traqops-sidebar-menu-root"
+        inlineCollapsed={collapsed}
         selectedKeys={selectedKeys}
         openKeys={openKeys}
         onOpenChange={setOpenKeys}
@@ -293,7 +348,8 @@ export default function DashboardLayout() {
         width={260}
         collapsedWidth={80}
         style={{
-          overflow: 'auto',
+          overflowX: collapsed ? 'visible' : 'auto',
+          overflowY: 'auto',
           height: '100vh',
           position: 'fixed',
           left: 0,
@@ -315,7 +371,12 @@ export default function DashboardLayout() {
         </div>
         {renderSidebarContent()}
       </Sider>
-      <Layout style={{ marginLeft: collapsed ? 80 : 260, transition: 'margin-left 0.2s' }}>
+      <Layout
+        style={{
+          marginLeft: collapsed ? 80 : 260,
+          transition: 'margin-left 0.2s cubic-bezier(0.2, 0, 0, 1)'
+        }}
+      >
         <Header
           style={{
             padding: '0 24px',

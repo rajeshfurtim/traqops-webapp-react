@@ -11,6 +11,7 @@ import Dashboard from '../pages/Dashboard'
 import CorrectiveMaintenance from '../pages/CorrectiveMaintenance'
 import ScheduledMaintenance from '../pages/ScheduledMaintenance'
 import Inventory from '../pages/Inventory'
+import InventoryCyclicCheck from '../pages/InventoryCyclicCheck'
 import ReportsIndex from '../pages/Reports/index'
 // Daily Reports
 import DailyReportsIndex from '../pages/Reports/Daily/index'
@@ -33,6 +34,8 @@ import ScheduledMaintenanceDetailsReports from '../pages/Reports/Tasks/Scheduled
 import ConsolidatedScheduledMaintenanceReport from '../pages/Reports/Tasks/ScheduledConsolidated'
 import CorrectiveMaintenanceReports from '../pages/Reports/Tasks/Corrective'
 import CorrectiveMaintenanceDetailsReports from '../pages/Reports/Tasks/CorrectiveDetails'
+import ChecklistReport from '../pages/Reports/Tasks/ChecklistReport'
+import TaskReportMock from '../pages/Reports/Tasks/TaskReportMock'
 import TaskReport from '../pages/Reports/Tasks/ScheduledDetails/TaskReport'
 import TaskReportDetails from '../pages/Reports/Tasks/ScheduledDetails/TaskReportDetails'
 import TaskCheckList from '../pages/Reports/Tasks/ScheduledDetails/TaskCheckList'
@@ -108,6 +111,7 @@ function App() {
               <Route path="corrective-maintenance" element={<CorrectiveMaintenance />} />
               <Route path="scheduled-maintenance" element={<ScheduledMaintenance />} />
               <Route path="inventory" element={<Inventory />} />
+              <Route path="inventory/cyclic-check" element={<InventoryCyclicCheck />} />
               <Route path="reports" element={<ReportsIndex />} />
               {/* Daily Reports nested routes */}
               <Route path="reports/daily" element={<DailyReportsIndex />} />
@@ -122,7 +126,11 @@ function App() {
               <Route path="reports/attendance/monthly-employee" element={<MonthlyEmployeeAttendanceReport />} />
               <Route path="reports/attendance/monthly-daily" element={<MonthlyDailyAttendanceReport />} />
               <Route path="reports/attendance/timesheet" element={<TimesheetReport />} />
-              <Route path="reports/attendance/consolidated-manpower" element={<ConsolidatedManpowerReport />} />
+              <Route path="reports/attendance/station-wise-report" element={<ConsolidatedManpowerReport />} />
+              <Route
+                path="reports/attendance/consolidated-manpower"
+                element={<Navigate to="/reports/attendance/station-wise-report" replace />}
+              />
               {/* Task Reports nested routes */}
               <Route path="reports/tasks" element={<TasksIndex />} />
               <Route path="reports/tasks/scheduled" element={<ScheduledMaintenanceReports />} />
@@ -130,6 +138,8 @@ function App() {
               <Route path="reports/tasks/scheduled-consolidated" element={<ConsolidatedScheduledMaintenanceReport />} />
               <Route path="reports/tasks/corrective" element={<CorrectiveMaintenanceReports />} />
               <Route path="reports/tasks/corrective-details" element={<CorrectiveMaintenanceDetailsReports />} />
+              <Route path="reports/tasks/checklist-report" element={<ChecklistReport />} />
+              <Route path="reports/tasks/task-report" element={<TaskReportMock />} />
               <Route path='reports/tasks/ScheduledDetails/TaskReport' element={<TaskReport />} />
               <Route path='reports/tasks/ScheduledDetails/TaskReportDetails' element={<TaskReportDetails />} />
               <Route path='reports/tasks/ScheduledDetails/task-checklist' element={<TaskCheckList />} />

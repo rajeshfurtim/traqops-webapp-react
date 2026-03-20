@@ -188,16 +188,16 @@ export default function ConsolidatedManpowerReport() {
   return (
     <>
       <Helmet>
-        <title>{getPageTitle('reports/attendance/consolidated-manpower')}</title>
+        <title>{getPageTitle('reports/attendance/station-wise-report')}</title>
         <meta
           name="description"
-          content={`${APP_CONFIG.name} - Consolidated Manpower Report`}
+          content={`${APP_CONFIG.name} - Station Wise Report`}
         />
       </Helmet>
 
       <Box>
         <Typography variant="h4" gutterBottom fontWeight="bold">
-          Consolidated Manpower Report
+          Station Wise Report
         </Typography>
 
         {/* Filters */}

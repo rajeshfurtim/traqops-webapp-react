@@ -7,6 +7,7 @@ import { Provider } from 'react-redux'
 import { store } from './store'
 import App from './app/App'
 import { SidebarProvider } from './context/SidebarContext'
+import { SidebarNotificationProvider } from './context/SidebarNotificationContext'
 import './styles/index.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -28,7 +29,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             }}
           >
             <SidebarProvider>
-              <App />
+              <SidebarNotificationProvider>
+                <App />
+              </SidebarNotificationProvider>
             </SidebarProvider>
           </BrowserRouter>
         </HelmetProvider>

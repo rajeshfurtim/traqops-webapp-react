@@ -99,14 +99,155 @@
   align-items: center;
 }
 
-/* Direct span/div children for backward compatibility */
-.traqops-sidebar .ant-menu-item > span,
-.traqops-sidebar .ant-menu-item > div,
-.traqops-sidebar .ant-menu-submenu-title > span,
-.traqops-sidebar .ant-menu-submenu-title > div {
+/* Notification count at end of menu label */
+.sidebar-menu-item-label-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 8px;
+}
+
+.sidebar-menu-item-label-text {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+}
+
+.sidebar-menu-item-label-text .sidebar-menu-label {
+  max-width: 100%;
+}
+
+/* Standalone count pill (end of label) — readable on dark sidebar */
+.traqops-sidebar .sidebar-menu-end-badge.ant-badge .ant-badge-count {
+  position: relative;
+  top: auto;
+  inset-inline-end: auto;
+  transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 22px;
+  border-radius: 11px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+.traqops-sidebar .ant-menu-item-selected .sidebar-menu-end-badge.ant-badge .ant-badge-count {
+  background: #ff4d4f;
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Icon + badge when sidebar collapsed */
+.sidebar-menu-icon-badge-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  min-width: 16px;
+  min-height: 16px;
+}
+
+/* Collapsed sider: don’t clip the count pill; center icons */
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-item,
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title {
+  overflow: visible;
+}
+
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-item-icon {
+  position: relative;
+  overflow: visible;
+  line-height: 1;
+}
+
+/* Badge count on icon — readable and not cut off */
+.traqops-sidebar .sidebar-menu-collapsed-badge.ant-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+
+.traqops-sidebar .sidebar-menu-collapsed-badge.ant-badge .ant-badge-count {
+  z-index: 2;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  border-radius: 9px;
+  box-shadow: 0 0 0 2px #001529;
+}
+
+.traqops-sidebar .ant-menu-item-selected .sidebar-menu-collapsed-badge.ant-badge .ant-badge-count {
+  box-shadow: 0 0 0 2px #1890ff;
+}
+
+/*
+ * Only constrain the title column — NOT `.ant-menu-item-icon`.
+ * A broad `> span` rule was clipping collapsed badge counts (icon sits in a span sibling).
+ */
+.traqops-sidebar .ant-menu-item > .ant-menu-title-content,
+.traqops-sidebar .ant-menu-submenu-title > .ant-menu-title-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Collapsed inline menu: center rail + icon can overflow for badge pill */
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-item,
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title {
+  justify-content: center;
+  padding-inline: 0 !important;
+}
+
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-item > .ant-menu-item-icon,
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title > .ant-menu-item-icon {
+  flex: 0 0 auto !important;
+  margin-inline-end: 0 !important;
+  overflow: visible !important;
+  position: relative;
+  z-index: 1;
+}
+
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-item > .ant-menu-title-content,
+.traqops-sidebar.ant-layout-sider-collapsed .ant-menu-submenu-title > .ant-menu-title-content {
+  flex: 0 0 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ensure collapsed badge positions above overflow/stacking */
+.traqops-sidebar.ant-layout-sider-collapsed .sidebar-menu-collapsed-badge.ant-badge {
+  position: relative;
+  overflow: visible;
+}
+
+.traqops-sidebar.ant-layout-sider-collapsed .traqops-sidebar-menu-root,
+.traqops-sidebar.ant-layout-sider-collapsed .traqops-sidebar-menu-root .ant-menu {
+  overflow-x: visible;
+}
+
+.traqops-sidebar.ant-layout-sider-collapsed .sidebar-menu-collapsed-badge.ant-badge .ant-badge-count {
+  /* AntD sets inline transform on the sup — force placement on collapsed rail */
+  position: absolute !important;
+  top: -4px !important;
+  inset-inline-end: -8px !important;
+  transform: none !important;
+  transform-origin: 100% 0% !important;
+  margin: 0 !important;
+  height: 18px !important;
+  line-height: 18px !important;
 }
 
 /* Responsive adjustments */
@@ -122,11 +263,21 @@
   }
 }
 
-/* Smooth transitions */
-.traqops-sidebar,
-.traqops-sidebar .ant-menu,
+/* Sidebar width only — avoid `transition: all` on every menu row (jank / “hanging” on collapse) */
+.traqops-sidebar.ant-layout-sider {
+  transition: width 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.traqops-sidebar .ant-menu {
+  transition: none;
+}
+
 .traqops-sidebar .ant-menu-item,
 .traqops-sidebar .ant-menu-submenu-title {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.traqops-sidebar .sidebar-logo {
+  transition: padding 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 

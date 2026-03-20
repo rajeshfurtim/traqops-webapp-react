@@ -49,13 +49,14 @@ export default function EllipsisTooltip({ text, placement = 'right', ...tooltipP
     }
   }, [text])
 
-  // Re-check when sidebar collapse state changes
+  // Re-check when sidebar expands (labels visible again). Collapsed: skip work — avoids many slow timers during toggle.
   useEffect(() => {
-    // Delay to allow sidebar animation to complete (0.2s transition + buffer)
-    const timeoutId = setTimeout(() => {
-      checkOverflow()
-    }, 300)
-    return () => clearTimeout(timeoutId)
+    if (collapsed) {
+      setIsOverflow(false)
+      return
+    }
+    const id = requestAnimationFrame(() => checkOverflow())
+    return () => cancelAnimationFrame(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed])
 
