@@ -112,27 +112,16 @@ function SidebarMenuItemIcon({ menuItem }) {
 /** Label row + optional end badge (expanded). Same stable-items pattern as icon. */
 function SidebarMenuItemLabel({ menuItem }) {
   const { collapsed } = useSidebar()
-  const { badgeCounts } = useSidebarNotifications()
-  const badgeCount = menuItem.path ? badgeCounts[menuItem.path] : undefined
-  const showBadge = typeof badgeCount === 'number' && badgeCount > 0
 
-  if (!collapsed && showBadge) {
+  if (collapsed) {
     return (
-      <div className="sidebar-menu-item-label-row">
-        <div className="sidebar-menu-item-label-text">
-          <EllipsisTooltip text={menuItem.label} />
-        </div>
-        <Badge
-          className="sidebar-menu-end-badge"
-          count={badgeCount}
-          size="small"
-          overflowCount={99}
-          showZero={false}
-        />
-      </div>
+      <Tooltip title={menuItem.label} placement="right">
+        <span>{menuItem.label}</span>
+      </Tooltip>
     )
   }
-  return <EllipsisTooltip text={menuItem.label} />
+
+  return <span>{menuItem.label}</span>
 }
 
 const SIDEBAR_SUBMENU_POPUP_CLASS = 'traqops-sidebar-submenu-popup'
@@ -332,7 +321,6 @@ export default function DashboardLayout() {
           mode="inline"
           theme={SIDEBAR_MENU_THEME}
           rootClassName="traqops-sidebar-menu-root"
-          _internalDisableMenuItemTitleTooltip
           inlineCollapsed={collapsed}
           selectedKeys={selectedKeys}
           openKeys={openKeys}

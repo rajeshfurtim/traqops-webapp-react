@@ -305,8 +305,8 @@ export default function ScheduledMaintenanceDetailsReports() {
                 <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
                   <Form.Item style={{ marginBottom: 0 }}>
                     <Space wrap>
-                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
-                        Filters
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading} icon={<SearchOutlined />}>
+                        Search
                       </AntButton>
                       <AntButton
                         htmlType="button"
@@ -337,26 +337,22 @@ export default function ScheduledMaintenanceDetailsReports() {
                   allowClear
                   style={{ width: 250 }}
                 />
-                <Tooltip title="Export Excel">
+                
                   <AntButton
-                    type="primary"
                     icon={<FileExcelOutlined />}
                     onClick={handleExportExcel}
-                    disabled={!reportData?.data || !reportData?.data?.length === 0}
-                    style={{ backgroundColor: '#5bd71c', color: '#fff' }}
-                  >
+                    disabled={!reportData?.data || reportData?.data?.length === 0}
+                  >Export Excel
                   </AntButton>
-                </Tooltip>
-                <Tooltip title="Export PDF">
+                
                   <AntButton
-                    type="primary"
                     icon={<FilePdfOutlined />}
                     onClick={handleExportPDF}
-                    disabled={!reportData?.data || !reportData?.data?.length === 0}
-                    style={{ backgroundColor: 'rgb(240, 42, 45)', color: '#fff' }}
+                    disabled={!reportData?.data || reportData?.data?.length === 0}
                   >
+                    Export PDF
                   </AntButton>
-                </Tooltip>
+                
               </Space>
             </Box>
             {!shouldFetch ? (

@@ -32,7 +32,6 @@ export default function ConsolidatedManpowerReport() {
     const today = dayjs()
     form.setFieldsValue({
       dateRange: [today, today],
-      type: 261586,
     })
     // setFilters({
     //   fromDate: today.format('YYYY-MM-DD'),
@@ -40,6 +39,14 @@ export default function ConsolidatedManpowerReport() {
     //   userTypeId: 261586,
     // })
   }, [])
+
+  useEffect(() => {
+    if(userTypes && userTypes.length > 0) {
+      form.setFieldsValue({
+        type: userTypes[0].id,
+      })
+    }
+  },[userTypes])
 
   // Apply filters
   const handleFilterChange = values => {
