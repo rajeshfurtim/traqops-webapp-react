@@ -389,6 +389,53 @@ export const reportsApi = baseApi.injectEndpoints({
         error ? [] :["InvoiceGenerate"], 
     }),
 
+    getAuditReport: build.query({
+      query: (params) => {
+        const { fromDate, toDate, kpiTypeId } = params
+
+        if (!kpiTypeId) {
+          throw new Error('kpiTypeId is required for getAuditReport')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          kpiTypeId: Array.isArray(kpiTypeId) ? kpiTypeId.join(',') : kpiTypeId?.toString()
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/audit`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
+    getKpiReport: build.query({
+      query: (params) => {
+        const { pn, ps, clientId, kpiTypeId } = params
+
+        if (!kpiTypeId) {
+          throw new Error('kpiTypeId is required for getKpiReport')
+        }
+
+        const queryParams = {
+          pn,
+          ps,
+          clientId,
+          kpiTypeId: Array.isArray(kpiTypeId) ? kpiTypeId.join(',') : kpiTypeId?.toString()
+        }
+
+        return {
+          url: `${API_BASE_URL}/reports/getallkpislist/bykpiTypeid`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -409,5 +456,7 @@ export const {
   useGetEvaluationElementsPenaltysQuery,
   useAddEvaluationPenaltyMutation,
   useGetInvoiceSummaryQuery,
-  useInvoiceGenerateMutation
+  useInvoiceGenerateMutation,
+  useGetAuditReportQuery,
+  useGetKpiReportQuery
 } = reportsApi
