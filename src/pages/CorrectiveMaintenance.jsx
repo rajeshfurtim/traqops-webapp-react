@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme, alpha, Chip, Grid } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col, Tabs } from 'antd'
-import { FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col, Tabs, Modal, Upload, Button, message } from 'antd'
+import { FileExcelOutlined, FilePdfOutlined, UploadOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle, FaTasks, FaClock } from 'react-icons/fa'
 import CountUp from "react-countup"
@@ -16,11 +16,13 @@ import { SearchOutlined } from '@ant-design/icons';
 import { correctiveApi } from '../store/api/correctivemaintenance.api';
 import { color } from 'framer-motion'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { domainName } from '../config/apiConfig'
+
 
 
 export default function CorrectiveMaintenance() {
   const clientId = localStorage.getItem('clientId');
-
+  const [open, setopen] = useState(false)
   const [activeTab, setActiveTab] = useState('1');
   const [loading, setLoading] = useState(true)
   const [shouldFetch, setShouldFetch] = useState(false)
@@ -85,9 +87,120 @@ export default function CorrectiveMaintenance() {
     },
     {
       skip: !filters.startdate || !filters.enddate,
-      refetchOnMountOrArgChange: true // ✅ IMPORTANT FIX
+      refetchOnMountOrArgChange: true
     }
   )
+
+
+  // send a client id while click add button 
+  // const [getMaxSequence, { isLoading }] =
+  //   correctiveApi.useLazyGetmaximumsequenceQuery();
+
+
+  const [sequenceNumber, setSequenceNumber] = useState(null);
+  const [getMaxSequence] = correctiveApi.useLazyGetmaximumsequenceQuery()
+
+  // ✅ UPDATE TICKET FUNCTION
+  const updateTicketNumber = (locationId, seqNum) => {
+    if (!locationId || !seqNum) return
+
+    const selectedLoc = locations?.find(loc => loc.id === locationId)
+
+    if (selectedLoc) {
+      const ticketNo = `${selectedLoc.code}/VAC/TVS/${seqNum}`
+      form.setFieldsValue({ ticketno: ticketNo })
+    }
+  }
+  const handleadd = async () => {
+    try {
+      const res = await getMaxSequence({ clientId }).unwrap()
+
+      if (res?.success) {
+        const nextNumber = (res.data || 0) + 1
+
+        setSequenceNumber(nextNumber)
+        setopen(true)
+
+        const currentStation = form.getFieldValue("station")
+        if (currentStation) {
+          updateTicketNumber(currentStation, nextNumber)
+        }
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  //system change
+  const [selectedSystem, setSelectedSystem] = useState(null);
+  const { data: categoryList, isLoading: categoryLoading } =
+    correctiveApi.useGetcategoryQuery(
+      { clientId, system: selectedSystem },
+      { skip: !selectedSystem }
+    );
+  const category = categoryList?.data || [];
+
+  //equipment change 
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedEquipment, setSelectedEquipment] = useState(null);
+  const { data: assetResponse, isLoading: assetLoading } =
+    correctiveApi.useGetLocationwisedataQuery(
+      {
+        categoryId: selectedCategory,
+        locationId: selectedLocation
+      },
+      {
+        skip: !selectedCategory || !selectedLocation
+      }
+    );
+
+  const assetList = assetResponse?.data || [];
+
+  const { data: userResponse, isLoading: userLoading } =
+    correctiveApi.useGetlistbyUserQuery(
+      { LocationId: selectedLocation },
+      { skip: !selectedLocation }
+    );
+
+  const userList = userResponse?.data || [];
+
+  const { data: faultResponse, isLoading: faultLoading } =
+    correctiveApi.useGetbyFaultidQuery(
+      { faultCategoryId: selectedEquipment },
+      { skip: !selectedEquipment }
+    );
+
+  const faultList = faultResponse?.data || [];
+
+  const { data: faultCategoryResponse, isLoading: faultCategoryLoading } =
+    correctiveApi.useGetallfaultcategoryListQuery({
+      domainName,
+      clientId,
+      pn: 1,
+      ps: 1000
+    });
+  const faultCategoryList = faultCategoryResponse?.data?.content || [];
+
+  //get piriority
+  const { data: priorityResponse, isLoading: priorityLoading } =
+    correctiveApi.useGetallpriorityQuery({
+      domainName,
+      clientId,
+    });
+  const priorityList = priorityResponse?.data?.content || [];
+
+
+  //subfault category
+  const [selectedFaultCategory, setSelectedFaultCategory] = useState(null);
+  const { data: faultSubResponse, isLoading: faultSubLoading } =
+    correctiveApi.useByfaultcategoryListQuery(
+      { faultCategoryId: selectedFaultCategory },
+      { skip: !selectedFaultCategory }
+    );
+
+  const faultSubList = faultSubResponse?.data || [];
+
 
   const handleFilterChange = (values) => {
     const newFilters = {}
@@ -113,25 +226,6 @@ export default function CorrectiveMaintenance() {
     setFilters({})
   }
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'Completed': 'success',
-      'In Progress': 'info',
-      'Pending': 'warning',
-      'Overdue': 'error'
-    }
-    return colors[status] || 'default'
-  }
-
-  const getPriorityColor = (priority) => {
-    const colors = {
-      'Low': '#17a2b8',
-      'Medium': '#ffc107',
-      'High': '#fd7e14',
-      'Critical': '#dc3545'
-    }
-    return colors[priority] || '#000'
-  }
   const locationOptions = [
     { id: -1, name: 'All Locations' },
     ...(Array.isArray(locations) && locations.length > 0 ? locations.map(loc => ({
@@ -256,12 +350,59 @@ export default function CorrectiveMaintenance() {
     })
   }
 
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys),
+  };
+  const isActionEnabled = selectedRowKeys.length > 0;
+
+
+  //edit 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+
+  const handleEditClick = () => {
+    if (selectedRowKeys.length === 1) { // only allow editing one row
+      const record = Cmreports.find(r => r.id === selectedRowKeys[0]);
+      if (!record) return;
+
+      setEditingRecord(record);
+      setIsEditing(true);
+      setopen(true);
+
+      // Populate form fields
+      form.setFieldsValue({
+        ticketno: record.cmKey,
+        station: record.location,
+        system: record.category,
+        equipment: record.assets,
+        itemcode: record.assets,
+        faultCategory: record.faultCategory,
+        faultsubcategory: record.faultSubCategory,
+        user: record.assignedId,
+        priority: record.priority,
+        description: record.allData?.description || '',
+        faultrecord: record.allData?.faultRecordedBy || '',
+      });
+    } else {
+      message.warning("Please select only one row to edit");
+    }
+  };
+
   const columns = [
+    {
+      title: 'S.No',
+      key: 'sno',
+      width: 70,
+      render: (_, __, index) => index + 1
+    },
     {
       title: 'Fault Id',
       dataIndex: 'cmKey',
       key: 'cmKey',
-      width: 120
+      width: 220
     },
     {
       title: 'Location',
@@ -351,43 +492,52 @@ export default function CorrectiveMaintenance() {
     },
   ]
 
-const items = [
-  { key: '1', label: 'Open' },
-  { key: '2', label: 'WorkDone' },
-  { key: '3', label: 'Completed' },
-  { key: '4', label: 'Verified' },
-  { key: '5', label: 'Overdue' }
-].map(tab => ({
-  ...tab,
-  children: (
-    <>
-      {/* ✅ Buttons only for Open tab */}
-      {tab.key === '1' && (
-        <div style={{ marginBottom: 12 }}>
-          <Space>
-            <AntButton type="primary" icon={<PlusOutlined />}>
-              Add
-            </AntButton>
-            <AntButton icon={<EditOutlined />}>
-              Edit
-            </AntButton>
-            <AntButton danger icon={<DeleteOutlined />}>
-              Delete
-            </AntButton>
-          </Space>
-        </div>
-      )}
+  const items = [
+    { key: '1', label: 'Open' },
+    { key: '2', label: 'WorkDone' },
+    { key: '3', label: 'Completed' },
+    { key: '4', label: 'Verified' },
+    { key: '5', label: 'Overdue' }
+  ].map(tab => ({
+    ...tab,
+    children: (
+      <>
+        {/* ✅ Buttons only for Open tab */}
+        {tab.key === '1' && (
+          <div style={{ marginBottom: 12 }}>
+            <Space>
+              <AntButton type="primary" icon={<PlusOutlined />} onClick={handleadd}>
+                Add
+              </AntButton>
+              <AntButton icon={<EditOutlined />} disabled={!isActionEnabled}
+                onClick={handleEditClick}
+              >
+                Edit
+              </AntButton>
+              <AntButton danger icon={<DeleteOutlined />} disabled={!isActionEnabled}>
+                Delete
+              </AntButton>
+            </Space>
+          </div>
+        )}
 
-      <Table
-        rowKey="id"
-        dataSource={Cmreports}
-        columns={columns}
-        loading={cmisFetching || cmqueryLoading}
-        bordered
-      />
-    </>
-  )
-}))
+        <Table
+          rowKey="id"
+          dataSource={Cmreports}
+          columns={columns}
+          rowSelection={rowSelection}
+          loading={cmisFetching || cmqueryLoading}
+          bordered
+          scroll={{ y: 400 }}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+          }}
+        />
+      </>
+    )
+  }))
   return (
     <>
       <Helmet>
@@ -514,6 +664,280 @@ const items = [
           </CardContent>
         </Card>
       </Box>
+      <Modal
+        title={isEditing ? "Edit Task" : "Add Details"}
+        open={open}
+        centered
+        width={800}
+        onCancel={() => {
+          setopen(false);
+          setIsEditing(false);
+          setEditingRecord(null);
+          form.resetFields();
+        }}
+        onOk={() => {
+          form.submit();
+        }}
+        okText={isEditing ? "Update" : "Add"}
+      >
+        <Form layout="vertical" form={form}>
+          <Row gutter={[16, 16]}>
+
+            {/* Ticket Info */}
+            <Col span={12}>
+              <Form.Item
+                label="Ticket No"
+                name="ticketno"
+              >
+                <Input disabled />
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Station"
+                name="station"
+                rules={[{ required: true, message: "Please select Station" }]}
+              >
+                <Select
+                  placeholder="Select Station"
+                  loading={locationsLoading}
+                  showSearch
+                  optionFilterProp="children"
+                  onChange={(value) => {
+                    setSelectedLocation(value)
+                    form.setFieldsValue({ asset: undefined })
+                    if (sequenceNumber) {
+                      updateTicketNumber(value, sequenceNumber)
+                    }
+                  }}
+                >
+                  {locations?.map((loc) => (
+                    <Select.Option key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            {/* System Info */}
+            <Col span={12}>
+              <Form.Item
+                label="System"
+                name="system"
+                rules={[{ required: true, message: "Please select System" }]}
+              >
+                <Select
+                  placeholder="Select System"
+                  optionLabelProp="label"
+                  onChange={(value) => {
+                    setSelectedSystem(value);
+                    form.setFieldsValue({ category: undefined });
+                  }}
+                >
+                  <Select.Option value="ECS" label="ECS">
+                    <Tag color="blue">ECS</Tag> Environmental Control System
+                  </Select.Option>
+
+                  <Select.Option value="TVS" label="TVS">
+                    <Tag color="green">TVS</Tag> Tunnel Ventilation System
+                  </Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Equipment"
+                name="equipment"
+                rules={[{ required: true, message: "Please select equipment" }]}
+              >
+                <Select
+                  placeholder="Select Equipment"
+                  showSearch
+                  loading={categoryLoading}
+                  onChange={(value) => {
+                    setSelectedCategory(value);
+                    setSelectedEquipment(value);
+                    form.setFieldsValue({ asset: undefined, faultcategory: undefined });
+                  }}
+                >
+                  {category?.map((item) => (
+                    <Select.Option key={item.id} value={item.id}>
+                      {item.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Item Code"
+                name="itemcode"
+                rules={[{ required: true, message: "Please select Item Code" }]}
+              >
+                <Select
+                  placeholder="Select Asset"
+                  loading={assetLoading}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {assetList.map((item) => (
+                    <Select.Option key={item.assetId} value={item.assetId}>
+                      {item.assetName}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            {/* Fault Details */}
+            <Col span={12}>
+              <Form.Item
+                label="Fault Category"
+                name="faultCategory"
+                rules={[{ required: true, message: "Please select fault category" }]}
+              >
+                <Select
+                  placeholder="Select Fault Category"
+                  loading={faultCategoryLoading}
+                  showSearch
+                  optionFilterProp="children"
+                  onChange={(value) => {
+                    setSelectedFaultCategory(value);
+                    form.setFieldsValue({ faultsubcategory: undefined });
+                  }}
+                >
+                  {faultCategoryList.map((item) => (
+                    <Select.Option key={item.id} value={item.id}>
+                      {item.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Fault Subcategory"
+                name="faultsubcategory"
+                rules={[{ required: true, message: "Please select subcategory" }]}
+              >
+                <Select
+                  placeholder="Select Fault Subcategory"
+                  loading={faultSubLoading}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {faultSubList.map((item) => (
+                    <Select.Option
+                      key={item.faultSubCategoryId}
+                      value={item.faultSubCategoryId}
+                    >
+                      {item.faultSubCategoryName}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            {/* Assignment */}
+            <Col span={12}>
+              <Form.Item
+                label="Assign to User"
+                name="user"
+              >
+                <Select
+                  placeholder="Select User"
+                  loading={userLoading}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {userList.map((user) => (
+                    <Select.Option key={user.userId} value={user.userId}>
+                      {user.firstName} - ({user.lastName})
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Priority"
+                name="priority"
+                rules={[{ required: true, message: "Please select priority" }]}
+              >
+                <Select
+                  placeholder="Select Priority"
+                  loading={priorityLoading}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {Array.isArray(priorityList) && priorityList.map((item) => (
+                    <Select.Option key={item.id} value={item.id}>
+                      {item.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+
+            {/* Additional */}
+            <Col span={12}>
+              <Form.Item
+                label="Fault Recorded By"
+                name="faultrecord"
+                rules={[{ required: true, message: "Please enter name" }]}
+              >
+                <Input placeholder="Enter name" />
+              </Form.Item>
+            </Col>
+
+            {/* Full Width Fields */}
+            <Col span={24}>
+              <Form.Item
+                label="Description"
+                name="description"
+              >
+                <Input.TextArea rows={3} placeholder="Enter description" />
+              </Form.Item>
+            </Col>
+
+            <Col span={24}>
+              <Form.Item
+                label="Upload Image"
+                name="images"
+                valuePropName="fileList"
+                getValueFromEvent={(e) => e?.fileList || []}
+                rules={[
+                  {
+                    validator: (_, fileList) => {
+                      if (fileList && fileList.length > 5) {
+                        return Promise.reject("Only 5 images allowed");
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+              >
+                <Upload
+                  listType="picture"
+                  beforeUpload={() => false} // ✅ prevent auto upload
+                  maxCount={5}
+                  multiple
+                  accept="image/*"
+                >
+                  <Button icon={<UploadOutlined />}>Select Images</Button>
+                </Upload>
+              </Form.Item>
+            </Col>
+
+          </Row>
+        </Form>
+      </Modal>
     </>
   )
 }
@@ -584,3 +1008,5 @@ function SummaryBox({ label, value, color, icon, trend, trendValue = 0, isLoadin
     </Tooltip>
   )
 }
+
+
