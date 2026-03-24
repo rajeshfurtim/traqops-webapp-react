@@ -46,7 +46,6 @@ import {
 
 export default function Dashboard() {
   const [filterForm] = Form.useForm();
-  const [locationWiseForm] = Form.useForm();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [activeTab, setActiveTab] = useState("consolidate");
@@ -168,10 +167,11 @@ export default function Dashboard() {
 
   // shiftOptions now comes from API (useGetAllShiftQuery)
 
-  const handleSearch = (values) => {
+  const handleSearch = (values, tabKeyOverride) => {
     const fromDate = values?.fromDate?.startOf?.("month")?.format?.("YYYY-MM-DD")
     const toDate = values?.fromDate?.endOf?.("month")?.format?.("YYYY-MM-DD")
     const locationIds = Array.isArray(values?.locationIds) ? values.locationIds : []
+    const tabKey = tabKeyOverride || activeTab
 
     // Spare consumption trend API always uses the full current year range (Jan 1 → Dec 31).
     const yearFromDate = dayjs().startOf("year").format("YYYY-MM-DD")
@@ -182,6 +182,7 @@ export default function Dashboard() {
       toDate,
       shiftId: values?.shiftId,
       locationIds,
+      tabKey,
     })
 
     // Your API requires locationId list; if none selected, keep existing chart data.
@@ -204,37 +205,44 @@ export default function Dashboard() {
             fromDate,
             toDate,
             locationId: locationIds,
+            tabKey,
           }).unwrap(),
           triggerGetFailureRateSystem({
             system: "TVS",
             fromDate,
             toDate,
             locationId: locationIds,
+            tabKey,
           }).unwrap(),
           triggerGetTopAssetsFailureSystem({
             system: "ECS",
             fromDate,
             toDate,
             locationId: locationIds,
+            tabKey,
           }).unwrap(),
           triggerGetTopAssetsFailureSystem({
             system: "TVS",
             fromDate,
             toDate,
             locationId: locationIds,
+            tabKey,
           }).unwrap(),
           triggerGetTopUsedSpares({
             fromDate,
             toDate,
             locationIds,
+            tabKey,
           }).unwrap(),
           triggerGetSpareConsumptionByLocationTrend({
             fromDate: yearFromDate,
             toDate: yearToDate,
             locationIds,
+            tabKey,
           }).unwrap(),
           triggerGetLowStockSpares({
             locationId: locationIds,
+            tabKey,
           }).unwrap(),
         ])
 
@@ -364,15 +372,6 @@ export default function Dashboard() {
         setConsolidateChartsLoading(false)
       }
     })()
-  };
-
-  const handleLocationWiseSearch = (values) => {
-    console.log("Dashboard location-wise filters", {
-      fromDate: values?.fromDate?.format?.("YYYY-MM-DD"),
-      toDate: values?.toDate?.format?.("YYYY-MM-DD"),
-      shiftId: values?.shiftId,
-      locationId: values?.locationId,
-    });
   };
 
   const ecs = dashboardData?.ecs || {};
@@ -541,6 +540,7 @@ export default function Dashboard() {
           clientId,
           locationId: locationIds,
           statusId,
+          tabKey: activeTab,
         }).unwrap();
 
         const rows = Array.isArray(response?.data) ? response.data : [];
@@ -617,6 +617,7 @@ export default function Dashboard() {
         toDate,
         locationId: locationIds,
         frequencyId,
+        tabKey: activeTab,
       }).unwrap();
 
       const rows = Array.isArray(response?.data) ? response.data : [];
@@ -758,13 +759,15 @@ export default function Dashboard() {
 
             <Tabs
               activeKey={activeTab}
-              onChange={setActiveTab}
+              onChange={(key) => {
+                setActiveTab(key);
+                handleSearch(filterForm.getFieldsValue(), key);
+              }}
               items={tabItems}
               style={{ marginBottom: 16 }}
             />
 
-            {activeTab === "consolidate" && (
-              <Card style={{ marginBottom: 16 }}>
+            <Card style={{ marginBottom: 16 }}>
                 <CardContent>
                   <Form
                     form={filterForm}
@@ -779,12 +782,13 @@ export default function Dashboard() {
                       display: "flex",
                       flexWrap: "wrap",
                       gap: 12,
-                      alignItems: "end",
+                      alignItems: "flex-start",
                     }}
                   >
                     <Form.Item
                       name="fromDate"
                       label="From Date"
+                      style={{ marginBottom: 0 }}
                       rules={[
                         { required: true, message: "Please select From Date" },
                       ]}
@@ -830,88 +834,8 @@ export default function Dashboard() {
                   </Form>
                 </CardContent>
               </Card>
-            )}
 
-            {activeTab === "locationWise" && (
-              <Card style={{ marginBottom: 16 }}>
-                <CardContent>
-                  <Form
-                    form={locationWiseForm}
-                    layout="inline"
-                    onFinish={handleLocationWiseSearch}
-                    initialValues={{
-                      fromDate: dayjs().startOf("month"),
-                      toDate: dayjs().endOf("month"),
-                      shiftId: undefined,
-                      locationId: undefined,
-                    }}
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 12,
-                      alignItems: "end",
-                    }}
-                  >
-                    <Form.Item
-                      name="fromDate"
-                      label="From Date"
-                      rules={[
-                        { required: true, message: "Please select From Date" },
-                      ]}
-                    >
-                      <DatePicker style={{ width: 180 }} />
-                    </Form.Item>
-
-                    <Form.Item
-                      name="toDate"
-                      label="To Date"
-                      rules={[
-                        { required: true, message: "Please select To Date" },
-                      ]}
-                    >
-                      <DatePicker style={{ width: 180 }} />
-                    </Form.Item>
-
-                    <Form.Item name="shiftId" label="Shift">
-                      <Select
-                        placeholder="Select Shift"
-                        allowClear
-                        style={{ width: 200 }}
-                        loading={shiftsLoading}
-                        options={shiftOptions.map((s) => ({
-                          label: s.name,
-                          value: s.id,
-                        }))}
-                      />
-                    </Form.Item>
-
-                    <Form.Item name="locationId" label="Location">
-                      <Select
-                        placeholder="Select Location"
-                        allowClear
-                        showSearch
-                        optionFilterProp="label"
-                        loading={locationsLoading}
-                        style={{ width: 260 }}
-                        options={locationOptions.map((l) => ({
-                          label: (l.name || "").trim(),
-                          value: l.id,
-                        }))}
-                      />
-                    </Form.Item>
-
-                    <Form.Item style={{ marginBottom: 0 }}>
-                      <Button type="primary" htmlType="submit">
-                        Search
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === "consolidate" && (
-              <Box>
+            <Box>
                 {/* ECS Section */}
                 <Card style={{ marginBottom: 16 }}>
                   <CardContent>
@@ -1976,18 +1900,10 @@ export default function Dashboard() {
                     </Grid>
                   </CardContent>
                 </Card>
-              </Box>
-            )}
+            </Box>
           </>
         )}
 
-        {activeTab === "locationWise" && (
-          <Box mt={2}>
-            <Typography variant="h6" color="text.secondary">
-              Coming soon...
-            </Typography>
-          </Box>
-        )}
       </Box>
     </>
   );

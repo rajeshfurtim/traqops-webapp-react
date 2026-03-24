@@ -5,6 +5,7 @@ export interface GetFailureRateSystemParams {
   fromDate: string
   toDate: string
   locationId: string | number | Array<string | number>
+  tabKey?: string
 }
 
 export interface GetTopAssetsFailureParams {
@@ -12,22 +13,26 @@ export interface GetTopAssetsFailureParams {
   fromDate: string
   toDate: string
   locationId: string | number | Array<string | number>
+  tabKey?: string
 }
 
 export interface GetTopUsedSparesParams {
   fromDate: string
   toDate: string
   locationIds: string | number | Array<string | number>
+  tabKey?: string
 }
 
 export interface GetSpareConsumptionByLocationTrendParams {
   fromDate: string
   toDate: string
   locationIds: string | number | Array<string | number>
+  tabKey?: string
 }
 
 export interface GetLowStockSparesParams {
   locationId: string | number | Array<string | number>
+  tabKey?: string
 }
 
 export interface GetPmCountByFrequencyParams {
@@ -35,19 +40,21 @@ export interface GetPmCountByFrequencyParams {
   toDate: string
   locationId: string | number | Array<string | number>
   frequencyId: string | number
+  tabKey?: string
 }
 
 export interface GetCmGraphCountParams {
   clientId: string | number
   locationId: string | number | Array<string | number>
   statusId: string | number
+  tabKey?: string
 }
 
 export const dashboardApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getFailureRateSystem: build.query({
       query: (params: GetFailureRateSystemParams) => {
-        const { system, fromDate, toDate, locationId } = params
+        const { system, fromDate, toDate, locationId, tabKey } = params
 
         if (!system) throw new Error('system is required for getFailureRateSystem')
         if (!fromDate) throw new Error('fromDate is required for getFailureRateSystem')
@@ -64,6 +71,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             fromDate,
             toDate,
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
+            ...(tabKey ? { tabKey } : {}),
           },
         }
       },
@@ -72,7 +80,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getTopAssetsFailure: build.query({
       query: (params: GetTopAssetsFailureParams) => {
-        const { system, fromDate, toDate, locationId } = params
+        const { system, fromDate, toDate, locationId, tabKey } = params
 
         if (!system) throw new Error('system is required for getTopAssetsFailure')
         if (!fromDate) throw new Error('fromDate is required for getTopAssetsFailure')
@@ -89,6 +97,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             fromDate,
             toDate,
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
+            ...(tabKey ? { tabKey } : {}),
           },
         }
       },
@@ -97,7 +106,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getTopUsedSpares: build.query({
       query: (params: GetTopUsedSparesParams) => {
-        const { fromDate, toDate, locationIds } = params
+        const { fromDate, toDate, locationIds, tabKey } = params
 
         if (!fromDate) throw new Error('fromDate is required for getTopUsedSpares')
         if (!toDate) throw new Error('toDate is required for getTopUsedSpares')
@@ -112,6 +121,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             fromDate,
             toDate,
             locationIds: Array.isArray(locationIds) ? locationIds.join(',') : locationIds.toString(),
+            ...(tabKey ? { tabKey } : {}),
           },
         }
       },
@@ -120,7 +130,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getSpareConsumptionByLocationTrend: build.query({
       query: (params: GetSpareConsumptionByLocationTrendParams) => {
-        const { fromDate, toDate, locationIds } = params
+        const { fromDate, toDate, locationIds, tabKey } = params
 
         if (!fromDate) throw new Error('fromDate is required for getSpareConsumptionByLocationTrend')
         if (!toDate) throw new Error('toDate is required for getSpareConsumptionByLocationTrend')
@@ -135,6 +145,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             fromDate,
             toDate,
             locationIds: Array.isArray(locationIds) ? locationIds.join(',') : locationIds.toString(),
+            ...(tabKey ? { tabKey } : {}),
           },
         }
       },
@@ -143,7 +154,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getLowStockSpares: build.query({
       query: (params: GetLowStockSparesParams) => {
-        const { locationId } = params
+        const { locationId, tabKey } = params
 
         if (!locationId || (Array.isArray(locationId) && locationId.length === 0)) {
           throw new Error('locationId is required for getLowStockSpares')
@@ -154,6 +165,7 @@ export const dashboardApi = baseApi.injectEndpoints({
           method: 'GET',
           params: {
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
+            ...(tabKey ? { tabKey } : {}),
           },
         }
       },
@@ -162,7 +174,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getPmCountByFrequency: build.query({
       query: (params: GetPmCountByFrequencyParams) => {
-        const { fromDate, toDate, locationId, frequencyId } = params
+        const { fromDate, toDate, locationId, frequencyId, tabKey } = params
 
         if (!fromDate) throw new Error('fromDate is required for getPmCountByFrequency')
         if (!toDate) throw new Error('toDate is required for getPmCountByFrequency')
@@ -179,6 +191,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             toDate,
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
             frequencyId: frequencyId.toString(),
+            ...(tabKey ? { tabKey } : {}),
           },
         }
       },
@@ -187,7 +200,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getCmGraphCount: build.query({
       query: (params: GetCmGraphCountParams) => {
-        const { clientId, locationId, statusId } = params
+        const { clientId, locationId, statusId, tabKey } = params
 
         if (!clientId && clientId !== 0) throw new Error('clientId is required for getCmGraphCount')
         if (!statusId && statusId !== 0) throw new Error('statusId is required for getCmGraphCount')
@@ -202,6 +215,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             clientId: clientId.toString(),
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
             statusId: statusId.toString(),
+            ...(tabKey ? { tabKey } : {}),
           },
         }
       },
