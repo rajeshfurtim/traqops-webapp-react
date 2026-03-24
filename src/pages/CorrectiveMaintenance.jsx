@@ -31,8 +31,11 @@ export default function CorrectiveMaintenance() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [filters, setFilters] = useState({})
   const [countlist, setCountlist] = useState({})
-  const [form] = Form.useForm();
+  // filter form
+  const [filterForm] = Form.useForm();
 
+  // modal form
+  const [modalForm] = Form.useForm();
   const { locations, loading: locationsLoading } = useGetLocationList();
 
   const { data: response, isLoading: isInitialLoading, isFetching, error: queryError } =
@@ -60,7 +63,7 @@ export default function CorrectiveMaintenance() {
 
   useEffect(() => {
     console.log(locations)
-    form.setFieldsValue({
+    filterForm.setFieldsValue({
       location: -1,
     })
     if (locations?.length) {
@@ -81,15 +84,15 @@ export default function CorrectiveMaintenance() {
     {
       fromdate: filters.startdate,
       todate: filters.enddate,
-      locationId: 14474904,
+      locationId: filters.location,
       clientId: clientId,
       statusId: statusMap[activeTab],
     },
     {
-      skip: !filters.startdate || !filters.enddate,
+      skip: !filters.startdate || !filters.enddate || !filters.location,
       refetchOnMountOrArgChange: true
     }
-  )
+  );
 
 
   // send a client id while click add button 
@@ -100,7 +103,7 @@ export default function CorrectiveMaintenance() {
   const [sequenceNumber, setSequenceNumber] = useState(null);
   const [getMaxSequence] = correctiveApi.useLazyGetmaximumsequenceQuery()
 
-  // ✅ UPDATE TICKET FUNCTION
+  // UPDATE TICKET FUNCTION
   const updateTicketNumber = (locationId, seqNum) => {
     if (!locationId || !seqNum) return
 
@@ -108,7 +111,7 @@ export default function CorrectiveMaintenance() {
 
     if (selectedLoc) {
       const ticketNo = `${selectedLoc.code}/VAC/TVS/${seqNum}`
-      form.setFieldsValue({ ticketno: ticketNo })
+      modalForm.setFieldsValue({ ticketno: ticketNo })
     }
   }
   const handleadd = async () => {
@@ -121,7 +124,7 @@ export default function CorrectiveMaintenance() {
         setSequenceNumber(nextNumber)
         setopen(true)
 
-        const currentStation = form.getFieldValue("station")
+        const currentStation = modalForm.getFieldValue("station")
         if (currentStation) {
           updateTicketNumber(currentStation, nextNumber)
         }
@@ -203,25 +206,26 @@ export default function CorrectiveMaintenance() {
 
 
   const handleFilterChange = (values) => {
-    const newFilters = {}
-    setShouldFetch(true)
+    const newFilters = {};
+    setShouldFetch(true);
 
     if (values.dateRange && values.dateRange.length === 2) {
-      newFilters.startdate = values.dateRange[0].format('YYYY-MM-DD')
-      newFilters.enddate = values.dateRange[1].format('YYYY-MM-DD')
+      newFilters.startdate = values.dateRange[0].format('YYYY-MM-DD');
+      newFilters.enddate = values.dateRange[1].format('YYYY-MM-DD');
     }
 
-    if (values.location == -1) {
-      newFilters.location = locations.map(x => (x.id));
+    //  Correct location handling
+    if (values.location === -1) {
+      newFilters.location = locations.map(x => x.id).join(','); // API expects string
     } else {
       newFilters.location = values.location;
     }
 
-    setFilters(newFilters)
-  }
+    setFilters(newFilters);
+  };
 
   const handleResetFilters = () => {
-    form.resetFields()
+    filterForm.resetFields()
     setShouldFetch(false)
     setFilters({})
   }
@@ -373,7 +377,7 @@ export default function CorrectiveMaintenance() {
       setopen(true);
 
       // Populate form fields
-      form.setFieldsValue({
+      modalForm.setFieldsValue({
         ticketno: record.cmKey,
         station: record.location,
         system: record.category,
@@ -553,7 +557,7 @@ export default function CorrectiveMaintenance() {
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Form
-              form={form}
+              form={filterForm}
               layout="inline"
               onFinish={handleFilterChange}
               style={{ marginBottom: 16 }}
@@ -673,14 +677,14 @@ export default function CorrectiveMaintenance() {
           setopen(false);
           setIsEditing(false);
           setEditingRecord(null);
-          form.resetFields();
+          modalForm.resetFields();
         }}
         onOk={() => {
-          form.submit();
+          modalForm.submit();
         }}
         okText={isEditing ? "Update" : "Add"}
       >
-        <Form layout="vertical" form={form}>
+        <Form layout="vertical" form={modalForm}>
           <Row gutter={[16, 16]}>
 
             {/* Ticket Info */}
@@ -706,7 +710,7 @@ export default function CorrectiveMaintenance() {
                   optionFilterProp="children"
                   onChange={(value) => {
                     setSelectedLocation(value)
-                    form.setFieldsValue({ asset: undefined })
+                    modalForm.setFieldsValue({ asset: undefined })
                     if (sequenceNumber) {
                       updateTicketNumber(value, sequenceNumber)
                     }
@@ -733,7 +737,7 @@ export default function CorrectiveMaintenance() {
                   optionLabelProp="label"
                   onChange={(value) => {
                     setSelectedSystem(value);
-                    form.setFieldsValue({ category: undefined });
+                    modalForm.setFieldsValue({ category: undefined });
                   }}
                 >
                   <Select.Option value="ECS" label="ECS">
@@ -760,7 +764,7 @@ export default function CorrectiveMaintenance() {
                   onChange={(value) => {
                     setSelectedCategory(value);
                     setSelectedEquipment(value);
-                    form.setFieldsValue({ asset: undefined, faultcategory: undefined });
+                    modalForm.setFieldsValue({ asset: undefined, faultcategory: undefined });
                   }}
                 >
                   {category?.map((item) => (
@@ -807,7 +811,7 @@ export default function CorrectiveMaintenance() {
                   optionFilterProp="children"
                   onChange={(value) => {
                     setSelectedFaultCategory(value);
-                    form.setFieldsValue({ faultsubcategory: undefined });
+                    modalForm.setFieldsValue({ faultsubcategory: undefined });
                   }}
                 >
                   {faultCategoryList.map((item) => (
@@ -925,7 +929,7 @@ export default function CorrectiveMaintenance() {
               >
                 <Upload
                   listType="picture"
-                  beforeUpload={() => false} // ✅ prevent auto upload
+                  beforeUpload={() => false} //  prevent auto upload
                   maxCount={5}
                   multiple
                   accept="image/*"
