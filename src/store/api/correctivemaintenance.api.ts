@@ -201,12 +201,10 @@ export const correctiveApi = baseApi.injectEndpoints({
 
     deleteBreakdown: build.mutation({
       query: (ids) => {
-        const isSingle = ids.length === 1
+        const idParam = Array.isArray(ids) ? ids.join(',') : ids
 
         return {
-          url: isSingle
-            ? `${API_BASE_URL}/breakdown/delete?id=${ids[0]}`
-            : `${API_BASE_URL}/secure/breakdown/delete?ids=${ids.join(',')}`,
+          url: `${API_BASE_URL}/secure/breakdown/delete?id=${idParam}`,
           method: 'DELETE',
         }
       },
