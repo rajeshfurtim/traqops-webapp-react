@@ -45,7 +45,7 @@ export const correctiveApi = baseApi.injectEndpoints({
         }
 
         return {
-          url: `${API_BASE_URL}/cmtask/getlist/bystatus`,
+          url: `${API_BASE_URL}/bmrcl/cmtasklist/bystatus/andlocation`,
           method: 'GET',
           params: queryParams,
         }
@@ -80,7 +80,7 @@ export const correctiveApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
-     GetLocationwisedata: build.query({
+    GetLocationwisedata: build.query({
       query: (params) => {
         const { categoryId, locationId } = params
         const queryParams = {
@@ -98,7 +98,7 @@ export const correctiveApi = baseApi.injectEndpoints({
     }),
 
 
-     GetbyFaultid: build.query({
+    GetbyFaultid: build.query({
       query: (params) => {
         const { faultCategoryId } = params
         const queryParams = {
@@ -116,11 +116,11 @@ export const correctiveApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
-     GetallfaultcategoryList: build.query({
+    GetallfaultcategoryList: build.query({
       query: (params) => {
-        const { domainName, clientId,pn ,ps } = params
+        const { domainName, clientId, pn, ps } = params
         const queryParams = {
-          domainName : domainName,
+          domainName: domainName,
           clientId: clientId,
           pn: '1',
           ps: '1000'
@@ -136,11 +136,11 @@ export const correctiveApi = baseApi.injectEndpoints({
     }),
 
 
-     ByfaultcategoryList: build.query({
+    ByfaultcategoryList: build.query({
       query: (params) => {
-        const { faultCategoryId} = params
+        const { faultCategoryId } = params
         const queryParams = {
-          faultCategoryId : faultCategoryId,
+          faultCategoryId: faultCategoryId,
           pn: '1',
           ps: '1000'
         }
@@ -154,11 +154,11 @@ export const correctiveApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
-     GetlistbyUser: build.query({
+    GetlistbyUser: build.query({
       query: (params) => {
-        const { LocationId} = params
+        const { LocationId } = params
         const queryParams = {
-          locationId : LocationId,
+          locationId: LocationId,
         }
 
         return {
@@ -168,13 +168,13 @@ export const correctiveApi = baseApi.injectEndpoints({
         }
       },
       providesTags: ['Report'],
-    }), 
-    
-     Getallpriority: build.query({
+    }),
+
+    Getallpriority: build.query({
       query: (params) => {
-        const { domainName,clientId} = params
+        const { domainName, clientId } = params
         const queryParams = {
-          domainName : domainName,
+          domainName: domainName,
           clientId: clientId,
           pn: '1',
           ps: '1000'
@@ -187,9 +187,31 @@ export const correctiveApi = baseApi.injectEndpoints({
         }
       },
       providesTags: ['Report'],
-    }), 
+    }),
+
+    AddOrUpdateBreakdown: build.mutation({
+      query: (formData) => ({
+        url: `${API_BASE_URL}/bmrcl/cm/addorupdate`,
+        method: 'POST',
+        body: formData,
+      }),
+      invalidatesTags: ['Report'],
+    }),
 
 
+    deleteBreakdown: build.mutation({
+      query: (ids) => {
+        const isSingle = ids.length === 1
+
+        return {
+          url: isSingle
+            ? `${API_BASE_URL}/breakdown/delete?id=${ids[0]}`
+            : `${API_BASE_URL}/secure/breakdown/delete?ids=${ids.join(',')}`,
+          method: 'DELETE',
+        }
+      },
+      invalidatesTags: ['Report'],
+    }),
 
 
   }),
@@ -203,7 +225,10 @@ export const {
   useGetcategoryQuery,
   useGetLocationwisedataQuery,
   useByfaultcategoryListQuery,
-  useGetallpriorityQuery
-  
+  useGetallpriorityQuery,
+  useAddOrUpdateBreakdownMutation,
+  useDeleteBreakdownMutation
+
+
 
 } = correctiveApi

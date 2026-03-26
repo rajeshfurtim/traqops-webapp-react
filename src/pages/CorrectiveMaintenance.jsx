@@ -30,7 +30,7 @@ export default function CorrectiveMaintenance() {
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [filters, setFilters] = useState({})
-  const [countlist, setCountlist] = useState({})
+  const [isViewMode, setIsViewMode] = useState(false)
   // filter form
   const [filterForm] = Form.useForm();
 
@@ -38,20 +38,19 @@ export default function CorrectiveMaintenance() {
   const [modalForm] = Form.useForm();
   const { locations, loading: locationsLoading } = useGetLocationList();
 
-  const { data: response, isLoading: isInitialLoading, isFetching, error: queryError } =
+  const { data: response, isLoading, isFetching } =
     correctiveApi.useGetcorrectivemaintenanceCountListQuery(
       {
         fromdate: filters.startdate,
         todate: filters.enddate,
-        locationId: filters.location,
+        locationId: filters.locationIds,
       },
       {
         skip: !filters.startdate || !shouldFetch || !filters.enddate,
-        refetchOnMountOrArgChange: false
       }
     )
 
-  const queryLoading = isInitialLoading || isFetching
+const queryLoading = isLoading || isFetching
 
   const statusMap = {
     '1': 640, // Open
@@ -70,29 +69,27 @@ export default function CorrectiveMaintenance() {
       setFilters({
         startdate: dayjs().startOf('month').format('YYYY-MM-DD'),
         enddate: dayjs().endOf('month').format('YYYY-MM-DD'),
-        location: locations.map(x => x.id).join(',')
+        // location: locations.map(x => x.id).join(',')
+        location: "-1",
+        locationIds: locations.map(x => x.id).join(',') // ✅ ADD THIS
+
       });
     }
   }, [locations])
 
-  const {
-    data: cmresponse,
-    isLoading: cmqueryLoading,
-    isFetching: cmisFetching,
-    error: cmqueryError
-  } = correctiveApi.useGetcorrectivemaintenanceQuery(
-    {
-      fromdate: filters.startdate,
-      todate: filters.enddate,
-      locationId: filters.location,
-      clientId: clientId,
-      statusId: statusMap[activeTab],
-    },
-    {
-      skip: !filters.startdate || !filters.enddate || !filters.location,
-      refetchOnMountOrArgChange: true
-    }
-  );
+  const { data: cmresponse, isLoading: cmqueryLoading,   isFetching: cmisFetching } =
+    correctiveApi.useGetcorrectivemaintenanceQuery(
+      {
+        fromdate: filters.startdate,
+        todate: filters.enddate,
+        locationId: filters.location,
+        clientId: clientId,
+        statusId: statusMap[activeTab],
+      },
+      {
+        skip: !filters.startdate || !filters.enddate || !filters.location,
+      }
+    );
 
 
   // send a client id while click add button 
@@ -114,6 +111,86 @@ export default function CorrectiveMaintenance() {
       modalForm.setFieldsValue({ ticketno: ticketNo })
     }
   }
+
+  //add 
+  const [addOrUpdateBreakdown, { isLoading: saveLoading }] = correctiveApi.useAddOrUpdateBreakdownMutation();
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [retryValues, setRetryValues] = useState(null)
+
+
+  const addticket = async (values, isRetry = false) => {
+    console.log("FORM VALUES:", values)
+
+    try {
+      const formData = new FormData()
+
+      formData.append("domainName", domainName)
+      formData.append("clientId", clientId)
+      formData.append("locationId", values.station || "")
+      formData.append("faultCategoryId", values.faultCategory || "")
+      formData.append("categoryId", values.equipment || "")
+      formData.append("faultSubCategoryId", values.faultsubcategory || "")
+      formData.append("priorityId", values.priority || "")
+      formData.append("technician", values.user || "")
+      formData.append("sequelNumber", sequenceNumber || 0)
+      formData.append("cmKey", values.ticketno || "")
+      formData.append("assetId", values.itemcode || "")
+      formData.append("systemName", values.system || "")
+      formData.append("recordedBy", values.faultrecord || "")
+      formData.append("description", values.description || "")
+      formData.append("assignedTo", values.user || "")
+      formData.append("type", "Task")
+      formData.append("isWorking", values.workingstatus)
+      formData.append("rectificationDetails", values.rectification || "")
+      formData.append("reasonForBreakdown", values.breakdownreason || "")
+      formData.append("confirmed", isRetry) // 🔥 important
+      formData.append("statusId", 640)
+
+      formData.append("issueStartTime", dayjs().format("YYYY-MM-DD HH:mm:ss"))
+      formData.append("issueEndTime", dayjs().add(3, "day").format("YYYY-MM-DD HH:mm:ss"))
+
+      // Files
+      if (values.images?.length) {
+        values.images.forEach((file, index) => {
+          formData.append(`files[${index}]`, file.originFileObj)
+        })
+      }
+
+      const res = await addOrUpdateBreakdown(formData).unwrap()
+
+      if (
+        res?.message === "CM already exists for this Asset, Location and Date" &&
+        !isRetry
+      ) {
+        setRetryValues(values)
+        setConfirmOpen(true)
+        return
+      }
+
+      message.success("Saved successfully ✅")
+      setopen(false)
+      modalForm.resetFields()
+
+    } catch (error) {
+      console.error(error)
+
+      const errorMessage =
+        error?.data?.message || error?.message || ""
+
+      if (
+        errorMessage === "CM already exists for this Asset, Location and Date" &&
+        !isRetry
+      ) {
+        setRetryValues(values)
+        setConfirmOpen(true)
+        return
+      }
+
+      message.error("Save failed ❌")
+    }
+  }
+
+  //add open model
   const handleadd = async () => {
     try {
       const res = await getMaxSequence({ clientId }).unwrap()
@@ -214,11 +291,12 @@ export default function CorrectiveMaintenance() {
       newFilters.enddate = values.dateRange[1].format('YYYY-MM-DD');
     }
 
-    //  Correct location handling
     if (values.location === -1) {
-      newFilters.location = locations.map(x => x.id).join(','); // API expects string
+      newFilters.location = "-1"; // for table API
+      newFilters.locationIds = locations.map(x => x.id).join(','); // for count API
     } else {
       newFilters.location = values.location;
+      newFilters.locationIds = values.location.toString();
     }
 
     setFilters(newFilters);
@@ -371,6 +449,7 @@ export default function CorrectiveMaintenance() {
     if (selectedRowKeys.length === 1) { // only allow editing one row
       const record = Cmreports.find(r => r.id === selectedRowKeys[0]);
       if (!record) return;
+      console.log("Edit ticket", record)
 
       setEditingRecord(record);
       setIsEditing(true);
@@ -380,20 +459,61 @@ export default function CorrectiveMaintenance() {
       modalForm.setFieldsValue({
         ticketno: record.cmKey,
         station: record.location,
-        system: record.category,
-        equipment: record.assets,
+        system: record.allData?.systemName,
+        equipment: record.category,
         itemcode: record.assets,
         faultCategory: record.faultCategory,
         faultsubcategory: record.faultSubCategory,
         user: record.assignedId,
         priority: record.priority,
         description: record.allData?.description || '',
-        faultrecord: record.allData?.faultRecordedBy || '',
+        faultrecord: record.allData?.recordedBy || '',
       });
     } else {
       message.warning("Please select only one row to edit");
     }
   };
+
+
+  //delete
+  const [deleteBreakdown, { isLoading: deleteLoading }] = correctiveApi.useDeleteBreakdownMutation()
+  const handleDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one row")
+      return
+    }
+
+    try {
+      await deleteBreakdown(selectedRowKeys).unwrap()
+
+      message.success("Deleted successfully ✅")
+      setSelectedRowKeys([])
+
+    } catch (error) {
+      console.error(error)
+      message.error("Delete failed ❌")
+    }
+  }
+
+  const showDeleteConfirm = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning("Please select at least one row")
+      return
+    }
+
+    Modal.confirm({
+      title: "Are you sure?",
+      content: `Do you want to delete ${selectedRowKeys.length} record(s)?`,
+      okText: "Yes",
+      cancelText: "No",
+      centered: true,
+      okButtonProps: {
+        danger: true,
+        loading: deleteLoading
+      },
+      onOk: handleDelete
+    })
+  }
 
   const columns = [
     {
@@ -506,7 +626,6 @@ export default function CorrectiveMaintenance() {
     ...tab,
     children: (
       <>
-        {/* ✅ Buttons only for Open tab */}
         {tab.key === '1' && (
           <div style={{ marginBottom: 12 }}>
             <Space>
@@ -518,7 +637,12 @@ export default function CorrectiveMaintenance() {
               >
                 Edit
               </AntButton>
-              <AntButton danger icon={<DeleteOutlined />} disabled={!isActionEnabled}>
+              <AntButton
+                danger
+                icon={<DeleteOutlined />}
+                disabled={!isActionEnabled}
+                onClick={showDeleteConfirm}
+              >
                 Delete
               </AntButton>
             </Space>
@@ -538,6 +662,29 @@ export default function CorrectiveMaintenance() {
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50'],
           }}
+          onRow={(record) => ({
+            onClick: () => {
+              setIsViewMode(true)
+              setIsEditing(false)
+              setopen(true)
+
+              modalForm.setFieldsValue({
+                ticketno: record.cmKey,
+                station: record.location,
+                system: record.allData?.systemName,
+                equipment: record.category,
+                itemcode: record.assets,
+                faultCategory: record.faultCategory,
+                faultsubcategory: record.faultSubCategory,
+                user: record.assignedId,
+                priority: record.priority,
+                description: record.allData?.description || '',
+                faultrecord: record.allData?.recordedBy || '',
+                rectification: record.allData?.rectificationDetails || '',
+                breakdownreason: record.allData?.reasonForBreakdown || ''
+              })
+            }
+          })}
         />
       </>
     )
@@ -669,22 +816,27 @@ export default function CorrectiveMaintenance() {
         </Card>
       </Box>
       <Modal
-        title={isEditing ? "Edit Task" : "Add Details"}
+        title={isViewMode ? "View Details" : isEditing ? "Edit Task" : "Add Details"}
         open={open}
         centered
         width={800}
         onCancel={() => {
-          setopen(false);
-          setIsEditing(false);
-          setEditingRecord(null);
-          modalForm.resetFields();
+          setopen(false)
+          setIsEditing(false)
+          setIsViewMode(false)
+          setEditingRecord(null)
+          modalForm.resetFields()
         }}
         onOk={() => {
-          modalForm.submit();
+          if (!isViewMode) {
+            modalForm.submit()
+          } else {
+            setopen(false)
+          }
         }}
-        okText={isEditing ? "Update" : "Add"}
+        okText={isViewMode ? "Close" : isEditing ? "Update" : "Add"}
       >
-        <Form layout="vertical" form={modalForm}>
+        <Form layout="vertical" form={modalForm} onFinish={addticket} >
           <Row gutter={[16, 16]}>
 
             {/* Ticket Info */}
@@ -715,6 +867,7 @@ export default function CorrectiveMaintenance() {
                       updateTicketNumber(value, sequenceNumber)
                     }
                   }}
+                  disabled={isViewMode}
                 >
                   {locations?.map((loc) => (
                     <Select.Option key={loc.id} value={loc.id}>
@@ -725,7 +878,27 @@ export default function CorrectiveMaintenance() {
               </Form.Item>
             </Col>
 
-            {/* System Info */}
+            <Col span={12}>
+              <Form.Item
+                label="Working Status"
+                name="workingstatus"
+                rules={[{ required: true, message: "Please select Status" }]}
+              >
+                <Select
+                  placeholder="Select Status"
+                  showSearch
+                  disabled={isViewMode}
+                >
+                  <Select.Option value={"Y"}>
+                    Operational
+                  </Select.Option>
+                  <Select.Option value={"N"}>
+                    Non-Operational
+                  </Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+
             <Col span={12}>
               <Form.Item
                 label="System"
@@ -739,6 +912,7 @@ export default function CorrectiveMaintenance() {
                     setSelectedSystem(value);
                     modalForm.setFieldsValue({ category: undefined });
                   }}
+                  disabled={isViewMode}
                 >
                   <Select.Option value="ECS" label="ECS">
                     <Tag color="blue">ECS</Tag> Environmental Control System
@@ -766,6 +940,7 @@ export default function CorrectiveMaintenance() {
                     setSelectedEquipment(value);
                     modalForm.setFieldsValue({ asset: undefined, faultcategory: undefined });
                   }}
+                  disabled={isViewMode}
                 >
                   {category?.map((item) => (
                     <Select.Option key={item.id} value={item.id}>
@@ -778,7 +953,7 @@ export default function CorrectiveMaintenance() {
 
             <Col span={12}>
               <Form.Item
-                label="Item Code"
+                label="Assets"
                 name="itemcode"
                 rules={[{ required: true, message: "Please select Item Code" }]}
               >
@@ -787,6 +962,7 @@ export default function CorrectiveMaintenance() {
                   loading={assetLoading}
                   showSearch
                   optionFilterProp="children"
+                  disabled={isViewMode}
                 >
                   {assetList.map((item) => (
                     <Select.Option key={item.assetId} value={item.assetId}>
@@ -813,6 +989,7 @@ export default function CorrectiveMaintenance() {
                     setSelectedFaultCategory(value);
                     modalForm.setFieldsValue({ faultsubcategory: undefined });
                   }}
+                  disabled={isViewMode}
                 >
                   {faultCategoryList.map((item) => (
                     <Select.Option key={item.id} value={item.id}>
@@ -834,6 +1011,7 @@ export default function CorrectiveMaintenance() {
                   loading={faultSubLoading}
                   showSearch
                   optionFilterProp="children"
+                  disabled={isViewMode}
                 >
                   {faultSubList.map((item) => (
                     <Select.Option
@@ -858,6 +1036,7 @@ export default function CorrectiveMaintenance() {
                   loading={userLoading}
                   showSearch
                   optionFilterProp="children"
+                  disabled={isViewMode}
                 >
                   {userList.map((user) => (
                     <Select.Option key={user.userId} value={user.userId}>
@@ -879,6 +1058,7 @@ export default function CorrectiveMaintenance() {
                   loading={priorityLoading}
                   showSearch
                   optionFilterProp="children"
+                  disabled={isViewMode}
                 >
                   {Array.isArray(priorityList) && priorityList.map((item) => (
                     <Select.Option key={item.id} value={item.id}>
@@ -889,26 +1069,52 @@ export default function CorrectiveMaintenance() {
               </Form.Item>
             </Col>
 
-            {/* Additional */}
             <Col span={12}>
               <Form.Item
-                label="Fault Recorded By"
+                label="Corrective/Preventive Action Taken"
                 name="faultrecord"
-                rules={[{ required: true, message: "Please enter name" }]}
               >
-                <Input placeholder="Enter name" />
+                <Input.TextArea rows={3} placeholder="Enter Action Taken Name " disabled={isViewMode} />
               </Form.Item>
             </Col>
 
-            {/* Full Width Fields */}
-            <Col span={24}>
+            <Col span={12}>
               <Form.Item
-                label="Description"
+                label="Brief Details About Fault"
                 name="description"
               >
-                <Input.TextArea rows={3} placeholder="Enter description" />
+                <Input.TextArea rows={3} placeholder="Enter description" disabled={isViewMode} />
               </Form.Item>
             </Col>
+
+            <Col span={12}>
+              <Form.Item
+                label="Rectification Details"
+                name="rectification"
+              >
+                <Input.TextArea rows={3} placeholder="Enter Rectification Details" disabled={isViewMode} />
+              </Form.Item>
+            </Col>
+
+
+            <Col span={12}>
+              <Form.Item
+                label="Reason For Breakdown"
+                name="breakdownreason"
+              >
+                <Input.TextArea rows={3} placeholder="Enter Brakdown Reason" disabled={isViewMode} />
+              </Form.Item>
+            </Col>
+
+            {/* <Col span={12}>
+              <Form.Item
+                label="Corrective/Preventive Action Taken"
+                name="cpactivetaken"
+                rules={[{ required: true, message: "Please Enter Corrective/Preventive Action Taken" }]}
+              >
+                <Input.TextArea rows={3} placeholder="Enter Corrective/Preventive Action Taken" />
+              </Form.Item>
+            </Col> */}
 
             <Col span={24}>
               <Form.Item
@@ -929,10 +1135,11 @@ export default function CorrectiveMaintenance() {
               >
                 <Upload
                   listType="picture"
-                  beforeUpload={() => false} //  prevent auto upload
+                  beforeUpload={() => false}
                   maxCount={5}
                   multiple
                   accept="image/*"
+                  disabled={isViewMode}
                 >
                   <Button icon={<UploadOutlined />}>Select Images</Button>
                 </Upload>
@@ -941,6 +1148,78 @@ export default function CorrectiveMaintenance() {
 
           </Row>
         </Form>
+      </Modal>
+
+      <Modal
+        open={confirmOpen}
+        centered
+        width={750}
+        closable={false}
+        maskClosable={false}
+        footer={null}
+        bodyStyle={{ padding: "30px", borderRadius: "12px" }}
+      >
+        <div style={{ textAlign: "center" }}>
+
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/595/595067.png"
+            alt="warning"
+            style={{ width: "90px", marginBottom: "20px" }}
+          />
+
+          <h2 style={{ marginBottom: "10px", fontWeight: "600", color: "#ff4d4f" }}>
+            Allready this ticket created
+          </h2>
+
+          <p style={{ fontSize: "16px", color: "#555", lineHeight: "1.6" }}>
+            CM already exists for this <b>Asset, Location and Date</b>.
+            <br />
+            Do you want to continue anyway?
+          </p>
+
+          <div
+            style={{
+              marginTop: "30px",
+              display: "flex",
+              justifyContent: "center",
+              gap: "20px"
+            }}
+          >
+            <Button
+              type="primary"
+              size="large"
+              style={{
+                padding: "0 30px",
+                borderRadius: "8px"
+              }}
+              onClick={() => {
+                setConfirmOpen(false)
+                addticket(retryValues, true)
+                setopen(false)
+              }}
+            >
+              Yes, Continue
+            </Button>
+
+            <Button
+              size="large"
+              danger
+              style={{
+                padding: "0 30px",
+                borderRadius: "8px"
+              }}
+              onClick={() => {
+                setConfirmOpen(false)
+                setopen(false)
+                modalForm.resetFields();
+              }
+              }
+            >
+              Cancel
+            </Button>
+          </div>
+
+        </div>
       </Modal>
     </>
   )
