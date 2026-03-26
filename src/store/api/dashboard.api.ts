@@ -6,6 +6,7 @@ export interface GetFailureRateSystemParams {
   toDate: string
   locationId: string | number | Array<string | number>
   tabKey?: string
+  shiftId?: string | number
 }
 
 export interface GetTopAssetsFailureParams {
@@ -14,6 +15,7 @@ export interface GetTopAssetsFailureParams {
   toDate: string
   locationId: string | number | Array<string | number>
   tabKey?: string
+  shiftId?: string | number
 }
 
 export interface GetTopUsedSparesParams {
@@ -21,6 +23,7 @@ export interface GetTopUsedSparesParams {
   toDate: string
   locationIds: string | number | Array<string | number>
   tabKey?: string
+  shiftId?: string | number
 }
 
 export interface GetSpareConsumptionByLocationTrendParams {
@@ -28,11 +31,13 @@ export interface GetSpareConsumptionByLocationTrendParams {
   toDate: string
   locationIds: string | number | Array<string | number>
   tabKey?: string
+  shiftId?: string | number
 }
 
 export interface GetLowStockSparesParams {
   locationId: string | number | Array<string | number>
   tabKey?: string
+  shiftId?: string | number
 }
 
 export interface GetPmCountByFrequencyParams {
@@ -54,7 +59,7 @@ export const dashboardApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getFailureRateSystem: build.query({
       query: (params: GetFailureRateSystemParams) => {
-        const { system, fromDate, toDate, locationId, tabKey } = params
+        const { system, fromDate, toDate, locationId, tabKey, shiftId } = params
 
         if (!system) throw new Error('system is required for getFailureRateSystem')
         if (!fromDate) throw new Error('fromDate is required for getFailureRateSystem')
@@ -72,6 +77,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             toDate,
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
             ...(tabKey ? { tabKey } : {}),
+            ...(shiftId !== undefined ? { shiftId: shiftId.toString() } : {}),
           },
         }
       },
@@ -80,7 +86,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getTopAssetsFailure: build.query({
       query: (params: GetTopAssetsFailureParams) => {
-        const { system, fromDate, toDate, locationId, tabKey } = params
+        const { system, fromDate, toDate, locationId, tabKey, shiftId } = params
 
         if (!system) throw new Error('system is required for getTopAssetsFailure')
         if (!fromDate) throw new Error('fromDate is required for getTopAssetsFailure')
@@ -98,6 +104,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             toDate,
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
             ...(tabKey ? { tabKey } : {}),
+            ...(shiftId !== undefined ? { shiftId: shiftId.toString() } : {}),
           },
         }
       },
@@ -106,7 +113,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getTopUsedSpares: build.query({
       query: (params: GetTopUsedSparesParams) => {
-        const { fromDate, toDate, locationIds, tabKey } = params
+        const { fromDate, toDate, locationIds, tabKey, shiftId } = params
 
         if (!fromDate) throw new Error('fromDate is required for getTopUsedSpares')
         if (!toDate) throw new Error('toDate is required for getTopUsedSpares')
@@ -122,6 +129,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             toDate,
             locationIds: Array.isArray(locationIds) ? locationIds.join(',') : locationIds.toString(),
             ...(tabKey ? { tabKey } : {}),
+            ...(shiftId !== undefined ? { shiftId: shiftId.toString() } : {}),
           },
         }
       },
@@ -130,7 +138,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getSpareConsumptionByLocationTrend: build.query({
       query: (params: GetSpareConsumptionByLocationTrendParams) => {
-        const { fromDate, toDate, locationIds, tabKey } = params
+        const { fromDate, toDate, locationIds, tabKey, shiftId } = params
 
         if (!fromDate) throw new Error('fromDate is required for getSpareConsumptionByLocationTrend')
         if (!toDate) throw new Error('toDate is required for getSpareConsumptionByLocationTrend')
@@ -146,6 +154,7 @@ export const dashboardApi = baseApi.injectEndpoints({
             toDate,
             locationIds: Array.isArray(locationIds) ? locationIds.join(',') : locationIds.toString(),
             ...(tabKey ? { tabKey } : {}),
+            ...(shiftId !== undefined ? { shiftId: shiftId.toString() } : {}),
           },
         }
       },
@@ -154,7 +163,7 @@ export const dashboardApi = baseApi.injectEndpoints({
 
     getLowStockSpares: build.query({
       query: (params: GetLowStockSparesParams) => {
-        const { locationId, tabKey } = params
+        const { locationId, tabKey, shiftId } = params
 
         if (!locationId || (Array.isArray(locationId) && locationId.length === 0)) {
           throw new Error('locationId is required for getLowStockSpares')
@@ -166,6 +175,7 @@ export const dashboardApi = baseApi.injectEndpoints({
           params: {
             locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
             ...(tabKey ? { tabKey } : {}),
+            ...(shiftId !== undefined ? { shiftId: shiftId.toString() } : {}),
           },
         }
       },

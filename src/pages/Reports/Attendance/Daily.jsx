@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Spin, Col, Row } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, message, Input, Skeleton, Col, Row } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useGetDailyLocationReportQuery } from '../../../store/api/reports.api'
@@ -10,11 +10,11 @@ import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetAllUserType } from '../../../hooks/useGetAllUserType'
-// import './Daily.css'
 
 export default function DailyAttendanceReport() {
   const [loading, setLoading] = useState(false)
   const [shouldFetch, setShouldFetch] = useState(false)
+  const [searchNonce, setSearchNonce] = useState(0)
   const [searchTriggered, setSearchTriggered] = useState(false)
   const [exporting, setExporting] = useState({ excel: false, pdf: false })
   const [reports, setReports] = useState([])
@@ -25,13 +25,9 @@ export default function DailyAttendanceReport() {
   })
   const [form] = Form.useForm()
   const { user } = useAuth()
-
-  // Fetch locations from API using custom hook
   const { locations, loading: locationsLoading } = useGetLocationList()
-  // Fetch user types from API using custom hook
   const { userTypes, loading: userTypesLoading } = useGetAllUserType()
 
-  // Create location options with name for display, add 'All Locations' option
   const locationOptions = [
     { id: -1, name: 'All Locations' },
     ...(Array.isArray(locations) && locations.length > 0 ? locations.map(loc => ({
@@ -40,7 +36,6 @@ export default function DailyAttendanceReport() {
     })) : [])
   ]
 
-  // Create user type options with name for display, add 'All' option
   const userTypeOptions = [
     { id: -1, name: 'All' },
     ...(Array.isArray(userTypes) && userTypes.length > 0 ? userTypes.map(ut => ({
@@ -49,38 +44,20 @@ export default function DailyAttendanceReport() {
     })) : [])
   ]
 
-
-  // const handleFilterChange = (field, value) => {
-  //   const newFilters = { ...filters }
-  //   if (field === 'date') {
-  //     newFilters.date = value
-  //   } else if (field === 'location') {
-  //     newFilters.location = value || undefined
-  //   } else if (field === 'type') {
-  //     newFilters.type = value
-  //   }
-  //   setFilters(newFilters)
-  // }
-
-  // Get current form values for RTK Query
-
-
   const formValues = Form.useWatch([], form)
-  const selectedDate = formValues?.date || filters.date || dayjs()
-  const selectedLocationName = formValues?.location || filters.location || 'All Locations'
-  const selectedUserTypeName = formValues?.type || filters.type || 'All'
 
-  // Get clientId from user context
+  const selectedDate = filters.date || dayjs()
+  const selectedLocationName = filters.location || 'All Locations'
+  const selectedUserTypeName = filters.type || 'All'
+
   const clientId = user?.client?.id || user?.clientId
 
-  // Find locationId(s) from selected location name
   let locationId = null
   if (selectedLocationName === 'All Locations') {
 
-    // Send all location IDs as comma-separated string when "All Locations" is selected
     if (locationOptions.length > 0) {
       locationId = locationOptions
-        .filter(loc => loc.id !== -1) // Exclude the "All Locations" option itself
+        .filter(loc => loc.id !== -1)
         .map(loc => loc.id)
         .join(',')
     }
@@ -91,7 +68,6 @@ export default function DailyAttendanceReport() {
     }
   }
 
-  // Find userTypeId from selected user type name
   let userTypeId = -1
   if (selectedUserTypeName && selectedUserTypeName !== 'All') {
     const selectedUserType = userTypeOptions.find(ut => ut.name === selectedUserTypeName)
@@ -100,16 +76,15 @@ export default function DailyAttendanceReport() {
     }
   }
 
-  // Format date as YYYY-MM-DD
   const formattedDate = dayjs(selectedDate).format('YYYY-MM-DD')
 
-  // RTK Query hook
   const { data: response, isLoading: isInitialLoading, isFetching } = useGetDailyLocationReportQuery(
     {
       date: formattedDate,
       locationId: locationId,
       userTypeId: userTypeId,
       clientId: clientId,
+      searchNonce,
     },
     { skip: !clientId || !shouldFetch }
   )
@@ -128,41 +103,12 @@ export default function DailyAttendanceReport() {
     }
   }, [shouldFetch, filters, clientId, queryLoading, response])
 
-  // Process response data
-  // useEffect(() => {
-  //   if (!queryLoading && response?.success && response.data && Array.isArray(response.data)) {
-  //     const mappedReports = response.data.map((item, index) => ({
-  //       id: item.id || index,
-  //       serialNo: index + 1,
-  //       date: item.createAt || formattedDate,
-  //       employeeName: item.userName || '-',
-  //       employeeId: item.employeeCode || '-',
-  //       location: item.locationName || '-',
-  //       userType: item.userTypeName || '-',
-  //       shift: item.shiftName || '-',
-  //       punchIn: item.inTime || '-',
-  //       punchOut: item.outTime || '-'
-  //     }))
-
-  //     setReports(mappedReports)
-  //     setFilters({
-  //       date: selectedDate,
-  //       location: selectedLocationName,
-  //       type: selectedUserTypeName
-  //     })
-  //   } else if (!queryLoading && response && !response.success) {
-  //     message.error(response.message || 'Failed to load daily location report')
-  //     setReports([])
-  //   }
-  // }, [response, queryLoading, formattedDate, selectedDate, selectedLocationName, selectedUserTypeName])
-
-
   useEffect(() => {
     if (queryLoading) return
 
     if (response?.success && Array.isArray(response.data)) {
       const mappedReports = response.data.map((item, index) => ({
-        id: item.id ?? `${item.employeeCode}-${index}`, // safer unique key
+        id: item.id ?? `${item.employeeCode}-${index}`, 
         serialNo: index + 1,
         date: item.createAt || formattedDate,
         employeeName: item.userName || '-',
@@ -186,9 +132,13 @@ export default function DailyAttendanceReport() {
       message.error('Client ID not found. Please login again.')
       return
     }
+    setSearchNonce((prev) => prev + 1)
+    setFilters({
+      date: formValues?.date || filters.date || dayjs(),
+      location: formValues?.location || filters.location || 'All Locations',
+      type: formValues?.type || filters.type || 'All',
+    })
     setShouldFetch(true)
-    // refetch()
-    // form.submit()
   }
 
   const handleResetFilters = () => {
@@ -227,7 +177,7 @@ export default function DailyAttendanceReport() {
       setExporting(prev => ({ ...prev, pdf: true }))
 
       await exportToPDF(
-        columns,            // ✅ same column order
+        columns,
         filteredReports,
         `daily-attendance-${dayjs(filters.date).format('YYYY-MM-DD')}`
       )
@@ -240,7 +190,6 @@ export default function DailyAttendanceReport() {
     }
   }
 
-  //filter
   const [searchText, setSearchText] = useState('')
   const filteredReports = useMemo(() => {
     if (!searchText) return reports
@@ -327,7 +276,6 @@ export default function DailyAttendanceReport() {
           Daily Attendance Report
         </Typography>
 
-        {/* Filter Section */}
         <Card className="filter-card" sx={{ mb: 3 }}>
           <CardContent className="filter-content">
             <Form
@@ -413,7 +361,7 @@ export default function DailyAttendanceReport() {
             ) :
               queryLoading ? (
                 <Box display="flex" justifyContent="center" p={4}>
-                  <Spin />
+                  <Skeleton active paragraph={{ rows: 8 }} />
                 </Box>
               ) : (
                 <>

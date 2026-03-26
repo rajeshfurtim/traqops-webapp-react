@@ -107,8 +107,7 @@ export default function Dashboard() {
       const v = (s?.value || s?.name || "").trim();
       return { label: v, value: v };
     })
-    // API can return the same status value for multiple `type`s (e.g., VERIFIED twice).
-    // Keep only 1 option per `value`.
+    
     .reduce((acc, opt) => {
       if (!acc.some((x) => x.value === opt.value)) acc.push(opt);
       return acc;
@@ -137,55 +136,34 @@ export default function Dashboard() {
     return `${h} hrs ${m} mins`;
   };
 
-  const kpiCards = [
-    {
-      title: "Total Tickets",
-      value: dashboardData?.kpis?.totalTickets?.toLocaleString?.() ?? "0",
-      color: "#1976d2",
-    },
-    {
-      title: "Open Tickets",
-      value: dashboardData?.kpis?.openTickets ?? 0,
-      color: "#ed6c02",
-    },
-    {
-      title: "Completed This Month",
-      value: dashboardData?.kpis?.completedThisMonth ?? 0,
-      color: "#2e7d32",
-    },
-    {
-      title: "Inventory Value",
-      value: `$${dashboardData?.kpis?.inventoryValue?.toLocaleString?.() ?? "0"}`,
-      color: "#9c27b0",
-    },
-  ];
-
   const tabItems = [
     { key: "consolidate", label: "Consolidate" },
     { key: "locationWise", label: "Location Wise" },
   ];
 
-  // shiftOptions now comes from API (useGetAllShiftQuery)
-
   const handleSearch = (values, tabKeyOverride) => {
     const fromDate = values?.fromDate?.startOf?.("month")?.format?.("YYYY-MM-DD")
     const toDate = values?.fromDate?.endOf?.("month")?.format?.("YYYY-MM-DD")
-    const locationIds = Array.isArray(values?.locationIds) ? values.locationIds : []
+    const rawLocationIds = Array.isArray(values?.locationIds) ? values.locationIds : []
+    const wantsAllLocations =
+      rawLocationIds?.some((id) => String(id) === "-1") ?? false
+    const locationIds = wantsAllLocations
+      ? locationOptions.map((l) => l?.id).filter((id) => id !== undefined && id !== null)
+      : rawLocationIds.filter((id) => String(id) !== "-1")
+    const shiftId = values?.shiftId
     const tabKey = tabKeyOverride || activeTab
 
-    // Spare consumption trend API always uses the full current year range (Jan 1 → Dec 31).
     const yearFromDate = dayjs().startOf("year").format("YYYY-MM-DD")
     const yearToDate = dayjs().endOf("year").format("YYYY-MM-DD")
 
     console.log("Dashboard filters", {
       fromDate,
       toDate,
-      shiftId: values?.shiftId,
+      shiftId,
       locationIds,
       tabKey,
     })
 
-    // Your API requires locationId list; if none selected, keep existing chart data.
     if (!fromDate || !toDate || !locationIds.length) return
 
     ;(async () => {
@@ -206,6 +184,7 @@ export default function Dashboard() {
             toDate,
             locationId: locationIds,
             tabKey,
+            shiftId,
           }).unwrap(),
           triggerGetFailureRateSystem({
             system: "TVS",
@@ -213,6 +192,7 @@ export default function Dashboard() {
             toDate,
             locationId: locationIds,
             tabKey,
+            shiftId,
           }).unwrap(),
           triggerGetTopAssetsFailureSystem({
             system: "ECS",
@@ -220,6 +200,7 @@ export default function Dashboard() {
             toDate,
             locationId: locationIds,
             tabKey,
+            shiftId,
           }).unwrap(),
           triggerGetTopAssetsFailureSystem({
             system: "TVS",
@@ -227,22 +208,26 @@ export default function Dashboard() {
             toDate,
             locationId: locationIds,
             tabKey,
+            shiftId,
           }).unwrap(),
           triggerGetTopUsedSpares({
             fromDate,
             toDate,
             locationIds,
             tabKey,
+            shiftId,
           }).unwrap(),
           triggerGetSpareConsumptionByLocationTrend({
             fromDate: yearFromDate,
             toDate: yearToDate,
             locationIds,
             tabKey,
+            shiftId,
           }).unwrap(),
           triggerGetLowStockSpares({
             locationId: locationIds,
             tabKey,
+            shiftId,
           }).unwrap(),
         ])
 
@@ -260,7 +245,6 @@ export default function Dashboard() {
           }))
         )
 
-        // API: [{ assetName, count }] -> Chart: [{ asset, failures }]
         setEcsTop10AssetsByFailureData(
           (ecsTopRes?.data || []).map((x) => ({
             asset: x?.assetName,
@@ -284,7 +268,6 @@ export default function Dashboard() {
 
         const trendRows = spareTrendRes?.data || []
         if (trendRows.length) {
-          // Render lines for every `stations` key (CKPE, VDSA, CBPK, ...)
           setSpareConsumptionTrendByStationData(
             trendRows.map((row) => {
               const stations = row?.stations || {}
@@ -303,13 +286,11 @@ export default function Dashboard() {
           setSpareConsumptionTrendByStationData([])
         }
 
-        // API: low stock spares -> Chart: [{ sparePart, stationA, stationB, stationC }]
         const lowStockItems = lowStockRes?.data || []
         if (lowStockItems.length) {
           const normalizeLocationName = (name) =>
             String(name || "Unknown").replace(/\r?\n/g, " ").trim()
 
-          // pick top 3 stations by total shortage
           const shortageByStation = {}
           lowStockItems.forEach((it) => {
             const stationName = normalizeLocationName(it?.locationName)
@@ -659,8 +640,6 @@ export default function Dashboard() {
   };
 
   const handleScheduleTaskExportPdf = () => {
-    // Hook export logic here when ready
-    // eslint-disable-next-line no-console
     console.log("Schedule Task export PDF", {
       frequency: scheduleTaskFrequency,
       date: scheduleTaskDate?.format?.("YYYY-MM-DD"),
@@ -802,10 +781,13 @@ export default function Dashboard() {
                         allowClear
                         style={{ width: 200 }}
                         loading={shiftsLoading}
-                        options={shiftOptions.map((s) => ({
-                          label: s.name,
-                          value: s.id,
-                        }))}
+                        options={[
+                          { label: "ALL", value: -1 },
+                          ...shiftOptions.map((s) => ({
+                            label: s.name,
+                            value: s.id,
+                          })),
+                        ]}
                       />
                     </Form.Item>
 
@@ -819,10 +801,13 @@ export default function Dashboard() {
                         maxTagTextLength={18}
                         loading={locationsLoading}
                         style={{ width: 360 }}
-                        options={locationOptions.map((l) => ({
-                          label: (l.name || "").trim(),
-                          value: l.id,
-                        }))}
+                        options={[
+                          { label: "ALL", value: -1 },
+                          ...locationOptions.map((l) => ({
+                            label: (l.name || "").trim(),
+                            value: l.id,
+                          })),
+                        ]}
                       />
                     </Form.Item>
 
@@ -1651,7 +1636,6 @@ export default function Dashboard() {
                                   {spareConsumptionStationKeys.map(
                                     (stationKey, idx) => (
                                       <Line
-                                        // One line per `stations` key (CKPE, VDSA, CBPK, ...)
                                         key={stationKey}
                                         type="monotone"
                                         dataKey={stationKey}
@@ -1681,7 +1665,6 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Low in Stock Spares Across Stations */}
                 <Card style={{ marginBottom: 16 }}>
                   <CardContent>
                     <Typography
@@ -1903,7 +1886,6 @@ export default function Dashboard() {
             </Box>
           </>
         )}
-
       </Box>
     </>
   );
