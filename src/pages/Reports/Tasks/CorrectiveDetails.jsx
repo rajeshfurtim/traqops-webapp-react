@@ -1,164 +1,272 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, duration } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin, Row, Col, Input, message } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
-import { useGettaskReportSummarycmQuery } from '../../../store/api/taskReport.api'
+import { useGettaskReportSummarycmQuery, useGetSystemCategorysQuery } from '../../../store/api/taskReport.api'
+import { useGetAllStatusQuery } from '../../../store/api/masterSettings.api'
 import { useAuth } from '../../../context/AuthContext'
-import { SearchOutlined } from '@ant-design/icons'
+import { SearchOutlined, FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
 
 const { RangePicker } = DatePicker
 
 export default function ScheduledMaintenanceDetailsReports() {
   const [form] = Form.useForm()
   const { user } = useAuth()
-  const { locations, loading: locationsLoading } = useGetLocationList()
-  const [loading, setLoading] = useState(false)
-  const [shouldFetch, setShouldFetch] = useState(false)
 
-  const defaultLocationId = 10339
   const clientId = user?.client?.id || user?.clientId
 
-  const [filters, setFilters] = useState({
-    fromDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
-    toDate: dayjs().format('YYYY-MM-DD'),
-    locationId: defaultLocationId,
-    statusId: -1,
-    pn: 1,
-    ps: 1000,
-  })
+  const [filters, setFilters] = useState({})
+  const [selectedSystem, setSelectedSystem] = useState(null)
+  const [current, setCurrent] = useState(1)
+  const [pageSize, setPagesize] = useState(25)
 
-
+  const { locations, loading: locationsLoading } = useGetLocationList()
+  const { data: statusList, loading: statusLoading } = useGetAllStatusQuery()
+  const { data: categoryList, loading: categoryLoading } = useGetSystemCategorysQuery({ clientId, system: selectedSystem }, { skip: !selectedSystem })
   const { data: reportData, isLoading: isInitialLoading, isFetching } = useGettaskReportSummarycmQuery(
     { ...filters, clientId },
-    { skip: !filters.fromDate || !filters.toDate || !filters.locationId || !shouldFetch }
+    { skip: !filters.fromDate || !filters.toDate || !filters.locationId }
   )
 
   const queryLoading = isInitialLoading || isFetching
 
-  const reports = (reportData?.data?.content || []).map((item, index) => {
-    const remark = item.breakDownRemarks?.[0] || {};
+  const requiredStatuses = [640, 631, 15, 16, 808]
 
-    return {
-      index,
-      sno: index + 1,
-      raw: item,
-      createdname: item.location?.code || "-",
-      date: item.createdAt || "-",
-      location: item.location?.name || "-",
-      faultid: item.cmKey || "-",
-      system: item.systemName || "-",
-      ptwno: remark.ptwNo || "-",
-      Equipment: item.category?.name || "-",
-      itemcode: item.assets?.itemCode || "-",
-      faultcategory: item.faultCategory?.name || "-",
-      faultsubcategory: item.faultSubCategory?.name || "-",
-      status: item.status?.name || "-",
-      assignedto: item.assignedTo?.firstName || "-",
-      workdoneremark: remark.remarks || "-",
-      completedby: remark.completedBy?.firstName || "-",
-      completeddate: remark.createdAt || "-",
-      completedremark: remark.remarks || "-",
-      verifyby: remark.verifiedBy || "-",
-      verifieddate: "-",
-      verifiedremark: "-",
-      closingdate: item.updatedAt || "-",
-      remarks: remark.remarks || "-",
-      duration: item.duration || "0"
-    };
-  });
-
-
-  const getColumnSearchProps = (dataIndex) => ({
-    filterDropdown: ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => (
-      <div style={{ padding: 8 }}>
-        <Input
-          placeholder={`Search ${dataIndex}`}
-          value={selectedKeys[0]}
-          onChange={(e) =>
-            setSelectedKeys(e.target.value ? [e.target.value] : [])
-          }
-          onPressEnter={() => confirm()}
-          style={{ marginBottom: 8 }}
-        />
-        <Space>
-          <AntButton type="primary" size="small" onClick={() => confirm()} icon={<SearchOutlined />}>
-            Search
-          </AntButton>
-          <AntButton size="small" onClick={() => clearFilters()}>
-            Reset
-          </AntButton>
-        </Space>
-      </div>
-    ),
-    onFilter: (value, record) =>
-      record[dataIndex]
-        ?.toString()
-        .toLowerCase()
-        .includes(value.toLowerCase()),
-  })
-
-const columns = [
-  { title: 'S.No', dataIndex: 'sno', key: 'sno', ...getColumnSearchProps('sno'), sorter: (a, b) => a.sno - b.sno },
-
-  { title: 'Created Name', dataIndex: 'createdname', key: 'createdname', ...getColumnSearchProps('createdname'), sorter:(a,b) => a.createdname.localeCompare(b.createdname) },
-
-  { title: 'Date', dataIndex: 'date', key: 'date', ...getColumnSearchProps('date'), sorter:(a,b)=> new Date(a.date) - new Date(b.date) },
-
-  { title: 'Location', dataIndex: 'location', key: 'location', ...getColumnSearchProps('location'), sorter:(a,b) => a.location.localeCompare(b.location) },
-
-  { title: 'Fault ID', dataIndex: 'faultid', key: 'faultid', ...getColumnSearchProps('faultid'), sorter:(a,b) => a.faultid.localeCompare(b.faultid) },
-
-  { title: 'System.No', dataIndex: 'system', key: 'system', ...getColumnSearchProps('system'), sorter:(a,b) => a.system.localeCompare(b.system) },
-
-  { title: 'PTWno', dataIndex: 'ptwno', key: 'ptwno', ...getColumnSearchProps('ptwno'), sorter:(a,b) => a.ptwno.localeCompare(b.ptwno) },
-
-  { title: 'Equipment', dataIndex: 'Equipment', key: 'Equipment', ...getColumnSearchProps('Equipment'), sorter:(a,b) => a.Equipment.localeCompare(b.Equipment) },
-
-  { title: 'Item Code', dataIndex: 'itemcode', key: 'itemcode', ...getColumnSearchProps('itemcode'), sorter:(a,b) => a.itemcode.localeCompare(b.itemcode) },
-
-  { title: 'Fault Category', dataIndex: 'faultcategory', key: 'faultcategory', ...getColumnSearchProps('faultcategory'), sorter:(a,b) => a.faultcategory.localeCompare(b.faultcategory) },
-
-  { title: 'Fault Subcategory', dataIndex: 'faultsubcategory', key: 'faultsubcategory', ...getColumnSearchProps('faultsubcategory'), sorter:(a,b) => a.faultsubcategory.localeCompare(b.faultsubcategory) },
-
-  { title: 'Status', dataIndex: 'status', key: 'status', ...getColumnSearchProps('status'), sorter:(a,b) => a.status.localeCompare(b.status) },
-
-  { title: 'Assigned To', dataIndex: 'assignedto', key: 'assignedto', ...getColumnSearchProps('assignedto'), sorter:(a,b) => a.assignedto.localeCompare(b.assignedto) },
-
-  { title: 'Workdone Remark', dataIndex: 'workdoneremark', key: 'workdoneremark', ...getColumnSearchProps('workdoneremark'), sorter:(a,b) => a.workdoneremark.localeCompare(b.workdoneremark) },
-
-  { title: 'Completed By', dataIndex: 'completedby', key: 'completedby', ...getColumnSearchProps('completedby'), sorter:(a,b) => a.completedby.localeCompare(b.completedby) },
-
-  { title: 'Completed Date', dataIndex: 'completeddate', key: 'completeddate', ...getColumnSearchProps('completeddate'), sorter:(a,b)=> new Date(a.completeddate) - new Date(b.completeddate) },
-
-  { title: 'Completed Remark', dataIndex: 'completedremark', key: 'completedremark', ...getColumnSearchProps('completedremark'), sorter:(a,b) => a.completedremark.localeCompare(b.completedremark) },
-
-  { title: 'Verify By', dataIndex: 'verifyby', key: 'verifyby', ...getColumnSearchProps('verifyby'), sorter:(a,b) => a.verifyby.localeCompare(b.verifyby) },
-
-  { title: 'Verified Date', dataIndex: 'verifieddate', key: 'verifieddate', ...getColumnSearchProps('verifieddate'), sorter:(a,b)=> new Date(a.verifieddate) - new Date(b.verifieddate) },
-
-  { title: 'Verified Remark', dataIndex: 'verifiedremark', key: 'verifiedremark', ...getColumnSearchProps('verifiedremark'), sorter:(a,b) => a.verifiedremark.localeCompare(b.verifiedremark) },
-
-  { title: 'Closing Date', dataIndex: 'closingdate', key: 'closingdate', ...getColumnSearchProps('closingdate'), sorter:(a,b)=> new Date(a.closingdate) - new Date(b.closingdate) },
-
-  { title: 'Remarks', dataIndex: 'remarks', key: 'remarks', ...getColumnSearchProps('remarks'), sorter:(a,b) => a.remarks.localeCompare(b.remarks) },
-
-  { title: 'Duration', dataIndex: 'duration', key: 'duration', ...getColumnSearchProps('duration'), sorter:(a,b) => a.duration.localeCompare(b.duration) },
-];
-
-
-  const expandedRowRender = (record) => (
-    <Descriptions bordered size="small" column={2}>
-      <Descriptions.Item label="Fault Category">
-        {record.raw?.faultCategory?.name || "-"}
-      </Descriptions.Item>
-      <Descriptions.Item label="Fault Subcategory">
-        {record.raw?.faultSubCategory?.name || "-"}
-      </Descriptions.Item>
-    </Descriptions>
+  const filteredStatusList = statusList?.data?.filter(item =>
+    requiredStatuses.includes(item.id)
   )
+
+  const handleSystemChange = (system) => {
+    setSelectedSystem(system)
+    form.setFieldsValue({
+      category: 'All'
+    })
+  }
+
+  useEffect(() => {
+    form.setFieldsValue({
+      dateRange: [dayjs().startOf('month'), dayjs()],
+      location: -1,
+      statusId: -1,
+      system: 'ECS',
+      category: 'All'
+    })
+    handleSystemChange('ECS')
+  }, [])
+
+  const columns = [
+    {
+      title: 'S.No',
+      dataIndex: 'sno',
+      key: 'sno',
+      width: 80, render: (_, __, index) => ((current - 1) * pageSize) + index + 1
+    },
+    {
+      title: 'Created Name',
+      dataIndex: 'createdBy',
+      key: 'createdBy',
+      render: (_, record) => record.createdBy?.firstName,
+      sorter: (a, b) => a.createdBy?.firstName.localeCompare(b.createdBy?.firstName)
+    },
+    {
+      title: 'Date',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (_, record) => record?.createdAt ? dayjs(record?.createdAt).format("DD-MM-YYYYTHH:mm") : '-',
+      sorter: (a, b) => new Date(a?.createdAt) - new Date(b?.createdAt)
+    },
+    {
+      title: 'Location',
+      dataIndex: 'location',
+      key: 'location',
+      render: (_, record) => record?.location?.name ?? '-',
+      sorter: (a, b) => a.location?.name.localeCompare(b.location?.name)
+    },
+    {
+      title: 'Fault ID',
+      dataIndex: 'cmKey',
+      key: 'cmKey',
+      sorter: (a, b) => a?.cmKey.localeCompare(b?.cmKey)
+    },
+    {
+      title: 'PTW No',
+      dataIndex: 'ptwNo',
+      key: 'ptwNo',
+      render: (_, record) => record?.breakDownRemarks[0]?.ptwNo ?? '-',
+      sorter: (a, b) => a?.breakDownRemarks[0]?.ptwNo.localeCompare(b?.breakDownRemarks[0]?.ptwNo)
+    },
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      render: (_, record) => record?.category?.name ?? '-',
+      sorter: (a, b) => a.category?.name?.localeCompare(b.category?.name)
+    },
+    {
+      title: 'Asset',
+      dataIndex: 'assets',
+      key: 'assets',
+      render: (_, record) => record?.assets?.name ?? '-',
+      sorter: (a, b) => a.assets?.name?.localeCompare(b.assets?.name)
+    },
+    {
+      title: 'Fault Category',
+      dataIndex: 'faultCategory',
+      key: 'faultCategory',
+      render: (_, record) => record?.faultCategory?.name ?? '-',
+      sorter: (a, b) => a.faultCategory?.name?.localeCompare(b.faultCategory?.name)
+    },
+    {
+      title: 'Fault Sub Category',
+      dataIndex: 'faultSubCategory',
+      key: 'faultSubCategory',
+      render: (_, record) => record?.faultSubCategory?.name ?? '-',
+      sorter: (a, b) => a.faultSubCategory?.name?.localeCompare(b.faultSubCategory?.name)
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (_, record) => record?.status?.name ?? '-',
+      sorter: (a, b) => a.status?.name?.localeCompare(b.status?.name)
+    },
+    {
+      title: 'Assigned To',
+      dataIndex: 'assignedTo',
+      key: 'assignedTo',
+      render: (_, record) => record?.assignedTo?.firstName ?? '-',
+      sorter: (a, b) => a.assignedTo?.firstName?.localeCompare(b.assignedTo?.firstName)
+    },
+    {
+      title: 'Completed By',
+      render: (_, record) =>
+        getCompletedData(record?.breakDownRemarks, 'performedBy') ?? '-',
+      sorter: (a, b) =>
+        (getCompletedData(a.breakDownRemarks, 'performedBy') || '')
+          .localeCompare(getCompletedData(b.breakDownRemarks, 'performedBy') || '')
+    },
+    {
+      title: 'Completed Date',
+      render: (_, record) =>
+        getCompletedData(record?.breakDownRemarks, 'date') ?? '-',
+      sorter: (a, b) =>
+        (getCompletedData(a.breakDownRemarks, 'date') || '')
+          .localeCompare(getCompletedData(b.breakDownRemarks, 'date') || '')
+    },
+    {
+      title: 'Completed Remark',
+      render: (_, record) =>
+        getCompletedData(record?.breakDownRemarks, 'remarks') ?? '-',
+      sorter: (a, b) =>
+        (getCompletedData(a.breakDownRemarks, 'remarks') || '')
+          .localeCompare(getCompletedData(b.breakDownRemarks, 'remarks') || '')
+    },
+    {
+      title: 'Verified By',
+      render: (_, record) =>
+        getVerifiedData(record?.breakDownRemarks, 'verifiedBy') ?? '-',
+      sorter: (a, b) =>
+        (getVerifiedData(a.breakDownRemarks, 'verifiedBy') || '')
+          .localeCompare(getVerifiedData(b.breakDownRemarks, 'verifiedBy') || '')
+    },
+    {
+      title: 'Verified Date',
+      render: (_, record) =>
+        getVerifiedData(record?.breakDownRemarks, 'date') ?? '-',
+      sorter: (a, b) =>
+        (getVerifiedData(a.breakDownRemarks, 'date') || '')
+          .localeCompare(getVerifiedData(b.breakDownRemarks, 'date') || '')
+    },
+    {
+      title: 'Verified Remark',
+      render: (_, record) =>
+        getVerifiedData(record?.breakDownRemarks, 'remarks') ?? '-',
+      sorter: (a, b) =>
+        (getVerifiedData(a.breakDownRemarks, 'remarks') || '')
+          .localeCompare(getVerifiedData(b.breakDownRemarks, 'remarks') || '')
+    },
+    {
+      title: 'Closing Date',
+      dataIndex: 'closingDate',
+      key: 'closingDate',
+      render: (_, record) => record?.updatedAt ? dayjs(record?.updatedAt).format("DD-MM-YYYYTHH:mm") : '-',
+      sorter: (a, b) => new Date(a?.updatedAt) - new Date(b?.updatedAt)
+    },
+    {
+      title: 'Remarks',
+      dataIndex: 'remarks',
+      key: 'remarks',
+      render: (_, record) => record?.breakDownRemarks[0]?.remarks ?? '-',
+      sorter: (a, b) => a.breakDownRemarks[0]?.remarks?.localeCompare(b.breakDownRemarks[0]?.remarks)
+    },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+      render: (_, record) => record?.duration + 'Mins' ?? '-',
+      sorter: (a, b) => a.duration.localeCompare(b.duration)
+    },
+  ];
+
+  const getCompletedData = (data, type) => {
+    if (!data?.length) return null;
+  
+    const lastCompleted = data
+      .filter(item => item?.status?.name === 'COMPLETED')
+      .pop();
+  
+    if (!lastCompleted) return null;
+  
+    if (type === 'date') {
+      return lastCompleted?.createdAt
+        ? dayjs(lastCompleted.createdAt).format('DD/MM/YYYY hh:mm A')
+        : null;
+    }
+  
+    if (type === 'performedBy') {
+      return lastCompleted?.performedBy;
+    }
+  
+    if (type === 'remarks') {
+      return lastCompleted?.remarks !== 'null'
+        ? lastCompleted?.remarks
+        : '';
+    }
+  
+    return null;
+  };
+
+  const getVerifiedData = (data, type) => {
+    if (!data?.length) return null;
+  
+    const verifiedItem = data.find(
+      item => item?.status?.name === 'VERIFIED'
+    );
+  
+    if (!verifiedItem) return null;
+  
+    if (type === 'date') {
+      return verifiedItem?.createdAt
+        ? dayjs(verifiedItem.createdAt).format('DD/MM/YYYY hh:mm A')
+        : null;
+    }
+  
+    if (type === 'verifiedBy') {
+      return verifiedItem?.verifiedBy;
+    }
+  
+    if (type === 'remarks') {
+      return verifiedItem?.remarks !== 'null'
+        ? verifiedItem?.remarks
+        : '';
+    }
+  
+    return null;
+  };
 
 
   const handleApplyFilters = (values) => {
@@ -166,15 +274,106 @@ const columns = [
       alert('Client ID is missing. Please check your user profile.')
       return
     }
-    setShouldFetch(true)
     setFilters({
       fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: values.dateRange?.[1]?.format('YYYY-MM-DD'),
-      locationId: values.location ?? defaultLocationId,
-      statusId: values.statusId ?? -1,
+      locationId: values.location,
+      statusId: values.statusId,
+      system: values.system,
+      categoryId: values.category != 'All' ? values.category : null,
       pn: 1,
-      ps: 1000,
+      ps: 10000,
     })
+  }
+
+   // Search state
+   const [searchText, setSearchText] = useState('');
+   const [filteredData, setFilteredData] = useState(null);
+ 
+   const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+  
+    const searchValue = value.toLowerCase().trim();
+  
+    if (!searchValue) {
+      setFilteredData(null);
+      return;
+    }
+  
+    const filtered = reportData?.data?.content?.filter((item) => {
+      const breakDown = item?.breakDownRemarks?.[0] || {};
+  
+      const searchString = [
+        item.createdBy?.firstName,
+        item.location?.name,
+        item.cmKey,
+        item.createdAt ? dayjs(item.createdAt).format('DD-MM-YYYYTHH:mm') : '',
+        breakDown?.ptwNo,
+        item.category?.name,
+        item.assets?.name,
+        item.faultCategory?.name,
+        item.faultSubCategory?.name,
+        item.status?.name,
+        item.assignedTo?.firstName,
+        item.updatedAt ? dayjs(item.updatedAt).format('DD-MM-YYYYTHH:mm') : '',
+        breakDown?.remarks,
+        breakDown?.verifiedBy,
+        breakDown?.performedBy,
+        breakDown?.date,
+        item.duration
+      ]
+        .filter(Boolean) 
+        .join(' ')
+        .toLowerCase();
+  
+      return searchString.includes(searchValue);
+    });
+ 
+    setFilteredData(filtered);
+  }
+
+  // Export Section
+  const [exporting, setExporting] = useState({ excel: false, pdf: false })
+
+  const handleExportPDF = async () => {
+    try {
+      setExporting(prev => ({ ...prev, pdf: true }))
+
+      await exportToPDF(
+        columns,
+        reportData?.data?.content,
+        `Corrective Maintenance Details Report`,
+        {
+          orientation: 'landscape',
+          format: 'a3'
+        }
+      )
+
+      message.success('PDF exported successfully')
+    } catch (err) {
+      message.error('PDF export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, pdf: false }))
+    }
+  }
+
+  const handleExportExcel = async () => {
+    try {
+      setExporting(prev => ({ ...prev, excel: true }))
+
+      await exportToExcel(
+        columns,
+        reportData?.data?.content,
+        `Corrective Maintenance Details Report`
+      )
+
+      message.success('Excel exported successfully')
+    } catch (err) {
+      message.error('Excel export failed')
+    } finally {
+      setExporting(prev => ({ ...prev, excel: false }))
+    }
   }
 
   return (
@@ -185,9 +384,9 @@ const columns = [
       </Helmet>
 
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+        {/* <Typography variant="h4" gutterBottom fontWeight="bold">
           Corrective Maintenance Reports Details
-        </Typography>
+        </Typography> */}
 
         <Card sx={{ mb: 3 }}>
           <CardContent>
@@ -195,24 +394,29 @@ const columns = [
               form={form}
               layout="vertical"
               onFinish={handleApplyFilters}
-              initialValues={{
-                dateRange: [dayjs().subtract(1, 'day'), dayjs()],
-                location: defaultLocationId,
-                system: -1,
-                statusId: -1,
-              }}
             >
               <Row gutter={[16, 16]}>
                 {/* Date range needs more width on large screens */}
                 <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="dateRange" label="Date Range">
-                    <RangePicker style={{ width: '100%' }} />
+                  <Form.Item name="dateRange" label="Date Range"
+                    rules={[{ required: true, message: 'Please select date range!' }]}
+                  >
+                    <RangePicker 
+                    style={{ width: '100%' }}
+                     format='DD/MM/YYYY'
+                     disabledDate={(current) =>
+                      current && current > dayjs().endOf('day')
+                    }
+                      />
                   </Form.Item>
                 </Col>
 
                 <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="location" label="Location">
-                    <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
+                    <Select style={{ width: '100%' }} loading={locationsLoading}>
+                      <Select.Option key={-1} value={-1}>
+                        All Location
+                      </Select.Option>
                       {locations?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
                           {loc.name}
@@ -222,48 +426,51 @@ const columns = [
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="system" label="System">
-                    <Select style={{ width: '100%' }} allowClear>
-                      <Select.Option value={-1}>All</Select.Option>
-                      <Select.Option value={640}>VAC</Select.Option>
-                      <Select.Option value={631}>TVS</Select.Option>
+                    <Select style={{ width: '100%' }} onChange={handleSystemChange}>
+                      <Select.Option value={'TVS'}>TVS</Select.Option>
+                      <Select.Option value={'ECS'}>ECS</Select.Option>
                     </Select>
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="category" label="Category">
+                    <Select style={{ width: '100%' }} loading={categoryLoading}>
+                      <Select.Option value={'All'}>All</Select.Option>
+                      {categoryList?.data?.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="statusId" label="Status">
-                    <Select style={{ width: '100%' }} allowClear>
+                    <Select style={{ width: '100%' }}>
                       <Select.Option value={-1}>All</Select.Option>
-                      <Select.Option value={640}>Open</Select.Option>
-                      <Select.Option value={631}>Completed</Select.Option>
-                      <Select.Option value={15}>Verified</Select.Option>
+                      {filteredStatusList?.map((loc) => (
+                        <Select.Option key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </Select.Option>
+                      ))}
                     </Select>
                   </Form.Item>
                 </Col>
 
-                <Col
-                  xs={24}
-                  sm={24}
-                  md={8}
-                  lg={4}
-                  style={{ display: 'flex', alignItems: 'center' }}
-                >
-                  <Form.Item style={{ marginBottom: 0 }} className="filter-item">
-                    <Space wrap>
-                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
-                        Apply Filters
-                      </AntButton>
-                      <AntButton
-                        htmlType="button"
-                        onClick={() => {
-                          form.resetFields();
-                          setShouldFetch(false);
-                        }}
-                      >
-                        Reset
-                      </AntButton>
+                <Col xs={24} sm={24} md={24} lg={6}>
+                  <Form.Item label=" ">
+                    <Space>
+                      <AntButton type="primary" htmlType="submit"
+                        icon={<SearchOutlined />}
+                        loading={queryLoading}
+                      >Search</AntButton>
+                      <AntButton onClick={() => {
+                        form.resetFields()
+                      }}>Reset</AntButton>
                     </Space>
                   </Form.Item>
                 </Col>
@@ -274,22 +481,61 @@ const columns = [
 
         <Card>
           <CardContent>
-            {!shouldFetch ? (
-              <Empty description="Please apply filters to view the report" />
-            ) :
-              queryLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+              <Space>
+                <Input
+                  placeholder="Search"
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={handleSearch}
+                  allowClear
+                  style={{ width: 250 }}
+                />
+
+                <AntButton
+                  icon={<FileExcelOutlined />}
+                  onClick={handleExportExcel}
+                  disabled={!reportData || reportData?.data?.content?.length === 0}
+                >
+                  Export Excel
+                </AntButton>
+
+                <AntButton
+                  icon={<FilePdfOutlined />}
+                  onClick={handleExportPDF}
+                  disabled={!reportData || reportData?.data?.content?.length === 0}
+                >
+                  Export PDF
+                </AntButton>
+
+              </Space>
+            </Box>
+            {queryLoading ? (
                 <Box display="flex" justifyContent="center" p={4}>
                   <Spin />
                 </Box>
               ) : (
                 <Table
-                  dataSource={reports}
+                  dataSource={filteredData || reportData?.data?.content}
                   columns={columns}
                   rowKey={(record, index) => index}
-                  expandable={{ expandedRowRender }}
-                  pagination={{ pageSize: 20 }}
                   bordered
-                  scroll={{ x: 'max-content', y: 450 }}
+                  size="middle"
+                  scroll={{ x: 'max-content' }}
+                  pagination={{
+                    position: ['bottomRight'],
+                    current: current,
+                    pageSize: pageSize,
+                    onChange: setCurrent,
+                    showSizeChanger: true,
+                    onShowSizeChange: (current, size) => {
+                      setPagesize(size);
+                      setCurrent(current);
+                    },
+                    pageSizeOptions: ['25', '50', '100'],
+                    showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                    className: "custom-pagination"
+                  }}
                 />
               )}
           </CardContent>

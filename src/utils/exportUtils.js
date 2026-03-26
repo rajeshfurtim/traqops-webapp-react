@@ -46,13 +46,18 @@ export const exportToExcel = async (
 export const exportToPDF = async (
   columns,
   data,
-  filename
+  filename,
+  options = {}
 ) => {
   if (!data || data.length === 0) return
 
   const { headers, rows } = prepareTableData(columns, data)
 
-  const doc = new jsPDF('l', 'mm', 'a4') // landscape for wide tables
+  const doc = new jsPDF({
+    orientation: options.orientation || "portrait",
+    unit: "mm",
+    format: options.format || "a4",
+  });
 
   doc.setFontSize(14)
   doc.text(filename, 14, 15)

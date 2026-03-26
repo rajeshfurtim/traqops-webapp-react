@@ -135,7 +135,7 @@ export const taskReportApi = baseApi.injectEndpoints({
 
     gettaskReportSummarycm: build.query({
       query: (params) => {
-        const { fromDate, toDate, locationId, statusId, pn, ps, clientId } = params
+        const { fromDate, toDate, locationId, statusId, system, categoryId, pn, ps, clientId } = params
 
         if (!fromDate || !toDate) {
           throw new Error('FromDate and ToDate are required')
@@ -152,6 +152,8 @@ export const taskReportApi = baseApi.injectEndpoints({
             toDate,
             locationId: locationId.toString(),
             ...(statusId != null && { statusId: statusId.toString() }),
+            ...(categoryId != null && { categoryId: categoryId.toString() }),
+            ...(system != null && { system: system }),
             ...(pn != null && { pn: pn.toString() }),
             ...(ps != null && { ps: ps.toString() }),
             clientId: clientId.toString(),
