@@ -43,7 +43,7 @@ export default function CorrectiveMaintenance() {
       }
     )
 
-const queryLoading = isLoading || isFetching
+  const queryLoading = isLoading || isFetching
 
   const statusMap = {
     '1': 640, // Open
@@ -69,7 +69,7 @@ const queryLoading = isLoading || isFetching
     }
   }, [locations])
 
-  const { data: cmresponse, isLoading: cmqueryLoading,   isFetching: cmisFetching } =
+  const { data: cmresponse, isLoading: cmqueryLoading, isFetching: cmisFetching } =
     correctiveApi.useGetcorrectivemaintenanceQuery(
       {
         fromdate: filters.startdate,
@@ -83,7 +83,7 @@ const queryLoading = isLoading || isFetching
       }
     );
 
-  
+
   const [sequenceNumber, setSequenceNumber] = useState(null);
   const [getMaxSequence] = correctiveApi.useLazyGetmaximumsequenceQuery()
 
@@ -106,60 +106,60 @@ const queryLoading = isLoading || isFetching
 
 
   const addticket = async (values, isRetry = false) => {
-  try {
-    const formData = new FormData()
+    try {
+      const formData = new FormData()
 
-    formData.append("domainName", domainName)
-    formData.append("clientId", clientId)
+      formData.append("domainName", domainName)
+      formData.append("clientId", clientId)
 
-    if (isEditing && editingRecord?.id) {
-      formData.append("id", editingRecord.id)
+      if (isEditing && editingRecord?.id) {
+        formData.append("id", editingRecord.id)
+      }
+
+      formData.append("locationId", values.station || "")
+      formData.append("faultCategoryId", values.faultCategory || "")
+      formData.append("categoryId", values.equipment || "")
+      formData.append("faultSubCategoryId", values.faultsubcategory || "")
+      formData.append("priorityId", values.priority || "")
+      formData.append("technician", values.user || "")
+      formData.append("sequelNumber", sequenceNumber || 0)
+      formData.append("cmKey", values.ticketno || "")
+      formData.append("assetId", values.itemcode || "")
+      formData.append("systemName", values.system || "")
+      formData.append("recordedBy", values.faultrecord || "")
+      formData.append("description", values.description || "")
+      formData.append("assignedTo", values.user || "")
+      formData.append("type", "Task")
+      formData.append("isWorking", values.workingstatus)
+      formData.append("rectificationDetails", values.rectification || "")
+      formData.append("reasonForBreakdown", values.breakdownreason || "")
+      formData.append("confirmed", isRetry)
+      formData.append("statusId", 640)
+
+      formData.append("issueStartTime", dayjs().format("YYYY-MM-DD HH:mm:ss"))
+      formData.append("issueEndTime", dayjs().add(3, "day").format("YYYY-MM-DD HH:mm:ss"))
+
+      // Files
+      if (values.images?.length) {
+        values.images.forEach((file, index) => {
+          formData.append(`files[${index}]`, file.originFileObj)
+        })
+      }
+
+      const res = await addOrUpdateBreakdown(formData).unwrap()
+
+      message.success(isEditing ? "Updated successfully ✅" : "Saved successfully ✅")
+
+      setopen(false)
+      modalForm.resetFields()
+      setIsEditing(false)
+      setEditingRecord(null)
+
+    } catch (error) {
+      console.error(error)
+      message.error(isEditing ? "Update failed ❌" : "Save failed ❌")
     }
-
-    formData.append("locationId", values.station || "")
-    formData.append("faultCategoryId", values.faultCategory || "")
-    formData.append("categoryId", values.equipment || "")
-    formData.append("faultSubCategoryId", values.faultsubcategory || "")
-    formData.append("priorityId", values.priority || "")
-    formData.append("technician", values.user || "")
-    formData.append("sequelNumber", sequenceNumber || 0)
-    formData.append("cmKey", values.ticketno || "")
-    formData.append("assetId", values.itemcode || "")
-    formData.append("systemName", values.system || "")
-    formData.append("recordedBy", values.faultrecord || "")
-    formData.append("description", values.description || "")
-    formData.append("assignedTo", values.user || "")
-    formData.append("type", "Task")
-    formData.append("isWorking", values.workingstatus)
-    formData.append("rectificationDetails", values.rectification || "")
-    formData.append("reasonForBreakdown", values.breakdownreason || "")
-    formData.append("confirmed", isRetry)
-    formData.append("statusId", 640)
-
-    formData.append("issueStartTime", dayjs().format("YYYY-MM-DD HH:mm:ss"))
-    formData.append("issueEndTime", dayjs().add(3, "day").format("YYYY-MM-DD HH:mm:ss"))
-
-    // Files
-    if (values.images?.length) {
-      values.images.forEach((file, index) => {
-        formData.append(`files[${index}]`, file.originFileObj)
-      })
-    }
-
-    const res = await addOrUpdateBreakdown(formData).unwrap()
-
-    message.success(isEditing ? "Updated successfully ✅" : "Saved successfully ✅")
-
-    setopen(false)
-    modalForm.resetFields()
-    setIsEditing(false)
-    setEditingRecord(null)
-
-  } catch (error) {
-    console.error(error)
-    message.error(isEditing ? "Update failed ❌" : "Save failed ❌")
   }
-}
 
   //add open model
   const handleadd = async () => {
@@ -416,42 +416,42 @@ const queryLoading = isLoading || isFetching
   const [isEditing, setIsEditing] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
 
- const handleEditClick = () => {
-  if (selectedRowKeys.length === 1) {
-    const record = Cmreports.find(r => r.id === selectedRowKeys[0]);
-    if (!record) return;
+  const handleEditClick = () => {
+    if (selectedRowKeys.length === 1) {
+      const record = Cmreports.find(r => r.id === selectedRowKeys[0]);
+      if (!record) return;
 
-    const data = record.allData;
+      const data = record.allData;
 
-    setEditingRecord(record);
-    setIsEditing(true);
-    setopen(true);
-    setSelectedLocation(data?.location?.id);
-    setSelectedSystem(data?.systemName);
-    setSelectedCategory(data?.category?.id);
-    setSelectedEquipment(data?.category?.id);
-    setSelectedFaultCategory(data?.faultCategory?.id);
-    modalForm.setFieldsValue({
-      ticketno: record.cmKey,
-      station: data?.location?.id,
-      workingstatus: data?.isWorking, 
-      system: data?.systemName,
-      equipment: data?.category?.id,
-      itemcode: data?.assets?.id, 
-      faultCategory: data?.faultCategory?.id,
-      faultsubcategory: data?.faultSubCategory?.id,
-      user: data?.assignedTo?.id,
-      priority: data?.priority?.id,
-      description: data?.description || '',
-      faultrecord: data?.recordedBy || '',
-      rectification: data?.rectificationDetails || '',
-      breakdownreason: data?.reasonForBreakdown || ''
-    });
+      setEditingRecord(record);
+      setIsEditing(true);
+      setopen(true);
+      setSelectedLocation(data?.location?.id);
+      setSelectedSystem(data?.systemName);
+      setSelectedCategory(data?.category?.id);
+      setSelectedEquipment(data?.category?.id);
+      setSelectedFaultCategory(data?.faultCategory?.id);
+      modalForm.setFieldsValue({
+        ticketno: record.cmKey,
+        station: data?.location?.id,
+        workingstatus: data?.isWorking,
+        system: data?.systemName,
+        equipment: data?.category?.id,
+        itemcode: data?.assets?.id,
+        faultCategory: data?.faultCategory?.id,
+        faultsubcategory: data?.faultSubCategory?.id,
+        user: data?.assignedTo?.id,
+        priority: data?.priority?.id,
+        description: data?.description || '',
+        faultrecord: data?.recordedBy || '',
+        rectification: data?.rectificationDetails || '',
+        breakdownreason: data?.reasonForBreakdown || ''
+      });
 
-  } else {
-    message.warning("Please select only one row to edit");
-  }
-};
+    } else {
+      message.warning("Please select only one row to edit");
+    }
+  };
 
 
   //delete
@@ -676,37 +676,47 @@ const queryLoading = isLoading || isFetching
           <CardContent>
             <Form
               form={filterForm}
-              layout="inline"
+              layout="vertical"
               onFinish={handleFilterChange}
               style={{ marginBottom: 16 }}
               initialValues={{
                 dateRange: [dayjs().startOf('month'), dayjs().endOf('month')]
               }}
             >
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
-              </Form.Item>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item name="dateRange" label="Date Range">
+                    <RangePicker style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
 
-              <Form.Item name="location" label="Location">
-                <Select style={{ width: 150 }} loading={locationsLoading}>
-                  {locationOptions.map(location => (
-                    <Select.Option key={location.id} value={location.id}>
-                      {location.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
 
-              <Form.Item>
-                <Space>
-                  <AntButton type="primary" htmlType="submit" loading={queryLoading}>
-                    Search
-                  </AntButton>
-                  <AntButton onClick={handleResetFilters}>
-                    Reset
-                  </AntButton>
-                </Space>
-              </Form.Item>
+                <Col xs={24} sm={12} md={8} lg={6}>
+
+                  <Form.Item name="location" label="Location">
+                    <Select style={{ width: '100%' }} loading={locationsLoading}>
+                      {locationOptions.map(location => (
+                        <Select.Option key={location.id} value={location.id}>
+                          {location.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                  <Form.Item >
+                    <Space>
+                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
+                        Search
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
             </Form>
           </CardContent>
         </Card>
@@ -806,7 +816,7 @@ const queryLoading = isLoading || isFetching
           }
         }}
         okText={isViewMode ? "Close" : isEditing ? "Update" : "Add"}
-        confirmLoading={saveLoading} 
+        confirmLoading={saveLoading}
       >
         <Form layout="vertical" form={modalForm} onFinish={addticket} >
           <Row gutter={[16, 16]}>
