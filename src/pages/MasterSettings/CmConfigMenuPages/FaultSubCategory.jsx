@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
 import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Spin, Select } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
-import { useGetFaultSubCategoryListQuery, useGetFaultCategoryListQuery, useAddFaultSubCategoryMutation, useDeleteFaultSubCategoryMutation } from '../../../store/api/masterSettings.api'
+import { useGetFaultSubCategoryListQuery, useGetFaultCategoryListQuery, useAddFaultSubCategoryMutation, useDeleteFaultSubCategoryMutation, useGetAllPriorityListQuery } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { useAuth } from '../../../context/AuthContext'
 import { domainName } from '../../../config/apiConfig'
@@ -19,6 +19,7 @@ export default function FaultSubCategory() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedRecord, setSelectedRecord] = useState(null)
 
+    const { data: priorityData, isLoading: priorityLoading } = useGetAllPriorityListQuery(clientId ? { clientId, pageNumber: 1, pageSize: 1000 } : skipToken)
     const { data: faultSubCategoryData, isLoading: faultSubCategoryLoading, isFetching } = useGetFaultSubCategoryListQuery(clientId ? { clientId, pageNumber: 1, pageSize: 1000 } : skipToken)
     const { data: faultCategoryData, isLoading: faultCategoryLoading } = useGetFaultCategoryListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
 
@@ -62,6 +63,13 @@ export default function FaultSubCategory() {
             dataIndex: 'periodType',
             key: 'periodType',
             sorter: (a, b) => (a?.periodType ?? '').localeCompare(b?.periodType ?? '')
+        },
+        {
+            title: 'Priority',
+            dataIndex: 'priority',
+            key: 'priority',
+            render: (_, record) => record?.priority?.name,
+            sorter: (a, b) => (a?.priority?.name ?? '').localeCompare(b?.priority?.name ?? '')
         },
         {
             title: 'Description',
@@ -108,6 +116,7 @@ export default function FaultSubCategory() {
         form.setFieldsValue({
             name: record?.name,
             faultCategory: record?.faultCategory?.id,
+            priority: record?.priority?.id,
             periodValue: record?.periodValue,
             periodType: record?.periodType,
             description: record?.description
@@ -127,6 +136,7 @@ export default function FaultSubCategory() {
             faultCategoryId: values.faultCategory,
             periodValue: values.periodValue,
             periodType: values.periodType,
+            priorityId: values.priority,
             description: values.description
         };
 
@@ -296,6 +306,7 @@ export default function FaultSubCategory() {
                                 >
                                     <Select
                                         placeholder="Select Fault Category"
+                                        loading={faultCategoryLoading}
                                     >
                                         {faultCategoryData?.data?.content?.map(l => (
                                             <Select.Option key={l.id} value={l.id}>
@@ -329,6 +340,24 @@ export default function FaultSubCategory() {
                                     rules={[{ required: false, message: 'Please enter periodValue!' }]}
                                 >
                                     <Input type="number" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    label="Priority"
+                                    name="priority"
+                                    rules={[{ required: true, message: 'Please select priority!' }]}
+                                >
+                                    <Select
+                                        placeholder="Select Priority"
+                                        loading={priorityLoading}
+                                    >
+                                        {priorityData?.data?.content?.map(l => (
+                                            <Select.Option key={l.id} value={l.id}>
+                                                {l.name}
+                                            </Select.Option>
+                                        ))}
+                                    </Select>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>

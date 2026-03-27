@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent, Typography } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Spin, TreeSelect } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Spin, TreeSelect, Tag } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetCheckListByClientQuery, useGetCheckListTypeQuery, useGetElementsCheckListQuery, useAddCheckListMutation, useDeleteCheckListMutation } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -14,6 +14,7 @@ export default function CheckList() {
     const { user } = useAuth()
     const clientId = user?.client?.id || user?.clientId
     const [form] = Form.useForm()
+    const selectedElements = Form.useWatch('elements', form);
 
     const [current, setCurrent] = useState(1);
     const [pageSize, setPagesize] = useState(25);
@@ -193,6 +194,21 @@ export default function CheckList() {
         },
     ];
 
+    const getElementLabel = (id) => {
+        const findNode = (data) => {
+            for (let item of data) {
+                if (item.value === id) return item.title;
+                if (item.children) {
+                    const found = findNode(item.children);
+                    if (found) return found;
+                }
+            }
+            return null;
+        };
+
+        return findNode(treeDataElements);
+    }
+
     return (
         <>
             <Box>
@@ -365,6 +381,38 @@ export default function CheckList() {
                                         }}
                                     />
                                 </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                {selectedElements?.length > 0 && (
+                                    <div style={{
+                                        marginTop: 8,
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                        gap: '6px'
+                                    }}
+                                    >
+                                        {selectedElements.map((id) => (
+                                            <Tag
+                                                key={id}
+                                                closable
+                                                onClose={() => {
+                                                    const updated = selectedElements.filter(val => val !== id);
+                                                    form.setFieldsValue({ elements: updated });
+                                                }}
+                                                style={{
+                                                    borderRadius: 25,
+                                                    padding: '4px 6px',
+                                                    maxWidth: '100%',
+                                                    whiteSpace: 'normal',
+                                                    wordBreak: 'break-word',
+                                                    margin: '4px'
+                                                }}
+                                            >
+                                                {getElementLabel(id)}
+                                            </Tag>
+                                        ))}
+                                    </div>
+                                )}
                             </Col>
                         </Row>
                     </Form>
