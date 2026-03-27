@@ -48,6 +48,7 @@ export const baseApi = createApi({
     'UserType',
     'Report',
     'Document',
+    'CyclicCheck',
     'MasterSettings',
     'UserInfo',
     'Department',

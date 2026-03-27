@@ -1,166 +1,329 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Card, Col, Row, Statistic, Table, Tag, Typography } from 'antd'
+import {
+  Card,
+  Table,
+  Tag,
+  Typography,
+  Button,
+  Modal,
+  Form,
+  Input,
+  Select,
+  DatePicker,
+  Space,
+} from 'antd'
+import { DeleteOutlined, SearchOutlined, EditOutlined,FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+
+import { useGetLocationList } from '../hooks/useGetLocationList'
 import { APP_CONFIG, getPageTitle } from '../config/constants'
 import {
   CYCLIC_CHECK_NOTIFICATION_PATH,
   useSidebarNotifications
 } from '../context/SidebarNotificationContext'
+import { useClient } from '../context/ClientContext'
+import {
+  useGetCyclicCheckQuery,
+  useDeleteCyclicCheckMutation
+} from '../store/api/cyclicCheck.api'
+import { message, Modal as AntModal } from 'antd'
 
-const { Title, Text } = Typography
-
-const mockCyclicCheckData = [
-  {
-    id: 1,
-    itemCode: 'INV-001',
-    itemName: 'Bearing 6205 ZZ',
-    location: 'Central Store',
-    systemQty: 120,
-    physicalQty: 118,
-    checkedOn: '2026-03-18',
-    checkedBy: 'Ravi Kumar',
-    status: 'Mismatch'
-  },
-  {
-    id: 2,
-    itemCode: 'INV-002',
-    itemName: 'Copper Cable 4sqmm',
-    location: 'Electrical Store',
-    systemQty: 240,
-    physicalQty: 240,
-    checkedOn: '2026-03-18',
-    checkedBy: 'Meena S',
-    status: 'Matched'
-  },
-  {
-    id: 3,
-    itemCode: 'INV-003',
-    itemName: 'MCB 32A',
-    location: 'Panel Room Store',
-    systemQty: 60,
-    physicalQty: 57,
-    checkedOn: '2026-03-19',
-    checkedBy: 'Arun P',
-    status: 'Mismatch'
-  },
-  {
-    id: 4,
-    itemCode: 'INV-004',
-    itemName: 'PVC Tape',
-    location: 'Central Store',
-    systemQty: 300,
-    physicalQty: 300,
-    checkedOn: '2026-03-19',
-    checkedBy: 'Nisha R',
-    status: 'Matched'
-  }
-]
-
-const columns = [
-  {
-    title: 'Item Code',
-    dataIndex: 'itemCode',
-    key: 'itemCode'
-  },
-  {
-    title: 'Item Name',
-    dataIndex: 'itemName',
-    key: 'itemName'
-  },
-  {
-    title: 'Location',
-    dataIndex: 'location',
-    key: 'location'
-  },
-  {
-    title: 'System Qty',
-    dataIndex: 'systemQty',
-    key: 'systemQty',
-    align: 'right'
-  },
-  {
-    title: 'Physical Qty',
-    dataIndex: 'physicalQty',
-    key: 'physicalQty',
-    align: 'right'
-  },
-  {
-    title: 'Difference',
-    key: 'difference',
-    align: 'right',
-    render: (_, record) => record.physicalQty - record.systemQty
-  },
-  {
-    title: 'Checked On',
-    dataIndex: 'checkedOn',
-    key: 'checkedOn'
-  },
-  {
-    title: 'Checked By',
-    dataIndex: 'checkedBy',
-    key: 'checkedBy'
-  },
-  {
-    title: 'Status',
-    dataIndex: 'status',
-    key: 'status',
-    render: (value) =>
-      value === 'Matched' ? <Tag color="success">Matched</Tag> : <Tag color="warning">Mismatch</Tag>
-  }
-]
+const { Title } = Typography
 
 export default function InventoryCyclicCheck() {
   const { setBadgeCount } = useSidebarNotifications()
-  const totalItems = mockCyclicCheckData.length
-  const matchedCount = mockCyclicCheckData.filter((item) => item.status === 'Matched').length
-  const mismatchCount = totalItems - matchedCount
+  const { clientId } = useClient()
 
-  // Update sidebar badge for this path (replace mismatchCount with API pending count)
+  const { data: cyclicCheckData, isLoading } =
+    useGetCyclicCheckQuery(clientId, { skip: !clientId })
+
+  const { locations } = useGetLocationList()
+
+  const [searchText, setSearchText] = useState('')
+  const [form] = Form.useForm()
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [selectedRecord, setSelectedRecord] = useState(null)
+
+  const [deleteCyclicCheck, { isLoading: isDeleting }] = useDeleteCyclicCheckMutation()
+
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+  })
+
+  //  Search
+  const filteredData = useMemo(() => {
+    const data = cyclicCheckData?.data || []
+    return data.filter((item) => {
+      const search = searchText.toLowerCase()
+
+      return (
+        item.category?.toLowerCase().includes(search) ||
+        item.description?.toLowerCase().includes(search) ||
+        item.remarks?.toLowerCase().includes(search) ||
+        item.status?.name?.toLowerCase().includes(search) ||
+        item.cyclicLocationMappings?.[0]?.locationName
+          ?.toLowerCase()
+          .includes(search)
+      )
+    })
+  }, [searchText, cyclicCheckData])
+
+  // Delete
+  const handleDelete = (record) => {
+    AntModal.confirm({
+      title: 'Are you sure you want to delete?',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          await deleteCyclicCheck(record.id).unwrap()
+          message.success('Deleted successfully')
+        } catch {
+          message.error('Delete failed')
+        }
+      },
+    })
+  }
+
+  // Edit
+  const handleEdit = (record) => {
+    setSelectedRecord(record)
+    form.setFieldsValue({
+      station: record.cyclicLocationMappings?.[0]?.locationId || '',
+      category: record.category,
+      description: record.description,
+      remarks: record.remarks,
+      status: record.status?.name || '',
+      createdAt: record.createdAt ? dayjs(record.createdAt) : null,
+    })
+    setIsModalVisible(true)
+  }
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false)
+    setSelectedRecord(null)
+    form.resetFields()
+  }
+
+  const handleModalSave = async () => {
+    try {
+      const values = await form.validateFields()
+      console.log('Form values:', values)
+      setIsModalVisible(false)
+      setSelectedRecord(null)
+      form.resetFields()
+    } catch (error) {
+      console.error('Validation failed:', error)
+    }
+  }
+
+  // Export Excel
+  const exportToExcel = () => {
+    const data = filteredData.map((item, index) => ({
+      SNo: index + 1,
+      Date: dayjs(item.createdAt).format('DD-MM-YYYY HH:mm'),
+      Station: item.cyclicLocationMappings?.[0]?.locationName,
+      Category: item.category,
+      Description: item.description,
+      Remarks: item.remarks,
+      Status: item.status?.name,
+    }))
+
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'CyclicCheck')
+
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const file = new Blob([excelBuffer])
+    saveAs(file, 'CyclicCheck.xlsx')
+  }
+
+  // Export PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF()
+
+    const tableData = filteredData.map((item, index) => [
+      index + 1,
+      dayjs(item.createdAt).format('DD-MM-YYYY'),
+      item.cyclicLocationMappings?.[0]?.locationName,
+      item.category,
+      item.description,
+      item.status?.name,
+    ])
+
+    autoTable(doc, {
+      head: [['S.No', 'Date', 'Station', 'Category', 'Description', 'Status']],
+      body: tableData,
+    })
+
+    doc.save('CyclicCheck.pdf')
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'NOTVERIFIED': return 'red'
+      case 'VERIFIED': return 'green'
+      default: return 'blue'
+    }
+  }
+
+  const columns = [
+    {
+      title: 'S.No',
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+    },
+    {
+      title: 'Date',
+      dataIndex: 'createdAt',
+      sorter: (a, b) =>
+        dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
+      render: (text) =>
+        text ? dayjs(text).format('DD-MM-YYYY HH:mm') : '-',
+    },
+    {
+      title: 'Station',
+      sorter: (a, b) =>
+        (a.cyclicLocationMappings?.[0]?.locationName || '').localeCompare(
+          b.cyclicLocationMappings?.[0]?.locationName || ''
+        ),
+      render: (_, record) =>
+        record.cyclicLocationMappings?.[0]?.locationName || '-',
+    },
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      sorter: (a, b) => a.category.localeCompare(b.category),
+    },
+    {
+      title: 'Work Description',
+      dataIndex: 'description',
+    },
+    {
+      title: 'Remarks',
+      dataIndex: 'remarks',
+      render: (text) => text || '-',
+    },
+    {
+      title: 'Status',
+      render: (_, record) => (
+        <Tag color={getStatusColor(record.status?.name)}>
+          {record.status?.name}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Actions',
+      render: (_, record) => (
+        <Space>
+          {/* <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            Edit
+          </Button> */}
+          <Button
+            type="link"
+            danger
+            loading={isDeleting}
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record)}
+          >
+            Delete
+          </Button>
+        </Space>
+      ),
+    },
+  ]
+
   useEffect(() => {
-    setBadgeCount(CYCLIC_CHECK_NOTIFICATION_PATH, mismatchCount)
-  }, [mismatchCount, setBadgeCount])
+    setBadgeCount(
+      CYCLIC_CHECK_NOTIFICATION_PATH,
+      filteredData.length
+    )
+  }, [filteredData, setBadgeCount])
 
   return (
     <>
       <Helmet>
         <title>{getPageTitle('inventory/cyclic-check')}</title>
-        <meta name="description" content={`${APP_CONFIG.name} - Cyclic Check`} />
       </Helmet>
 
-      <div>
-        <Title level={4} style={{ marginBottom: 8 }}>
-          Cyclic Check
-        </Title>
-        <Text type="secondary">Mock data preview for inventory cyclic stock verification.</Text>
+      <Title level={4}>Cyclic Check</Title>
 
-        <Row gutter={16} style={{ marginTop: 16, marginBottom: 16 }}>
-          <Col xs={24} sm={8}>
-            <Card>
-              <Statistic title="Total Checked Items" value={totalItems} />
-            </Card>
-          </Col>
-          <Col xs={24} sm={8}>
-            <Card>
-              <Statistic title="Matched Items" value={matchedCount} valueStyle={{ color: '#389e0d' }} />
-            </Card>
-          </Col>
-          <Col xs={24} sm={8}>
-            <Card>
-              <Statistic title="Mismatched Items" value={mismatchCount} valueStyle={{ color: '#d48806' }} />
-            </Card>
-          </Col>
-        </Row>
+      <Card>
 
-        <Card>
-          <Table
-            rowKey="id"
-            columns={columns}
-            dataSource={mockCyclicCheckData}
-            pagination={{ pageSize: 10, showSizeChanger: false }}
-            scroll={{ x: 'max-content' }}
+        {/* ✅ Top Controls */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Input
+            placeholder="Search..."
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            style={{ width: 250 }}
           />
-        </Card>
-      </div>
+          <Space>
+            <Button onClick={exportToExcel} icon={<FileExcelOutlined />}>Export Excel</Button>
+            <Button onClick={exportToPDF} icon={<FilePdfOutlined />}>Export PDF</Button>
+          </Space>
+        </div>
+
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={filteredData}
+          loading={isLoading}
+          pagination={pagination}
+          onChange={(pag) => setPagination(pag)}
+        />
+      </Card>
+
+      <Modal
+        title="Edit Cyclic Check"
+        open={isModalVisible}
+        onCancel={handleModalCancel}
+        onOk={handleModalSave}
+        maskClosable={false}
+        width={600}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item name="station" label="Station" rules={[{ required: true, message: 'Please select a station' }]}>
+            <Select placeholder="Select a station">
+              {locations?.map((location) => (
+                <Select.Option key={location.id} value={location.id}>
+                  {location.locationName}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="category" label="Category" rules={[{ required: true, message: 'Please select category' }]}>
+            <Select placeholder="Select category">
+              <Select.Option value="Water Cooled Chiller">Water Cooled Chiller</Select.Option>
+              <Select.Option value="Air Conditioning">Air Conditioning</Select.Option>
+              <Select.Option value="Electrical">Electrical</Select.Option>
+              <Select.Option value="Other">Other</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="description" label="Work Description" rules={[{ required: true, message: 'Please enter description' }]}>
+            <Input.TextArea rows={3} placeholder="Enter work description" />
+          </Form.Item>
+          <Form.Item name="remarks" label="Remarks">
+            <Input.TextArea rows={2} placeholder="Enter remarks" />
+          </Form.Item>
+          <Form.Item name="status" label="Status">
+            <Input placeholder="Status" disabled />
+          </Form.Item>
+          <Form.Item name="createdAt" label="Date">
+            <DatePicker showTime disabled style={{ width: '100%' }} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   )
 }
