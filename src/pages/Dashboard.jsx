@@ -18,6 +18,7 @@ import {
   useGetAllShiftQuery,
   useGetAllStatusQuery,
   useGetAllFrequencyQuery,
+  useGetAllUserTypeQuery,
 } from "../store/api/masterSettings.api";
 import {
   useLazyGetFailureRateSystemQuery,
@@ -27,6 +28,7 @@ import {
   useLazyGetLowStockSparesQuery,
   useLazyGetPmCountByFrequencyQuery,
   useLazyGetCmGraphCountQuery,
+  useLazyGetAttendanceCountByShiftQuery,
 } from "../store/api/dashboard.api";
 import { useAuth } from "../context/AuthContext";
 import { domainName as fallbackDomainName } from "../config/apiConfig";
@@ -57,6 +59,11 @@ export default function Dashboard() {
   const [topUsedSparesData, setTopUsedSparesData] = useState([]);
   const [spareConsumptionTrendByStationData, setSpareConsumptionTrendByStationData] = useState([]);
   const [lowStockSparesAcrossStationsData, setLowStockSparesAcrossStationsData] = useState([]);
+  const [attendanceEngineerData, setAttendanceEngineerData] = useState([]);
+  const [attendanceTechnicianData, setAttendanceTechnicianData] = useState([]);
+  const [attendanceTeamLeaderData, setAttendanceTeamLeaderData] = useState([]);
+  const [attendanceHelpdeskData, setAttendanceHelpdeskData] = useState([]);
+  const [attendanceChartsLoading, setAttendanceChartsLoading] = useState(false);
   const { user } = useAuth();
   const [triggerGetFailureRateSystem] = useLazyGetFailureRateSystemQuery();
   const [triggerGetTopAssetsFailureSystem] = useLazyGetTopAssetsFailureQuery();
@@ -65,6 +72,7 @@ export default function Dashboard() {
   const [triggerGetLowStockSpares] = useLazyGetLowStockSparesQuery();
   const [triggerGetPmCountByFrequency] = useLazyGetPmCountByFrequencyQuery();
   const [triggerGetCmGraphCount] = useLazyGetCmGraphCountQuery();
+  const [triggerGetAttendanceCountByShift] = useLazyGetAttendanceCountByShiftQuery();
 
   const clientId = user?.client?.id || user?.clientId;
   const domainNameParam = user?.domain?.name || fallbackDomainName;
@@ -84,6 +92,12 @@ export default function Dashboard() {
     );
 
   const shiftOptions = shiftListResponse?.data?.content ?? [];
+
+  const { data: userTypeListResponse } = useGetAllUserTypeQuery(
+    { clientId, pageNumber: 1, pageSize: 1000 },
+    { skip: !clientId }
+  );
+  const userTypeOptions = userTypeListResponse?.data?.content ?? [];
 
   const { data: frequenciesResponse, isLoading: frequenciesLoading } =
     useGetAllFrequencyQuery();
@@ -141,9 +155,41 @@ export default function Dashboard() {
     { key: "locationWise", label: "Location Wise" },
   ];
 
+  const getAttendanceChartData = async ({
+    date,
+    locationIds,
+    userTypeId,
+    clientId,
+    shiftId,
+    tabKey,
+  }) => {
+    const attendanceRes = await triggerGetAttendanceCountByShift({
+      date,
+      locationId: locationIds,
+      userTypeId,
+      clientId,
+      shiftId,
+      tabKey,
+    }).unwrap();
+
+    return (attendanceRes?.data || []).map((row) => ({
+      label: String(row?.locationName || row?.locationId || "").trim(),
+      value: Number(row?.userTypeAttendance?.[0]?.presentCount || 0),
+    }));
+  };
+
+  const getUserTypeIdByName = (targetName) => {
+    const normalizedTarget = String(targetName || "").trim().toLowerCase();
+    const match = userTypeOptions.find(
+      (u) => String(u?.name || "").trim().toLowerCase() === normalizedTarget
+    );
+    return match?.id;
+  };
+
   const handleSearch = (values, tabKeyOverride) => {
     const fromDate = values?.fromDate?.startOf?.("month")?.format?.("YYYY-MM-DD")
     const toDate = values?.fromDate?.endOf?.("month")?.format?.("YYYY-MM-DD")
+    const attendanceDate = values?.fromDate?.format?.("YYYY-MM-DD")
     const rawLocationIds = Array.isArray(values?.locationIds) ? values.locationIds : []
     const wantsAllLocations =
       rawLocationIds?.some((id) => String(id) === "-1") ?? false
@@ -168,7 +214,13 @@ export default function Dashboard() {
 
     ;(async () => {
       setConsolidateChartsLoading(true)
+      setAttendanceChartsLoading(true)
       try {
+        const engineerUserTypeId = getUserTypeIdByName("ENGINEER");
+        const technicianUserTypeId = getUserTypeIdByName("TECHNICIAN");
+        const teamLeaderUserTypeId = getUserTypeIdByName("Team Leader");
+        const helpdeskUserTypeId = getUserTypeIdByName("Helpdesk");
+
         const [
           ecsFailureRes,
           tvsFailureRes,
@@ -177,6 +229,10 @@ export default function Dashboard() {
           topSparesRes,
           spareTrendRes,
           lowStockRes,
+          engineerAttendanceRes,
+          technicianAttendanceRes,
+          teamLeaderAttendanceRes,
+          helpdeskAttendanceRes,
         ] = await Promise.all([
           triggerGetFailureRateSystem({
             system: "ECS",
@@ -229,6 +285,46 @@ export default function Dashboard() {
             tabKey,
             shiftId,
           }).unwrap(),
+          engineerUserTypeId
+            ? getAttendanceChartData({
+                date: attendanceDate,
+                locationIds,
+                userTypeId: engineerUserTypeId,
+                clientId,
+                shiftId: shiftId ?? -1,
+                tabKey,
+              })
+            : Promise.resolve([]),
+          technicianUserTypeId
+            ? getAttendanceChartData({
+                date: attendanceDate,
+                locationIds,
+                userTypeId: technicianUserTypeId,
+                clientId,
+                shiftId: shiftId ?? -1,
+                tabKey,
+              })
+            : Promise.resolve([]),
+          teamLeaderUserTypeId
+            ? getAttendanceChartData({
+                date: attendanceDate,
+                locationIds,
+                userTypeId: teamLeaderUserTypeId,
+                clientId,
+                shiftId: shiftId ?? -1,
+                tabKey,
+              })
+            : Promise.resolve([]),
+          helpdeskUserTypeId
+            ? getAttendanceChartData({
+                date: attendanceDate,
+                locationIds,
+                userTypeId: helpdeskUserTypeId,
+                clientId,
+                shiftId: shiftId ?? -1,
+                tabKey,
+              })
+            : Promise.resolve([]),
         ])
 
         setEcsFailureRateBySystemData(
@@ -347,10 +443,16 @@ export default function Dashboard() {
         } else {
           setLowStockSparesAcrossStationsData([])
         }
+
+        setAttendanceEngineerData(engineerAttendanceRes)
+        setAttendanceTechnicianData(technicianAttendanceRes)
+        setAttendanceTeamLeaderData(teamLeaderAttendanceRes)
+        setAttendanceHelpdeskData(helpdeskAttendanceRes)
       } catch (err) {
         console.error("Failure rate API error:", err)
       } finally {
         setConsolidateChartsLoading(false)
+        setAttendanceChartsLoading(false)
       }
     })()
   };
@@ -686,27 +788,6 @@ export default function Dashboard() {
     "#fa8c16",
     "#13c2c2",
     "#595959",
-  ];
-
-  const attendanceEngineerData = [
-    { label: "W1", value: 0.8 },
-    { label: "W2", value: 1.2 },
-    { label: "W3", value: 1.6 },
-    { label: "W4", value: 1.4 },
-  ];
-
-  const attendanceTechnicianData = [
-    { label: "W1", value: 0.6 },
-    { label: "W2", value: 1.0 },
-    { label: "W3", value: 1.2 },
-    { label: "W4", value: 1.6 },
-  ];
-
-  const attendanceHelpdeskData = [
-    { label: "W1", value: 0.4 },
-    { label: "W2", value: 0.8 },
-    { label: "W3", value: 1.0 },
-    { label: "W4", value: 1.2 },
   ];
 
   return (
@@ -1744,37 +1825,43 @@ export default function Dashboard() {
                             >
                               Attendance / ENGINEER
                             </Typography>
-                            <RechartsResponsiveBox height={260}>
-                              <BarChart
-                                data={attendanceEngineerData}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 0,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis
-                                  dataKey="label"
-                                  tick={{ fontSize: 12 }}
-                                />
-                                <YAxis
-                                  tick={{ fontSize: 12 }}
-                                  domain={[0, 2]}
-                                  ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
-                                />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="value"
-                                  fill="#1677ff"
-                                  radius={[10, 10, 0, 0]}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                            {attendanceChartsLoading ? (
+                              <Skeleton active style={{ height: 260 }} />
+                            ) : attendanceEngineerData?.length ? (
+                              <RechartsResponsiveBox height={260}>
+                                <BarChart
+                                  data={attendanceEngineerData}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    dataKey="label"
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <YAxis
+                                    tick={{ fontSize: 12 }}
+                                    domain={[0, 2]}
+                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                  />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="value"
+                                    fill="#1677ff"
+                                    radius={[10, 10, 0, 0]}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -1795,37 +1882,100 @@ export default function Dashboard() {
                             >
                               Attendance / TECHNICIAN
                             </Typography>
-                            <RechartsResponsiveBox height={260}>
-                              <BarChart
-                                data={attendanceTechnicianData}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 0,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis
-                                  dataKey="label"
-                                  tick={{ fontSize: 12 }}
-                                />
-                                <YAxis
-                                  tick={{ fontSize: 12 }}
-                                  domain={[0, 2]}
-                                  ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
-                                />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="value"
-                                  fill="#52c41a"
-                                  radius={[10, 10, 0, 0]}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                            {attendanceChartsLoading ? (
+                              <Skeleton active style={{ height: 260 }} />
+                            ) : attendanceTechnicianData?.length ? (
+                              <RechartsResponsiveBox height={260}>
+                                <BarChart
+                                  data={attendanceTechnicianData}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    dataKey="label"
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <YAxis
+                                    tick={{ fontSize: 12 }}
+                                    domain={[0, 2]}
+                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                  />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="value"
+                                    fill="#52c41a"
+                                    radius={[10, 10, 0, 0]}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty />
+                            )}
+                          </CardContent>
+                        </Card>
+                      </Grid>
+
+                      <Grid item xs={12} md={6}>
+                        <Card
+                          sx={{
+                            borderRadius: 2,
+                            border: "1px solid #eef2f7",
+                            boxShadow: "none",
+                          }}
+                        >
+                          <CardContent>
+                            <Typography
+                              variant="subtitle1"
+                              gutterBottom
+                              fontWeight="bold"
+                            >
+                              Attendance / Team Leader
+                            </Typography>
+                            {attendanceChartsLoading ? (
+                              <Skeleton active style={{ height: 260 }} />
+                            ) : attendanceTeamLeaderData?.length ? (
+                              <RechartsResponsiveBox height={260}>
+                                <BarChart
+                                  data={attendanceTeamLeaderData}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    dataKey="label"
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <YAxis
+                                    tick={{ fontSize: 12 }}
+                                    domain={[0, 2]}
+                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                  />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="value"
+                                    fill="#722ed1"
+                                    radius={[10, 10, 0, 0]}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>
@@ -1846,37 +1996,43 @@ export default function Dashboard() {
                             >
                               Attendance / Helpdesk
                             </Typography>
-                            <RechartsResponsiveBox height={260}>
-                              <BarChart
-                                data={attendanceHelpdeskData}
-                                margin={{
-                                  top: 10,
-                                  right: 20,
-                                  left: 0,
-                                  bottom: 10,
-                                }}
-                              >
-                                <CartesianGrid
-                                  strokeDasharray="3 3"
-                                  stroke="#f0f0f0"
-                                />
-                                <XAxis
-                                  dataKey="label"
-                                  tick={{ fontSize: 12 }}
-                                />
-                                <YAxis
-                                  tick={{ fontSize: 12 }}
-                                  domain={[0, 2]}
-                                  ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
-                                />
-                                <Tooltip />
-                                <Bar
-                                  dataKey="value"
-                                  fill="#722ed1"
-                                  radius={[10, 10, 0, 0]}
-                                />
-                              </BarChart>
-                            </RechartsResponsiveBox>
+                            {attendanceChartsLoading ? (
+                              <Skeleton active style={{ height: 260 }} />
+                            ) : attendanceHelpdeskData?.length ? (
+                              <RechartsResponsiveBox height={260}>
+                                <BarChart
+                                  data={attendanceHelpdeskData}
+                                  margin={{
+                                    top: 10,
+                                    right: 20,
+                                    left: 0,
+                                    bottom: 10,
+                                  }}
+                                >
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis
+                                    dataKey="label"
+                                    tick={{ fontSize: 12 }}
+                                  />
+                                  <YAxis
+                                    tick={{ fontSize: 12 }}
+                                    domain={[0, 2]}
+                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                  />
+                                  <Tooltip />
+                                  <Bar
+                                    dataKey="value"
+                                    fill="#13c2c2"
+                                    radius={[10, 10, 0, 0]}
+                                  />
+                                </BarChart>
+                              </RechartsResponsiveBox>
+                            ) : (
+                              <Empty />
+                            )}
                           </CardContent>
                         </Card>
                       </Grid>

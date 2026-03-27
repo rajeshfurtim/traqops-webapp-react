@@ -55,6 +55,15 @@ export interface GetCmGraphCountParams {
   tabKey?: string
 }
 
+export interface GetAttendanceCountByShiftParams {
+  date: string
+  locationId: string | number | Array<string | number>
+  userTypeId: string | number
+  clientId: string | number
+  shiftId: string | number
+  tabKey?: string
+}
+
 export const dashboardApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getFailureRateSystem: build.query({
@@ -231,6 +240,34 @@ export const dashboardApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
+
+    getAttendanceCountByShift: build.query({
+      query: (params: GetAttendanceCountByShiftParams) => {
+        const { date, locationId, userTypeId, clientId, shiftId, tabKey } = params
+
+        if (!date) throw new Error('date is required for getAttendanceCountByShift')
+        if (!clientId && clientId !== 0) throw new Error('clientId is required for getAttendanceCountByShift')
+        if (!userTypeId && userTypeId !== 0) throw new Error('userTypeId is required for getAttendanceCountByShift')
+        if (!shiftId && shiftId !== 0) throw new Error('shiftId is required for getAttendanceCountByShift')
+        if (!locationId || (Array.isArray(locationId) && locationId.length === 0)) {
+          throw new Error('locationId is required for getAttendanceCountByShift')
+        }
+
+        return {
+          url: `${API_BASE_URL}/consolidate/attendancecount/byshift`,
+          method: 'GET',
+          params: {
+            date,
+            locationId: Array.isArray(locationId) ? locationId.join(',') : locationId.toString(),
+            userTypeId: userTypeId.toString(),
+            clientId: clientId.toString(),
+            shiftId: shiftId.toString(),
+            ...(tabKey ? { tabKey } : {}),
+          },
+        }
+      },
+      providesTags: ['Report'],
+    }),
   }),
   overrideExisting: false,
 })
@@ -243,5 +280,6 @@ export const {
   useLazyGetLowStockSparesQuery,
   useLazyGetPmCountByFrequencyQuery,
   useLazyGetCmGraphCountQuery,
+  useLazyGetAttendanceCountByShiftQuery,
 } = dashboardApi
 
