@@ -2,15 +2,19 @@ import { useState, useMemo, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme, alpha, Chip, Grid } from '@mui/material'
 import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col, Tabs, Modal, Upload, Button, message } from 'antd'
-import { UploadOutlined } from '@ant-design/icons'
+import { FileExcelOutlined, FilePdfOutlined, UploadOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle, FaTasks, FaClock } from 'react-icons/fa'
 import CountUp from "react-countup"
+
 import { getPageTitle, APP_CONFIG } from '../config/constants'
+import { useGetEquipmentRunStatusReportQuery } from '../store/api/reports.api';
 import { useGetLocationList } from '../hooks/useGetLocationList';
+import { exportToExcel, exportToPDF } from '../utils/exportUtils';
 const { RangePicker } = DatePicker
 import { SearchOutlined } from '@ant-design/icons';
 import { correctiveApi } from '../store/api/correctivemaintenance.api';
+import { color } from 'framer-motion'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { domainName } from '../config/apiConfig'
 
@@ -20,17 +24,20 @@ export default function CorrectiveMaintenance() {
   const clientId = localStorage.getItem('clientId');
   const [open, setopen] = useState(false)
   const [activeTab, setActiveTab] = useState('1');
+  const [loading, setLoading] = useState(true)
   const [shouldFetch, setShouldFetch] = useState(false)
+  const [tickets, setTickets] = useState([])
+  const [selectedTicket, setSelectedTicket] = useState(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
   const [filters, setFilters] = useState({})
   const [isViewMode, setIsViewMode] = useState(false)
   // filter form
   const [filterForm] = Form.useForm();
+
   // modal form
   const [modalForm] = Form.useForm();
-  //location api
   const { locations, loading: locationsLoading } = useGetLocationList();
 
-  //count api
   const { data: response, isLoading, isFetching } =
     correctiveApi.useGetcorrectivemaintenanceCountListQuery(
       {
@@ -43,7 +50,7 @@ export default function CorrectiveMaintenance() {
       }
     )
 
-  const queryLoading = isLoading || isFetching
+const queryLoading = isLoading || isFetching
 
   const statusMap = {
     '1': 640, // Open
@@ -64,12 +71,13 @@ export default function CorrectiveMaintenance() {
         enddate: dayjs().endOf('month').format('YYYY-MM-DD'),
         // location: locations.map(x => x.id).join(',')
         location: "-1",
-        locationIds: locations.map(x => x.id).join(',')
+        locationIds: locations.map(x => x.id).join(',') // ✅ ADD THIS
+
       });
     }
   }, [locations])
 
-  const { data: cmresponse, isLoading: cmqueryLoading, isFetching: cmisFetching } =
+  const { data: cmresponse, isLoading: cmqueryLoading,   isFetching: cmisFetching } =
     correctiveApi.useGetcorrectivemaintenanceQuery(
       {
         fromdate: filters.startdate,
@@ -82,6 +90,11 @@ export default function CorrectiveMaintenance() {
         skip: !filters.startdate || !filters.enddate || !filters.location,
       }
     );
+
+
+  // send a client id while click add button 
+  // const [getMaxSequence, { isLoading }] =
+  //   correctiveApi.useLazyGetmaximumsequenceQuery();
 
 
   const [sequenceNumber, setSequenceNumber] = useState(null);
@@ -106,16 +119,13 @@ export default function CorrectiveMaintenance() {
 
 
   const addticket = async (values, isRetry = false) => {
+    console.log("FORM VALUES:", values)
+
     try {
       const formData = new FormData()
 
       formData.append("domainName", domainName)
       formData.append("clientId", clientId)
-
-      if (isEditing && editingRecord?.id) {
-        formData.append("id", editingRecord.id)
-      }
-
       formData.append("locationId", values.station || "")
       formData.append("faultCategoryId", values.faultCategory || "")
       formData.append("categoryId", values.equipment || "")
@@ -133,7 +143,7 @@ export default function CorrectiveMaintenance() {
       formData.append("isWorking", values.workingstatus)
       formData.append("rectificationDetails", values.rectification || "")
       formData.append("reasonForBreakdown", values.breakdownreason || "")
-      formData.append("confirmed", isRetry)
+      formData.append("confirmed", isRetry) // 🔥 important
       formData.append("statusId", 640)
 
       formData.append("issueStartTime", dayjs().format("YYYY-MM-DD HH:mm:ss"))
@@ -148,16 +158,35 @@ export default function CorrectiveMaintenance() {
 
       const res = await addOrUpdateBreakdown(formData).unwrap()
 
-      message.success(isEditing ? "Updated successfully ✅" : "Saved successfully ✅")
+      if (
+        res?.message === "CM already exists for this Asset, Location and Date" &&
+        !isRetry
+      ) {
+        setRetryValues(values)
+        setConfirmOpen(true)
+        return
+      }
 
+      message.success("Saved successfully ✅")
       setopen(false)
       modalForm.resetFields()
-      setIsEditing(false)
-      setEditingRecord(null)
 
     } catch (error) {
       console.error(error)
-      message.error(isEditing ? "Update failed ❌" : "Save failed ❌")
+
+      const errorMessage =
+        error?.data?.message || error?.message || ""
+
+      if (
+        errorMessage === "CM already exists for this Asset, Location and Date" &&
+        !isRetry
+      ) {
+        setRetryValues(values)
+        setConfirmOpen(true)
+        return
+      }
+
+      message.error("Save failed ❌")
     }
   }
 
@@ -417,37 +446,29 @@ export default function CorrectiveMaintenance() {
   const [editingRecord, setEditingRecord] = useState(null);
 
   const handleEditClick = () => {
-    if (selectedRowKeys.length === 1) {
+    if (selectedRowKeys.length === 1) { // only allow editing one row
       const record = Cmreports.find(r => r.id === selectedRowKeys[0]);
       if (!record) return;
-
-      const data = record.allData;
+      console.log("Edit ticket", record)
 
       setEditingRecord(record);
       setIsEditing(true);
       setopen(true);
-      setSelectedLocation(data?.location?.id);
-      setSelectedSystem(data?.systemName);
-      setSelectedCategory(data?.category?.id);
-      setSelectedEquipment(data?.category?.id);
-      setSelectedFaultCategory(data?.faultCategory?.id);
+
+      // Populate form fields
       modalForm.setFieldsValue({
         ticketno: record.cmKey,
-        station: data?.location?.id,
-        workingstatus: data?.isWorking,
-        system: data?.systemName,
-        equipment: data?.category?.id,
-        itemcode: data?.assets?.id,
-        faultCategory: data?.faultCategory?.id,
-        faultsubcategory: data?.faultSubCategory?.id,
-        user: data?.assignedTo?.id,
-        priority: data?.priority?.id,
-        description: data?.description || '',
-        faultrecord: data?.recordedBy || '',
-        rectification: data?.rectificationDetails || '',
-        breakdownreason: data?.reasonForBreakdown || ''
+        station: record.location,
+        system: record.allData?.systemName,
+        equipment: record.category,
+        itemcode: record.assets,
+        faultCategory: record.faultCategory,
+        faultsubcategory: record.faultSubCategory,
+        user: record.assignedId,
+        priority: record.priority,
+        description: record.allData?.description || '',
+        faultrecord: record.allData?.recordedBy || '',
       });
-
     } else {
       message.warning("Please select only one row to edit");
     }
@@ -519,6 +540,14 @@ export default function CorrectiveMaintenance() {
       dataIndex: 'category',
       key: 'category',
       width: 140
+      // width: 120,
+      // render: (priority) => (
+      //   <Chip
+      //     label={priority}
+      //     size="small"
+      //     sx={{ bgcolor: getPriorityColor(priority), color: 'white', fontWeight: 'bold' }}
+      //   />
+      // )
     },
     {
       title: 'Date',
@@ -676,47 +705,37 @@ export default function CorrectiveMaintenance() {
           <CardContent>
             <Form
               form={filterForm}
-              layout="vertical"
+              layout="inline"
               onFinish={handleFilterChange}
               style={{ marginBottom: 16 }}
               initialValues={{
                 dateRange: [dayjs().startOf('month'), dayjs().endOf('month')]
               }}
             >
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="dateRange" label="Date Range">
-                    <RangePicker style={{ width: '100%' }} />
-                  </Form.Item>
-                </Col>
+              <Form.Item name="dateRange" label="Date Range">
+                <RangePicker />
+              </Form.Item>
 
+              <Form.Item name="location" label="Location">
+                <Select style={{ width: 150 }} loading={locationsLoading}>
+                  {locationOptions.map(location => (
+                    <Select.Option key={location.id} value={location.id}>
+                      {location.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
-
-                  <Form.Item name="location" label="Location">
-                    <Select style={{ width: '100%' }} loading={locationsLoading}>
-                      {locationOptions.map(location => (
-                        <Select.Option key={location.id} value={location.id}>
-                          {location.name}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-
-                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
-                  <Form.Item >
-                    <Space>
-                      <AntButton type="primary" htmlType="submit" loading={queryLoading}>
-                        Search
-                      </AntButton>
-                      <AntButton onClick={handleResetFilters}>
-                        Reset
-                      </AntButton>
-                    </Space>
-                  </Form.Item>
-                </Col>
-              </Row>
+              <Form.Item>
+                <Space>
+                  <AntButton type="primary" htmlType="submit" loading={queryLoading}>
+                    Search
+                  </AntButton>
+                  <AntButton onClick={handleResetFilters}>
+                    Reset
+                  </AntButton>
+                </Space>
+              </Form.Item>
             </Form>
           </CardContent>
         </Card>
@@ -816,7 +835,6 @@ export default function CorrectiveMaintenance() {
           }
         }}
         okText={isViewMode ? "Close" : isEditing ? "Update" : "Add"}
-        confirmLoading={saveLoading}
       >
         <Form layout="vertical" form={modalForm} onFinish={addticket} >
           <Row gutter={[16, 16]}>
@@ -1087,6 +1105,17 @@ export default function CorrectiveMaintenance() {
                 <Input.TextArea rows={3} placeholder="Enter Brakdown Reason" disabled={isViewMode} />
               </Form.Item>
             </Col>
+
+            {/* <Col span={12}>
+              <Form.Item
+                label="Corrective/Preventive Action Taken"
+                name="cpactivetaken"
+                rules={[{ required: true, message: "Please Enter Corrective/Preventive Action Taken" }]}
+              >
+                <Input.TextArea rows={3} placeholder="Enter Corrective/Preventive Action Taken" />
+              </Form.Item>
+            </Col> */}
+
             <Col span={24}>
               <Form.Item
                 label="Upload Image"
