@@ -269,7 +269,7 @@ export default function ConsolidatedManpowerReport() {
                     {/* Export buttons */}
                     <Space style={{ marginLeft: 'auto' }} size={12}>
                       <Input
-                        // placeholder="Search Location"
+                        placeholder="Search"
                         prefix={<SearchOutlined />}
                         value={searchText}
                         onChange={e => setSearchText(e.target.value)}

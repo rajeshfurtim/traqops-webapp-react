@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
 import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin, Row, Col, Input, message } from 'antd'
@@ -8,7 +8,7 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGettaskReportSummarycmQuery, useGetSystemCategorysQuery } from '../../../store/api/taskReport.api'
 import { useGetAllStatusQuery } from '../../../store/api/masterSettings.api'
 import { useAuth } from '../../../context/AuthContext'
-import { SearchOutlined, FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { SearchOutlined, FileExcelOutlined, FilePdfOutlined, ClockCircleOutlined } from '@ant-design/icons'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
 
 const { RangePicker } = DatePicker
@@ -207,8 +207,11 @@ export default function ScheduledMaintenanceDetailsReports() {
       title: 'Duration',
       dataIndex: 'duration',
       key: 'duration',
-      render: (_, record) => record?.duration + 'Mins' ?? '-',
-      sorter: (a, b) => a.duration.localeCompare(b.duration)
+      render: (_, record) =>
+        record?.duration != null && record?.duration !== ''
+          ? `${record.duration} Mins`
+          : '-',
+      sorter: (a, b) => Number(a?.duration) - Number(b?.duration),
     },
   ];
 
@@ -333,6 +336,17 @@ export default function ScheduledMaintenanceDetailsReports() {
     setFilteredData(filtered);
   }
 
+  const tableData = filteredData || reportData?.data?.content || []
+
+  const totalDurationMinutes = useMemo(
+    () =>
+      tableData.reduce((sum, record) => {
+        const n = Number(record?.duration)
+        return sum + (Number.isFinite(n) ? n : 0)
+      }, 0),
+    [filteredData, reportData?.data?.content]
+  )
+
   // Export Section
   const [exporting, setExporting] = useState({ excel: false, pdf: false })
 
@@ -396,11 +410,17 @@ export default function ScheduledMaintenanceDetailsReports() {
               onFinish={handleApplyFilters}
             >
               <Row
-                gutter={[16, 16]}
+                gutter={[12, 12]}
                 wrap={false}
-                style={{ overflowX: 'auto' }}
+                style={{
+                  display: 'flex',
+                  flexWrap: 'nowrap',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                }}
               >
-                <Col span={4}>
+                <Col style={{ flex: '1 0 240px', minWidth: 220, maxWidth: 320 }}>
                   <Form.Item
                     name="dateRange"
                     label="Date Range"
@@ -416,9 +436,9 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
-                  <Form.Item name="location" label="Location"  rules={[{ required: true, message: 'Please select Location!' }]}>
-                    <Select loading={locationsLoading}>
+                <Col style={{ flex: '1 1 150px', minWidth: 140 }}>
+                  <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Please select Location!' }]}>
+                    <Select style={{ width: '100%' }} loading={locationsLoading}>
                       <Select.Option value={-1}>All Location</Select.Option>
                       {locations?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
@@ -429,18 +449,18 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col style={{ flex: '0 1 120px', minWidth: 110 }}>
                   <Form.Item name="system" label="System" rules={[{ required: true, message: 'Please select System!' }]}>
-                    <Select onChange={handleSystemChange}>
+                    <Select style={{ width: '100%' }} onChange={handleSystemChange}>
                       <Select.Option value="TVS">TVS</Select.Option>
                       <Select.Option value="ECS">ECS</Select.Option>
                     </Select>
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col style={{ flex: '1 1 150px', minWidth: 140 }}>
                   <Form.Item name="category" label="Category" rules={[{ required: true, message: 'Please select Category!' }]}>
-                    <Select loading={categoryLoading}>
+                    <Select style={{ width: '100%' }} loading={categoryLoading}>
                       <Select.Option value="All">All</Select.Option>
                       {categoryList?.data?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
@@ -451,9 +471,9 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col style={{ flex: '1 1 150px', minWidth: 140 }}>
                   <Form.Item name="statusId" label="Status" rules={[{ required: true, message: 'Please select Status!' }]}>
-                    <Select>
+                    <Select style={{ width: '100%' }}>
                       <Select.Option value={-1}>All</Select.Option>
                       {filteredStatusList?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
@@ -464,8 +484,14 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
-                  <Form.Item label=" ">
+                <Col
+                  style={{
+                    flex: '0 0 auto',
+                    display: 'flex',
+                    alignItems: 'start',
+                  }}
+                >
+                  <Form.Item label=" " style={{ marginBottom: 0 }}>
                     <Space>
                       <AntButton
                         type="primary"
@@ -488,15 +514,97 @@ export default function ScheduledMaintenanceDetailsReports() {
 
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-              <Space>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 2,
+                mb: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 1.75,
+                  px: 2.25,
+                  py: 1.25,
+                  borderRadius: 2,
+                  background: (theme) =>
+                    `linear-gradient(135deg, ${theme.palette.primary.main}14 0%, ${theme.palette.primary.main}08 45%, ${theme.palette.action.hover} 100%)`,
+                  border: '1px solid',
+                  borderColor: (theme) => `${theme.palette.primary.main}28`,
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 2px 12px rgba(0,0,0,0.35)'
+                      : '0 2px 12px rgba(22, 119, 255, 0.12), 0 1px 2px rgba(0,0,0,0.04)',
+                }}
+              >
+                <Box
+                  aria-hidden
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 1.75,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    background: (theme) =>
+                      `linear-gradient(145deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+                    color: 'primary.contrastText',
+                    boxShadow: '0 3px 10px rgba(22, 119, 255, 0.35)',
+                  }}
+                >
+                  <ClockCircleOutlined style={{ fontSize: 22 }} />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      display: 'block',
+                      lineHeight: 1.2,
+                      letterSpacing: '0.08em',
+                      fontWeight: 700,
+                      color: 'text.secondary',
+                      opacity: 0.92,
+                    }}
+                  >
+                    Total duration
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mt: 0.25 }}>
+                    <Typography
+                      component="span"
+                      variant="h5"
+                      sx={{
+                        fontWeight: 800,
+                        lineHeight: 1.1,
+                        color: 'primary.main',
+                        fontFeatureSettings: '"tnum"',
+                      }}
+                    >
+                      {totalDurationMinutes}
+                    </Typography>
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      sx={{ fontWeight: 600, color: 'text.secondary' }}
+                    >
+                      minutes
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+              <Space wrap>
                 <Input
                   placeholder="Search"
                   prefix={<SearchOutlined />}
                   value={searchText}
                   onChange={handleSearch}
                   allowClear
-                  style={{ width: 250 }}
+                  style={{ width: 250, minWidth: 160 }}
                 />
 
                 <AntButton
@@ -523,7 +631,7 @@ export default function ScheduledMaintenanceDetailsReports() {
               </Box>
             ) : (
               <Table
-                dataSource={filteredData || reportData?.data?.content}
+                dataSource={tableData}
                 columns={columns}
                 rowKey={(record, index) => index}
                 bordered
@@ -549,14 +657,6 @@ export default function ScheduledMaintenanceDetailsReports() {
         </Card>
       </Box>
 
-      {/* <style>
-        {`
-          .overdue-row {
-            background-color: #fff1f0 !important;
-            border-left: 4px solid red;
-          }
-        `}
-      </style> */}
     </>
   )
 }
