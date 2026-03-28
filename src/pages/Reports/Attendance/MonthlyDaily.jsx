@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
 import {
   Table, Form, Select, DatePicker, Space, Button as AntButton,
-  Input, Row, Col, Empty, Spin, message
+  Input, Row, Col, Empty, Skeleton, message
 } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -322,19 +322,31 @@ export default function MonthlyDailyAttendanceReport() {
         <Card>
           <CardContent>
             {!shouldFetch ? (
-              <Empty description="Click search to view data" />
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="Click search to view data"
+              />
             ) : queryLoading ? (
-              <Box display="flex" justifyContent="center" p={4}><Spin /></Box>
+              <Box sx={{ width: '100%', maxWidth: '100%', p: 2 }}>
+                <Skeleton active title={{ width: '32%' }} paragraph={{ rows: 10 }} />
+              </Box>
             ) : (
               <>
                 {/* TOOLBAR */}
-                <Box display="flex" justifyContent="flex-end" mb={2} gap={2}>
+                <Box
+                  display="flex"
+                  justifyContent="flex-end"
+                  flexWrap="wrap"
+                  mb={2}
+                  gap={2}
+                  sx={{ width: '100%', maxWidth: '100%' }}
+                >
                   <Input
                     placeholder="Search..."
                     prefix={<SearchOutlined />}
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
-                    style={{ width: 250 }}
+                    style={{ width: 250, minWidth: 160, maxWidth: '100%' }}
                   />
 
                   <AntButton icon={<FileExcelOutlined />} onClick={() => exportToExcel(filteredReports)}>
@@ -346,54 +358,69 @@ export default function MonthlyDailyAttendanceReport() {
                   </AntButton>
                 </Box>
 
-                {/* TABLE */}
-                <Table
-                  dataSource={filteredReports}
-                  columns={columns}
-                  rowKey="id"
-                  bordered
-                  scroll={{ x: 'max-content', y: 450 }}
-                  pagination={{
-                    defaultPageSize: 10,
-                    showSizeChanger: true,
-                    pageSizeOptions: ['10', '20', '50', '100', '200', '1000'],
-                  }}
-                  locale={{
-                    emptyText: searchText
-                      ? 'No matching records found'
-                      : 'No data available'
-                  }}
-                  summary={() => {
-                    const summary = getSummaryData()
+                {filteredReports.length === 0 ? (
+                  <Empty
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    description={
+                      searchText
+                        ? 'No matching records found'
+                        : 'No data available'
+                    }
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      width: '100%',
+                      maxWidth: '100%',
+                      overflowX: 'auto',
+                      WebkitOverflowScrolling: 'touch',
+                    }}
+                  >
+                    <Table
+                      dataSource={filteredReports}
+                      columns={columns}
+                      rowKey="id"
+                      bordered
+                      scroll={{ x: 'max-content', y: 450 }}
+                      pagination={{
+                        defaultPageSize: 10,
+                        showSizeChanger: true,
+                        pageSizeOptions: ['10', '20', '50', '100', '200', '1000'],
+                        responsive: true,
+                      }}
+                      summary={() => {
+                        const summary = getSummaryData()
 
-                    return (
-                      <Table.Summary fixed>
-                        <Table.Summary.Row>
-                          <Table.Summary.Cell index={0} />
-                          <Table.Summary.Cell index={1} />
-                          <Table.Summary.Cell index={2} />
-                          <Table.Summary.Cell index={3} />
-                          <Table.Summary.Cell index={4}> Total</Table.Summary.Cell>
+                        return (
+                          <Table.Summary fixed>
+                            <Table.Summary.Row>
+                              <Table.Summary.Cell index={0} />
+                              <Table.Summary.Cell index={1} />
+                              <Table.Summary.Cell index={2} />
+                              <Table.Summary.Cell index={3} />
+                              <Table.Summary.Cell index={4}> Total</Table.Summary.Cell>
 
-                          {/* Total Duties */}
-                          <Table.Summary.Cell index={5} align="center">
-                            {summary.totalDuties}
-                          </Table.Summary.Cell>
-
-                          {/* Dynamic Days */}
-                          {getDateColumns().map((col, i) => {
-                            const day = col.dataIndex || col.key
-                            return (
-                              <Table.Summary.Cell key={i} align="center">
-                                {summary.dayCounts?.[day] || 0}
+                              {/* Total Duties */}
+                              <Table.Summary.Cell index={5} align="center">
+                                {summary.totalDuties}
                               </Table.Summary.Cell>
-                            )
-                          })}
-                        </Table.Summary.Row>
-                      </Table.Summary>
-                    )
-                  }}
-                />
+
+                              {/* Dynamic Days */}
+                              {getDateColumns().map((col, i) => {
+                                const day = col.dataIndex || col.key
+                                return (
+                                  <Table.Summary.Cell key={i} align="center">
+                                    {summary.dayCounts?.[day] || 0}
+                                  </Table.Summary.Cell>
+                                )
+                              })}
+                            </Table.Summary.Row>
+                          </Table.Summary>
+                        )
+                      }}
+                    />
+                  </Box>
+                )}
               </>
             )}
           </CardContent>
