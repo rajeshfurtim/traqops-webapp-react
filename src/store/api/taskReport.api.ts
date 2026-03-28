@@ -34,7 +34,7 @@ export const taskReportApi = baseApi.injectEndpoints({
 
     getLocationwise: build.query({
       query: (params) => {
-        const { fromDate, toDate, locationId, statusId, clientId } = params
+        const { fromDate, toDate, locationId, statusId, clientId,system } = params
 
         if (!clientId) {
           throw new Error('ClientId is required for getLocationwise')
@@ -52,6 +52,8 @@ export const taskReportApi = baseApi.injectEndpoints({
             ...(locationId != null && { locationId: locationId.toString() }),
             ...(statusId != null && { statusId: statusId.toString() }),
             clientId: clientId.toString(),
+            ...(system != null && { system: system.toString()})
+
           },
         }
       },

@@ -136,7 +136,7 @@ export default function TaskReportExtended() {
                   >
                     <Select placeholder="Select Category" loading={categoryLoading}>
                       <Select.Option value="ALL">
-                        All Category
+                        All
                       </Select.Option>
                       {categoryList?.data?.map(l => (
                         <Select.Option key={l.id} value={l.id}>

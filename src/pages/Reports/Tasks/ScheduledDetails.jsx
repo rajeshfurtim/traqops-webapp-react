@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
+import { Box, Typography, Card, CardContent, Grid } from '@mui/material'
 import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col, Tooltip, message } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -8,7 +8,11 @@ import { useGetLocationList } from '../../../hooks/useGetLocationList'
 import { useGetLocationwiseQuery } from '../../../store/api/taskReport.api'
 import { useAuth } from '../../../context/AuthContext'
 import { SearchOutlined, FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
+import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle } from 'react-icons/fa'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
+import useGetFreqencyList from '../../../hooks/useGetFrequencyList'
+import { useGetSystemCategorysQuery } from '../../../store/api/taskReport.api'
+
 
 const { RangePicker } = DatePicker
 
@@ -19,15 +23,16 @@ export default function ScheduledMaintenanceDetailsReports() {
   const [shouldFetch, setShouldFetch] = useState(false)
   const [current, setCurrent] = useState(1)
   const [pageSize, setPagesize] = useState(25)
-
+  const [selectedSystem, setSelectedSystem] = useState("ECS");
   const defaultLocationId = -1
   const clientId = user?.client?.id || user?.clientId
-
+  const { freqencyList, isLoading: frequencyLoading } = useGetFreqencyList()
   const [filters, setFilters] = useState({
     fromDate: dayjs().subtract(1, 'day').format('YYYY-MM-DD'),
     toDate: dayjs().format('YYYY-MM-DD'),
     locationId: defaultLocationId,
     statusId: -1,
+    system : 'ECS'
   })
 
 
@@ -37,6 +42,16 @@ export default function ScheduledMaintenanceDetailsReports() {
   )
   const queryLoading = isInitialLoading || isFetching
 
+  const { data: categories, isLoading: categoryLoading } = useGetSystemCategorysQuery(
+    {
+      clientId: clientId,
+      system: selectedSystem
+    },
+    { skip: !selectedSystem }
+  );
+  useEffect(() => {
+    setSelectedSystem("ECS");
+  }, []);
   const reports = (reportData?.data || []).map((item, index) => {
     const isOverdue =
       !['VERIFIED', 'COMPLETED'].includes(item.status) &&
@@ -50,8 +65,11 @@ export default function ScheduledMaintenanceDetailsReports() {
       locationName: item.locationName,
       frequency: item.frequency,
       assetName: item.assetName,
+      system: item.systemName,
       categoryName: item.categoryName,
       status: item.status,
+      workdoneby: item.workDoneBy || '-',
+      workdonedate: item.workDoneDate || '-',
       task: item.task,
       ptwNo: item.ptwNo || '-',
       fromDeviceName: item.fromDeviceName || '-',
@@ -63,6 +81,40 @@ export default function ScheduledMaintenanceDetailsReports() {
       raw: item,
     }
   })
+
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState(null);
+
+  const dataToDisplay = filteredData !== null ? filteredData : reports
+
+  // data box count
+  const summaryCounts = (dataToDisplay || []).reduce(
+    (acc, item) => {
+      const status = item.status?.toUpperCase();
+
+      if (status === 'OPEN') acc.open += 1;
+      else if (status === 'COMPLETED') acc.completed += 1;
+      else if (status === 'WORK DONE') acc.workdone += 1;
+      else if (status === 'VERIFIED') acc.verified += 1;
+
+      acc.total += 1;
+
+      return acc;
+    },
+    {
+      open: 0,
+      completed: 0,
+      workdone: 0,
+      verified: 0,
+      total: 0,
+    }
+  );
+  const totalOpen = summaryCounts.open;
+  const totalCompleted = summaryCounts.completed;
+  const totalVerified = summaryCounts.verified;
+  const totalWorkDone = summaryCounts.workdone;
+  const totalTasks = summaryCounts.total;
 
   const getStatusTag = (status, isOverdue) => {
     if (isOverdue) return <Tag style={{ padding: '4px 10px', borderRadius: 25 }} color="red">OVERDUE</Tag>
@@ -78,6 +130,45 @@ export default function ScheduledMaintenanceDetailsReports() {
         return <Tag style={{ padding: '4px 10px', borderRadius: 25 }}>{status}</Tag>
     }
   }
+
+  /* ---------------- BOXES ---------------- */
+  const boxes = [
+    {
+      key: 'total',
+      label: 'Total Tasks',
+      value: totalTasks,
+      color: '#1677ff',
+      icon: <FaClipboardList size={32} color="#1677ff" />,
+    },
+    {
+      key: 'open',
+      label: 'Open',
+      value: totalOpen,
+      color: '#fa8c16',
+      icon: <FaExternalLinkAlt size={32} color="#fa8c16" />,
+    },
+    {
+      key: 'workdone',
+      label: 'Work Done',
+      value: totalWorkDone,
+      color: '#722ed1',
+      icon: <FaCheckSquare size={32} color="#722ed1" />,
+    },
+    {
+      key: 'completed',
+      label: 'Completed',
+      value: totalCompleted,
+      color: '#52c41a',
+      icon: <FaCheckSquare size={32} color="#52c41a" />,
+    },
+    {
+      key: 'verified',
+      label: 'Verified',
+      value: totalVerified,
+      color: '#13c2c2',
+      icon: <FaCheckCircle size={32} color="#13c2c2" />,
+    },
+  ]
 
   const stringSorter = (key) => (a, b) =>
     (a[key] || "").localeCompare(b[key] || "");
@@ -141,6 +232,7 @@ export default function ScheduledMaintenanceDetailsReports() {
     { title: 'Location', dataIndex: 'locationName', key: 'locationName', sorter: stringSorter("locationName") },
     { title: 'Frequency', dataIndex: 'frequency', key: 'frequency', sorter: stringSorter("frequency") },
     { title: 'Asset', dataIndex: 'assetName', key: 'assetName', sorter: stringSorter("assetName") },
+    { title: 'System', dataIndex:'system', key:'system', sorter: stringSorter("system")},
     { title: 'Category', dataIndex: 'categoryName', key: 'categoryName', sorter: stringSorter("categoryName") },
 
     {
@@ -153,6 +245,8 @@ export default function ScheduledMaintenanceDetailsReports() {
     { title: 'Task', dataIndex: 'task', key: 'task', sorter: stringSorter("task") },
     { title: 'PTW No', dataIndex: 'ptwNo', key: 'ptwNo', sorter: stringSorter("ptwNo") },
     { title: 'Spare', dataIndex: 'fromDeviceName', key: 'fromDeviceName', sorter: stringSorter("fromDeviceName") },
+    { title: 'WorkDone By', dataIndex: 'workdoneby', key: 'workdoneby', sorter: stringSorter("workdoneby") },
+    { title: 'WorkDone Date', dataIndex: 'workdonedate', key: 'workdonedate', sorter: stringSorter("workdonedate") },
     { title: 'Completed By', dataIndex: 'completedBy', key: 'completedBy', sorter: stringSorter("completedBy") },
     { title: 'Completed Date', dataIndex: 'completedDate', key: 'completedDate', sorter: stringSorter("completedDate") }
   ]
@@ -163,17 +257,15 @@ export default function ScheduledMaintenanceDetailsReports() {
       return
     }
     setShouldFetch(true)
+    setFilteredData(null)
     setFilters({
       fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: values.dateRange?.[1]?.format('YYYY-MM-DD'),
       locationId: values.location ?? defaultLocationId,
       statusId: values.statusId ?? -1,
+      system: values.system
     })
   }
-
-  // Search state
-  const [searchText, setSearchText] = useState('');
-  const [filteredData, setFilteredData] = useState(null);
 
   const handleSearch = (e) => {
     const value = e.target.value;
@@ -186,7 +278,7 @@ export default function ScheduledMaintenanceDetailsReports() {
       return;
     }
 
-    const filtered = reportData?.data?.filter((item) =>
+    const filtered = reports.filter((item) =>
       `${item?.locationName ?? ''} ${item?.frequency ?? ''} ${item?.assetName ?? ''}
           ${item?.startDate ? dayjs(item?.startDate).format('DD/MM/YYYY') : ''}
           ${item?.endDate ? dayjs(item?.endDate).format('DD/MM/YYYY') : ''}
@@ -210,7 +302,7 @@ export default function ScheduledMaintenanceDetailsReports() {
 
       await exportToPDF(
         columns,
-        reportData?.data,
+        dataToDisplay,
         `scheduled-maintenance-report (Date: ${dayjs(filters.fromDate).format('DD/MM/YYYY')} to ${dayjs(filters.toDate).format('DD/MM/YYYY')} - Location: ${locationName[0]?.name ?? 'All'})`
       )
 
@@ -229,7 +321,7 @@ export default function ScheduledMaintenanceDetailsReports() {
 
       await exportToExcel(
         columns,
-        reportData?.data,
+        dataToDisplay,
         `scheduled-maintenance-report (Date: ${dayjs(filters.fromDate).format('DD/MM/YYYY')} to ${dayjs(filters.toDate).format('DD/MM/YYYY')} - Location: ${locationName[0]?.name ?? 'All'} - Location: ${locationName[0]?.name ?? 'All'})`
       )
 
@@ -262,24 +354,23 @@ export default function ScheduledMaintenanceDetailsReports() {
               initialValues={{
                 dateRange: [dayjs().subtract(1, 'day'), dayjs()],
                 location: defaultLocationId,
+                frequencyId: -1,
                 statusId: -1,
+                system: "ECS",
+                categoryId: -1
               }}
             >
               <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={8} lg={6}>
+
+                <Col span={4}>
                   <Form.Item name="dateRange" label="Date Range">
-                    <RangePicker style={{ width: '100%' }}
-                      format={'DD/MM/YYYY'}
-                      disabledDate={(current) =>
-                        current && current > dayjs().endOf('day')
-                      }
-                    />
+                    <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col span={4}>
                   <Form.Item name="location" label="Location">
-                    <Select style={{ width: '100%' }} allowClear loading={locationsLoading}>
+                    <Select allowClear loading={locationsLoading}>
                       <Select.Option value={-1}>All Location</Select.Option>
                       {locations?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
@@ -290,36 +381,69 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col span={4}>
                   <Form.Item name="statusId" label="Status">
-                    <Select style={{ width: '100%' }} allowClear>
+                    <Select allowClear>
                       <Select.Option value={-1}>All Status</Select.Option>
                       <Select.Option value={640}>Open</Select.Option>
                       <Select.Option value={631}>Completed</Select.Option>
                       <Select.Option value={15}>Verified</Select.Option>
-                      {/* <Select.Option value={4}>Overdue</Select.Option> */}
                     </Select>
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
-                  <Form.Item style={{ marginBottom: 0 }}>
-                    <Space wrap>
-                      <AntButton type="primary" htmlType="submit" loading={queryLoading} icon={<SearchOutlined />}>
-                        Search
-                      </AntButton>
-                      <AntButton
-                        htmlType="button"
-                        onClick={() => {
-                          form.resetFields();
-                          setShouldFetch(false);
-                        }}
-                      >
-                        Reset
-                      </AntButton>
-                    </Space>
+                <Col span={4}>
+                  <Form.Item name="frequencyId" label="Frequency">
+                    <Select allowClear loading={frequencyLoading}>
+                      <Select.Option value={-1}>All Frequency</Select.Option>
+                      {freqencyList?.map((fre) => (
+                        <Select.Option key={fre.id} value={fre.id}>
+                          {fre.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
                   </Form.Item>
                 </Col>
+
+                <Col span={4}>
+                  <Form.Item name="system" label="System">
+                    <Select
+                      onChange={(value) => {
+                        setSelectedSystem(value || 'ECS');
+                        form.setFieldsValue({ categoryId: -1 });
+                      }}
+                    >
+                      <Select.Option value="ECS">ECS</Select.Option>
+                      <Select.Option value="TVS">TVS</Select.Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col span={4}>
+                  <Form.Item name="categoryId" label="Category">
+                    <Select loading={categoryLoading} allowClear>
+                      <Select.Option value={-1}>All</Select.Option>
+                      {(categories?.data || []).map((cat) => (
+                        <Select.Option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col span={4} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+                  <AntButton
+                    type="primary"
+                    htmlType="submit"
+                    loading={queryLoading}
+                    icon={<SearchOutlined />}
+                    block
+                  >
+                    Search
+                  </AntButton>
+                </Col>
+
               </Row>
             </Form>
           </CardContent>
@@ -337,22 +461,22 @@ export default function ScheduledMaintenanceDetailsReports() {
                   allowClear
                   style={{ width: 250 }}
                 />
-                
-                  <AntButton
-                    icon={<FileExcelOutlined />}
-                    onClick={handleExportExcel}
-                    disabled={!reportData?.data || reportData?.data?.length === 0}
-                  >Export Excel
-                  </AntButton>
-                
-                  <AntButton
-                    icon={<FilePdfOutlined />}
-                    onClick={handleExportPDF}
-                    disabled={!reportData?.data || reportData?.data?.length === 0}
-                  >
-                    Export PDF
-                  </AntButton>
-                
+
+                <AntButton
+                  icon={<FileExcelOutlined />}
+                  onClick={handleExportExcel}
+                  disabled={!dataToDisplay || dataToDisplay.length === 0}
+                >Export Excel
+                </AntButton>
+
+                <AntButton
+                  icon={<FilePdfOutlined />}
+                  onClick={handleExportPDF}
+                  disabled={!dataToDisplay || dataToDisplay.length === 0}
+                >
+                  Export PDF
+                </AntButton>
+
               </Space>
             </Box>
             {!shouldFetch ? (
@@ -363,29 +487,107 @@ export default function ScheduledMaintenanceDetailsReports() {
                   <Spin />
                 </Box>
               ) : (
-                <Table
-                  dataSource={filteredData ?? reports}
-                  columns={columns}
-                  loading={queryLoading}
-                  rowKey={(record, index) => index}
-                  size="middle"
-                  scroll={{ x: 'max-content' }}
-                  pagination={{
-                    position: ['bottomRight'],
-                    current: current,
-                    pageSize: pageSize,
-                    onChange: setCurrent,
-                    showSizeChanger: true,
-                    onShowSizeChange: (current, size) => {
-                      setPagesize(size);
-                      setCurrent(current);
-                    },
-                    pageSizeOptions: ['25', '50', '100'],
-                    showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
-                    className: "custom-pagination"
-                  }}
-                  bordered
-                />
+                <>
+                  {/* SUMMARY BOXES */}
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
+                    {boxes.map((box) => (
+                      <Grid
+                        item
+                        key={box.key}
+                        xs={12}
+                        sm={6}
+                        sx={{
+                          flexBasis: {
+                            xs: '100%',
+                            sm: '50%',
+                            md: '20%',
+                          },
+                          maxWidth: {
+                            xs: '100%',
+                            sm: '50%',
+                            md: '20%',
+                          },
+                        }}
+                      >
+                        <Card
+                          sx={{
+                            height: '100%',
+                            borderRadius: 3,
+                            border: `1px solid ${box.color}`,
+                            backgroundColor: `${box.color}0f`,
+                            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.06)',
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                            '&:hover': {
+                              transform: 'translateY(-4px)',
+                              boxShadow: '0 10px 24px rgba(15, 23, 42, 0.18)',
+                            },
+                          }}
+                        >
+                          <CardContent
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: '50%',
+                                backgroundColor: `${box.color}1a`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {box.icon}
+                            </Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                              <Typography
+                                variant="subtitle2"
+                                sx={{ textTransform: 'uppercase', letterSpacing: 0.5, color: 'text.secondary' }}
+                              >
+                                {box.label}
+                              </Typography>
+                              <Typography
+                                variant="h5"
+                                fontWeight="bold"
+                                sx={{ color: box.color, mt: 0.5 }}
+                              >
+                                {box.value}
+                              </Typography>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                  <Table
+                    dataSource={dataToDisplay}
+                    columns={columns}
+                    loading={queryLoading}
+                    rowKey={(record, index) => index}
+                    size="middle"
+                    scroll={{ x: 'max-content' }}
+                    pagination={{
+                      position: ['bottomRight'],
+                      current: current,
+                      pageSize: pageSize,
+                      onChange: setCurrent,
+                      showSizeChanger: true,
+                      onShowSizeChange: (current, size) => {
+                        setPagesize(size);
+                        setCurrent(current);
+                      },
+                      pageSizeOptions: ['25', '50', '100','500', '1000'],
+                      showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                      className: "custom-pagination"
+                    }}
+                    bordered
+                  />
+                </>
               )}
           </CardContent>
         </Card>

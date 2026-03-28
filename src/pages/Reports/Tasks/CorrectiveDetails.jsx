@@ -214,57 +214,57 @@ export default function ScheduledMaintenanceDetailsReports() {
 
   const getCompletedData = (data, type) => {
     if (!data?.length) return null;
-  
+
     const lastCompleted = data
       .filter(item => item?.status?.name === 'COMPLETED')
       .pop();
-  
+
     if (!lastCompleted) return null;
-  
+
     if (type === 'date') {
       return lastCompleted?.createdAt
         ? dayjs(lastCompleted.createdAt).format('DD/MM/YYYY hh:mm A')
         : null;
     }
-  
+
     if (type === 'performedBy') {
       return lastCompleted?.performedBy;
     }
-  
+
     if (type === 'remarks') {
       return lastCompleted?.remarks !== 'null'
         ? lastCompleted?.remarks
         : '';
     }
-  
+
     return null;
   };
 
   const getVerifiedData = (data, type) => {
     if (!data?.length) return null;
-  
+
     const verifiedItem = data.find(
       item => item?.status?.name === 'VERIFIED'
     );
-  
+
     if (!verifiedItem) return null;
-  
+
     if (type === 'date') {
       return verifiedItem?.createdAt
         ? dayjs(verifiedItem.createdAt).format('DD/MM/YYYY hh:mm A')
         : null;
     }
-  
+
     if (type === 'verifiedBy') {
       return verifiedItem?.verifiedBy;
     }
-  
+
     if (type === 'remarks') {
       return verifiedItem?.remarks !== 'null'
         ? verifiedItem?.remarks
         : '';
     }
-  
+
     return null;
   };
 
@@ -286,24 +286,24 @@ export default function ScheduledMaintenanceDetailsReports() {
     })
   }
 
-   // Search state
-   const [searchText, setSearchText] = useState('');
-   const [filteredData, setFilteredData] = useState(null);
- 
-   const handleSearch = (e) => {
+  // Search state
+  const [searchText, setSearchText] = useState('');
+  const [filteredData, setFilteredData] = useState(null);
+
+  const handleSearch = (e) => {
     const value = e.target.value;
     setSearchText(value);
-  
+
     const searchValue = value.toLowerCase().trim();
-  
+
     if (!searchValue) {
       setFilteredData(null);
       return;
     }
-  
+
     const filtered = reportData?.data?.content?.filter((item) => {
       const breakDown = item?.breakDownRemarks?.[0] || {};
-  
+
       const searchString = [
         item.createdBy?.firstName,
         item.location?.name,
@@ -323,13 +323,13 @@ export default function ScheduledMaintenanceDetailsReports() {
         breakDown?.date,
         item.duration
       ]
-        .filter(Boolean) 
+        .filter(Boolean)
         .join(' ')
         .toLowerCase();
-  
+
       return searchString.includes(searchValue);
     });
- 
+
     setFilteredData(filtered);
   }
 
@@ -395,28 +395,31 @@ export default function ScheduledMaintenanceDetailsReports() {
               layout="vertical"
               onFinish={handleApplyFilters}
             >
-              <Row gutter={[16, 16]}>
-                {/* Date range needs more width on large screens */}
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="dateRange" label="Date Range"
+              <Row
+                gutter={[16, 16]}
+                wrap={false}
+                style={{ overflowX: 'auto' }}
+              >
+                <Col span={4}>
+                  <Form.Item
+                    name="dateRange"
+                    label="Date Range"
                     rules={[{ required: true, message: 'Please select date range!' }]}
                   >
-                    <RangePicker 
-                    style={{ width: '100%' }}
-                     format='DD/MM/YYYY'
-                     disabledDate={(current) =>
-                      current && current > dayjs().endOf('day')
-                    }
-                      />
+                    <RangePicker
+                      style={{ width: '100%' }}
+                      format="DD/MM/YYYY"
+                      disabledDate={(current) =>
+                        current && current > dayjs().endOf('day')
+                      }
+                    />
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="location" label="Location">
-                    <Select style={{ width: '100%' }} loading={locationsLoading}>
-                      <Select.Option key={-1} value={-1}>
-                        All Location
-                      </Select.Option>
+                <Col span={4}>
+                  <Form.Item name="location" label="Location"  rules={[{ required: true, message: 'Please select Location!' }]}>
+                    <Select loading={locationsLoading}>
+                      <Select.Option value={-1}>All Location</Select.Option>
                       {locations?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
                           {loc.name}
@@ -426,19 +429,19 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="system" label="System">
-                    <Select style={{ width: '100%' }} onChange={handleSystemChange}>
-                      <Select.Option value={'TVS'}>TVS</Select.Option>
-                      <Select.Option value={'ECS'}>ECS</Select.Option>
+                <Col span={4}>
+                  <Form.Item name="system" label="System" rules={[{ required: true, message: 'Please select System!' }]}>
+                    <Select onChange={handleSystemChange}>
+                      <Select.Option value="TVS">TVS</Select.Option>
+                      <Select.Option value="ECS">ECS</Select.Option>
                     </Select>
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="category" label="Category">
-                    <Select style={{ width: '100%' }} loading={categoryLoading}>
-                      <Select.Option value={'All'}>All</Select.Option>
+                <Col span={4}>
+                  <Form.Item name="category" label="Category" rules={[{ required: true, message: 'Please select Category!' }]}>
+                    <Select loading={categoryLoading}>
+                      <Select.Option value="All">All</Select.Option>
                       {categoryList?.data?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
                           {loc.name}
@@ -448,9 +451,9 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="statusId" label="Status">
-                    <Select style={{ width: '100%' }}>
+                <Col span={4}>
+                  <Form.Item name="statusId" label="Status" rules={[{ required: true, message: 'Please select Status!' }]}>
+                    <Select>
                       <Select.Option value={-1}>All</Select.Option>
                       {filteredStatusList?.map((loc) => (
                         <Select.Option key={loc.id} value={loc.id}>
@@ -461,16 +464,20 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col xs={24} sm={24} md={24} lg={6}>
+                <Col span={4}>
                   <Form.Item label=" ">
                     <Space>
-                      <AntButton type="primary" htmlType="submit"
+                      <AntButton
+                        type="primary"
+                        htmlType="submit"
                         icon={<SearchOutlined />}
                         loading={queryLoading}
-                      >Search</AntButton>
-                      <AntButton onClick={() => {
-                        form.resetFields()
-                      }}>Reset</AntButton>
+                      >
+                        Search
+                      </AntButton>
+                      <AntButton onClick={() => form.resetFields()}>
+                        Reset
+                      </AntButton>
                     </Space>
                   </Form.Item>
                 </Col>
@@ -481,7 +488,7 @@ export default function ScheduledMaintenanceDetailsReports() {
 
         <Card>
           <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Space>
                 <Input
                   placeholder="Search"
@@ -511,33 +518,33 @@ export default function ScheduledMaintenanceDetailsReports() {
               </Space>
             </Box>
             {queryLoading ? (
-                <Box display="flex" justifyContent="center" p={4}>
-                  <Spin />
-                </Box>
-              ) : (
-                <Table
-                  dataSource={filteredData || reportData?.data?.content}
-                  columns={columns}
-                  rowKey={(record, index) => index}
-                  bordered
-                  size="middle"
-                  scroll={{ x: 'max-content' }}
-                  pagination={{
-                    position: ['bottomRight'],
-                    current: current,
-                    pageSize: pageSize,
-                    onChange: setCurrent,
-                    showSizeChanger: true,
-                    onShowSizeChange: (current, size) => {
-                      setPagesize(size);
-                      setCurrent(current);
-                    },
-                    pageSizeOptions: ['25', '50', '100'],
-                    showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
-                    className: "custom-pagination"
-                  }}
-                />
-              )}
+              <Box display="flex" justifyContent="center" p={4}>
+                <Spin />
+              </Box>
+            ) : (
+              <Table
+                dataSource={filteredData || reportData?.data?.content}
+                columns={columns}
+                rowKey={(record, index) => index}
+                bordered
+                size="middle"
+                scroll={{ x: 'max-content' }}
+                pagination={{
+                  position: ['bottomRight'],
+                  current: current,
+                  pageSize: pageSize,
+                  onChange: setCurrent,
+                  showSizeChanger: true,
+                  onShowSizeChange: (current, size) => {
+                    setPagesize(size);
+                    setCurrent(current);
+                  },
+                  pageSizeOptions: ['25', '50', '100'],
+                  showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} items`,
+                  className: "custom-pagination"
+                }}
+              />
+            )}
           </CardContent>
         </Card>
       </Box>
