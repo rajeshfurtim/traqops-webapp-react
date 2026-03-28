@@ -398,48 +398,52 @@ export default function Dashboard() {
           const topStations = Object.entries(shortageByStation)
             .sort((a, b) => b[1] - a[1])
             .map(([name]) => name)
+            .filter((name) => name && name !== "undefined" && name !== "null")
             .slice(0, 3)
 
-          const [stationAName, stationBName, stationCName] = topStations
+          if (!topStations.length) {
+            setLowStockSparesAcrossStationsData([])
+          } else {
+            const [stationAName, stationBName, stationCName] = topStations
 
-          const spareMap = new Map()
-          lowStockItems.forEach((it) => {
-            const spareName = it?.spareName || ""
-            if (!spareName) return
+            const spareMap = new Map()
+            lowStockItems.forEach((it) => {
+              const spareName = it?.spareName || ""
+              if (!spareName) return
 
-            if (!spareMap.has(spareName)) {
-              spareMap.set(spareName, {
-                sparePart: spareName,
-                [stationAName]: 0,
-                [stationBName]: 0,
-                [stationCName]: 0,
-              })
-            }
+              if (!spareMap.has(spareName)) {
+                const baseRow = { sparePart: spareName }
+                if (stationAName) baseRow[stationAName] = 0
+                if (stationBName) baseRow[stationBName] = 0
+                if (stationCName) baseRow[stationCName] = 0
+                spareMap.set(spareName, baseRow)
+              }
 
-            const row = spareMap.get(spareName)
-            const stationName = normalizeLocationName(it?.locationName)
-            const shortage = Number(it?.shortage || 0)
+              const row = spareMap.get(spareName)
+              const stationName = normalizeLocationName(it?.locationName)
+              const shortage = Number(it?.shortage || 0)
 
-            if (stationName === stationAName) row[stationAName] += shortage
-            else if (stationName === stationBName)
-              row[stationBName] += shortage
-            else if (stationName === stationCName)
-              row[stationCName] += shortage
-          })
+              if (stationAName && stationName === stationAName) row[stationAName] += shortage
+              else if (stationBName && stationName === stationBName)
+                row[stationBName] += shortage
+              else if (stationCName && stationName === stationCName)
+                row[stationCName] += shortage
+            })
 
-          const chartRows = Array.from(spareMap.values())
-            .map((r) => ({
-              ...r,
-              __total:
-                (r[stationAName] || 0) +
-                (r[stationBName] || 0) +
-                (r[stationCName] || 0),
-            }))
-            .sort((a, b) => b.__total - a.__total)
-            .slice(0, 6)
-            .map(({ __total, ...rest }) => rest)
+            const chartRows = Array.from(spareMap.values())
+              .map((r) => ({
+                ...r,
+                __total:
+                  (stationAName ? r[stationAName] || 0 : 0) +
+                  (stationBName ? r[stationBName] || 0 : 0) +
+                  (stationCName ? r[stationCName] || 0 : 0),
+              }))
+              .sort((a, b) => b.__total - a.__total)
+              .slice(0, 6)
+              .map(({ __total, ...rest }) => rest)
 
-          setLowStockSparesAcrossStationsData(chartRows)
+            setLowStockSparesAcrossStationsData(chartRows)
+          }
         } else {
           setLowStockSparesAcrossStationsData([])
         }
@@ -778,7 +782,13 @@ export default function Dashboard() {
   const lowStockSparesAcrossStations = lowStockSparesAcrossStationsData;
   const lowStockStationKeys = Array.isArray(lowStockSparesAcrossStations) &&
     lowStockSparesAcrossStations.length > 0
-    ? Object.keys(lowStockSparesAcrossStations[0]).filter((k) => k !== "sparePart")
+    ? Object.keys(lowStockSparesAcrossStations[0]).filter(
+        (k) =>
+          k !== "sparePart" &&
+          k !== "undefined" &&
+          k !== "null" &&
+          k?.trim?.() !== ""
+      )
     : [];
 
   const lowStockStationColors = [
