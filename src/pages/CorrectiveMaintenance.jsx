@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme, alpha, Chip, Grid } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col, Tabs, Modal, Upload, Button, message } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Row, Col, Tabs, Modal, Upload, Button, message } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, UploadOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle, FaTasks, FaClock } from 'react-icons/fa'
@@ -649,43 +649,50 @@ const queryLoading = isLoading || isFetching
           </div>
         )}
 
-        <Table
-          rowKey="id"
-          dataSource={Cmreports}
-          columns={columns}
-          rowSelection={rowSelection}
-          loading={cmisFetching || cmqueryLoading}
-          bordered
-          scroll={{ y: 400 }}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            pageSizeOptions: ['10', '20', '50'],
-          }}
-          onRow={(record) => ({
-            onClick: () => {
-              setIsViewMode(true)
-              setIsEditing(false)
-              setopen(true)
+        {cmqueryLoading || cmisFetching ? (
+          <Box sx={{ width: '100%', mt: 1 }}>
+            <Skeleton variant="rounded" width="100%" height={40} sx={{ mb: 1.5 }} />
+            <Skeleton variant="rounded" width="100%" height={360} />
+          </Box>
+        ) : (
+          <Table
+            rowKey="id"
+            dataSource={Cmreports}
+            columns={columns}
+            rowSelection={rowSelection}
+            bordered
+            scroll={{ x: 'max-content', y: 400 }}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50'],
+              responsive: true,
+            }}
+            onRow={(record) => ({
+              onClick: () => {
+                setIsViewMode(true)
+                setIsEditing(false)
+                setopen(true)
 
-              modalForm.setFieldsValue({
-                ticketno: record.cmKey,
-                station: record.location,
-                system: record.allData?.systemName,
-                equipment: record.category,
-                itemcode: record.assets,
-                faultCategory: record.faultCategory,
-                faultsubcategory: record.faultSubCategory,
-                user: record.assignedId,
-                priority: record.priority,
-                description: record.allData?.description || '',
-                faultrecord: record.allData?.recordedBy || '',
-                rectification: record.allData?.rectificationDetails || '',
-                breakdownreason: record.allData?.reasonForBreakdown || ''
-              })
-            }
-          })}
-        />
+                modalForm.setFieldsValue({
+                  ticketno: record.cmKey,
+                  station: record.location,
+                  system: record.allData?.systemName,
+                  equipment: record.category,
+                  itemcode: record.assets,
+                  faultCategory: record.faultCategory,
+                  faultsubcategory: record.faultSubCategory,
+                  user: record.assignedId,
+                  priority: record.priority,
+                  description: record.allData?.description || '',
+                  faultrecord: record.allData?.recordedBy || '',
+                  rectification: record.allData?.rectificationDetails || '',
+                  breakdownreason: record.allData?.reasonForBreakdown || ''
+                })
+              }
+            })}
+          />
+        )}
       </>
     )
   }))
@@ -745,8 +752,16 @@ const queryLoading = isLoading || isFetching
             {!shouldFetch ? (
               <Empty description="Please apply filters to view the report" />
             ) : queryLoading ? (
-              <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+              <Box sx={{ width: '100%' }}>
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Grid item xs={12} sm={6} md={2} key={i}>
+                      <Skeleton variant="rounded" height={112} sx={{ borderRadius: 3 }} />
+                    </Grid>
+                  ))}
+                </Grid>
+                <Skeleton variant="rounded" width={320} height={40} sx={{ mb: 2, maxWidth: '100%' }} />
+                <Skeleton variant="rounded" width="100%" height={400} />
               </Box>
             ) : (
               <>
