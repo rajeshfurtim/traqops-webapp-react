@@ -269,9 +269,9 @@ export default function MonthlyDailyAttendanceReport() {
       </Helmet>
 
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+        {/* <Typography variant="h4" gutterBottom fontWeight="bold">
           Monthly Attendance Report
-        </Typography>
+        </Typography> */}
 
         <Card sx={{ mb: 3 }}>
           <CardContent>

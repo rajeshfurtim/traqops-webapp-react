@@ -255,7 +255,7 @@ export default function InventoryCyclicCheck() {
         <title>{getPageTitle('inventory/cyclic-check')}</title>
       </Helmet>
 
-      <Title level={4}>Cyclic Check</Title>
+      {/* <Title level={4}>Cyclic Check</Title> */}
 
       <Card>
 

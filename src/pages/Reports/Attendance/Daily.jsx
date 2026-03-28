@@ -272,9 +272,9 @@ export default function DailyAttendanceReport() {
         <meta name="description" content={`${APP_CONFIG.name} - Daily Attendance Report`} />
       </Helmet>
       <Box className="daily-attendance-page">
-        <Typography variant="h4" gutterBottom fontWeight="bold" className="page-title">
+        {/* <Typography variant="h4" gutterBottom fontWeight="bold" className="page-title">
           Daily Attendance Report
-        </Typography>
+        </Typography> */}
 
         <Card className="filter-card" sx={{ mb: 3 }}>
           <CardContent className="filter-content">

@@ -447,9 +447,9 @@ export default function Inventory() {
         <meta name="description" content={`${APP_CONFIG.name} - Inventory Management System`} />
       </Helmet>
       <div>
-        <Title level={4} style={{ fontWeight: 'bold', marginBottom: 16 }}>
+        {/* <Title level={4} style={{ fontWeight: 'bold', marginBottom: 16 }}>
           Inventory Management
-        </Title>
+        </Title> */}
 
         {loading || !inventoryData ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>

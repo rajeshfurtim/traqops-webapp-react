@@ -203,9 +203,9 @@ export default function ConsolidatedManpowerReport() {
       </Helmet>
 
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+        {/* <Typography variant="h4" gutterBottom fontWeight="bold">
           Station Wise Report
-        </Typography>
+        </Typography> */}
 
         {/* Filters */}
         <Card sx={{ mb: 3 }}>

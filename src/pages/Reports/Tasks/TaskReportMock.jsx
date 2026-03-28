@@ -87,10 +87,10 @@ export default function TaskReportMock() {
       </Helmet>
 
       <div>
-        <Title level={4} style={{ marginBottom: 8 }}>
+        {/* <Title level={4} style={{ marginBottom: 8 }}>
           Task Report
         </Title>
-        <Text type="secondary">Mock data preview — replace with API integration when ready.</Text>
+        <Text type="secondary">Mock data preview — replace with API integration when ready.</Text> */}
 
         <Row gutter={16} style={{ marginTop: 16, marginBottom: 16 }}>
           <Col xs={24} sm={8}>

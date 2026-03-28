@@ -784,9 +784,9 @@ export default function ScheduledMaintenance() {
       </Helmet>
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h4" fontWeight="bold">
+          {/* <Typography variant="h4" fontWeight="bold">
           Scheduled Maintenance
-        </Typography>
+        </Typography> */}
           <Space>
             {selectedRowKeys.length > 0 && (
               <Button

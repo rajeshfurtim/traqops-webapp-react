@@ -703,9 +703,9 @@ const queryLoading = isLoading || isFetching
       </Helmet>
 
       <Box>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+        {/* <Typography variant="h4" gutterBottom fontWeight="bold">
           Corrective Maintenance
-        </Typography>
+        </Typography> */}
 
 
         <Card sx={{ mb: 3 }}>
