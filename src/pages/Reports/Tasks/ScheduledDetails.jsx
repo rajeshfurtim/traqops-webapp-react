@@ -263,7 +263,8 @@ export default function ScheduledMaintenanceDetailsReports() {
       toDate: values.dateRange?.[1]?.format('YYYY-MM-DD'),
       locationId: values.location ?? defaultLocationId,
       statusId: values.statusId ?? -1,
-      system: values.system
+      system: values.system,
+      categoryId: values.categoryId ?? -1,
     })
   }
 

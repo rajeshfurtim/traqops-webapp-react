@@ -3,7 +3,7 @@ import { baseApi, API_BASE_URL } from './baseApi'
 
 export const taskReportApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    
+
     getFrequencyCount: build.query({
       query: (params) => {
         const { fromDate, toDate, locationId, frequencyId, clientId } = params
@@ -34,7 +34,7 @@ export const taskReportApi = baseApi.injectEndpoints({
 
     getLocationwise: build.query({
       query: (params) => {
-        const { fromDate, toDate, locationId, statusId, clientId,system } = params
+        const { fromDate, toDate, locationId, statusId, clientId, system, categoryId } = params
 
         if (!clientId) {
           throw new Error('ClientId is required for getLocationwise')
@@ -52,7 +52,10 @@ export const taskReportApi = baseApi.injectEndpoints({
             ...(locationId != null && { locationId: locationId.toString() }),
             ...(statusId != null && { statusId: statusId.toString() }),
             clientId: clientId.toString(),
-            ...(system != null && { system: system.toString()})
+            ...(system != null && { system: system.toString() }),
+            ...(categoryId !== -1 && categoryId != null && {
+              categoryId: categoryId.toString()
+            })
 
           },
         }
@@ -226,7 +229,7 @@ export const taskReportApi = baseApi.injectEndpoints({
           url: `${API_BASE_URL}/checklist/getelements/bychecklistid`,
           method: 'GET',
           params: {
-             checkListId: checkListId.toString(),
+            checkListId: checkListId.toString(),
           },
         }
       },
@@ -241,7 +244,7 @@ export const taskReportApi = baseApi.injectEndpoints({
           url: `${API_BASE_URL}/getpmchecklist/bypmtask`,
           method: 'GET',
           params: {
-             pmTaskId: pmTaskId.toString(),
+            pmTaskId: pmTaskId.toString(),
           },
         }
       },
