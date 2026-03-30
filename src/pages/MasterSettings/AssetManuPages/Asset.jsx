@@ -1,12 +1,13 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, DatePicker, Switch, Select, Spin } from "antd"
-import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, DatePicker, Switch, Select, Spin, Tooltip } from "antd"
+import { SearchOutlined, PlusOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons"
 import { useAddAssetMutation, useDeleteAssetMutation, useGetAssetsLocationWiseQuery, useGetLocationListQuery, useGetAreaByLocationQuery, useGetSubAreaByAreaQuery } from '../../../store/api/masterSettings.api'
 import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
 import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from '../../../context/AuthContext'
 import { domainName } from '../../../config/apiConfig'
+import jsPDF from 'jspdf'
 import dayjs from "dayjs"
 
 export default function Asset() {
@@ -38,6 +39,14 @@ export default function Asset() {
 
     const [addAsset] = useAddAssetMutation();
     const [deleteAsset] = useDeleteAssetMutation();
+
+    useEffect(() => {
+        const list = locationList?.data?.content;
+
+        if (list?.length > 0) {
+            setSelectedHeaderLocationId(list[0]?.id)
+        }
+    }, [locationList])
 
     const columns = [
         {
@@ -86,6 +95,18 @@ export default function Asset() {
                 </Tag>
             ),
             sorter: (a, b) => (a?.action ?? '').localeCompare(b?.action ?? '')
+        },
+        {
+            title: 'Quantity',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            sorter: (a, b) => a?.itemCode - b?.itemCode
+        },
+        {
+            title: 'Make',
+            dataIndex: 'make',
+            key: 'make',
+            sorter: (a, b) => (a?.make ?? '').localeCompare(b?.make ?? '')
         }
     ]
 
@@ -105,7 +126,7 @@ export default function Asset() {
         }
 
         const filtered = assetsListData?.data?.content?.filter((item) =>
-            `${item?.locationName ?? ''} ${item?.categoryName ?? ''}
+            `${item?.locationName ?? ''} ${item?.categoryName ?? ''} ${item?.quantity ?? ''} ${item?.make ?? ''}
          ${item?.assetName ?? ''} ${item?.itemCode ?? ''} ${item?.action ?? ''}`
                 .toLowerCase()
                 .includes(searchValue)
@@ -115,10 +136,12 @@ export default function Asset() {
     };
 
     const handleAdd = () => {
-        form.setFieldsValue({
-            location: selectedHeaderLocationId
-        })
-        setSelectedLocationId(selectedHeaderLocationId);
+        if (selectedHeaderLocationId != -1) {
+            form.setFieldsValue({
+                location: selectedHeaderLocationId
+            })
+            setSelectedLocationId(selectedHeaderLocationId);
+        }
         setIsModalOpen(true)
     }
 
@@ -140,6 +163,7 @@ export default function Asset() {
             make: record.make,
             model: record.model,
             capacity: record.capacity,
+            date: record.date ? dayjs(record.date) : null,
             dateOfCommission: record.dateOfCommission ? dayjs(record.dateOfCommission) : null,
             status: record.action === 'Y' ? true : false,
         });
@@ -164,6 +188,7 @@ export default function Asset() {
             make: values.make,
             model: values.model,
             Capacity: values.capacity,
+            date: values.date ? dayjs(values.date).format('YYYY-MM-DD') : null,
             dateOfCommission: values.dateOfCommission ? dayjs(values.dateOfCommission).format('YYYY-MM-DD') : null,
             action: values.status ? 'Y' : 'N'
         };
@@ -237,6 +262,32 @@ export default function Asset() {
         }
     };
 
+    const handleDownloadQR = () => {
+        const canvas = document.getElementById("qr-code-canvas");
+
+        if (!canvas) return;
+
+        const imgData = canvas.toDataURL("image/png");
+
+        const pdf = new jsPDF({
+            orientation: "portrait",
+            unit: "mm",
+            format: "a4",
+        });
+
+        // Center QR in PDF
+        const imgWidth = 60;
+        const imgHeight = 60;
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const x = (pageWidth - imgWidth) / 2;
+
+        pdf.text(`Asset ID: ${selectedRecord.assetId}`, x, 95);
+        pdf.addImage(imgData, "PNG", x, 30, imgWidth, imgHeight);
+
+        pdf.save(`AST_${selectedRecord.assetId}.pdf`);
+    }
+
     return (
         <>
             <Box>
@@ -261,11 +312,12 @@ export default function Asset() {
                                     )}
                                 </>
                                 <Select
+                                    value={selectedHeaderLocationId}
                                     onChange={(value) => handleHeaderLocationChange(value)}
                                     placeholder="Select Location"
                                     style={{ width: 220 }}
-                                    defaultValue={selectedHeaderLocationId}
                                 >
+                                    <Select.Option key={-1} value={-1}>All Location</Select.Option>
                                     {locationList?.data?.content?.map(l => (
                                         <Select.Option key={l.id} value={l.id}>
                                             {l.name}
@@ -474,6 +526,15 @@ export default function Asset() {
                             </Col>
                             <Col span={12}>
                                 <Form.Item
+                                    label="Date"
+                                    name="date"
+                                    rules={[{ required: false, message: 'Please select date!' }]}
+                                >
+                                    <DatePicker style={{ width: "100%" }} format="DD-MM-YYYY" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
                                     label="Date of Commission"
                                     name="dateOfCommission"
                                     rules={[{ required: false, message: 'Please select date of commission!' }]}
@@ -492,11 +553,30 @@ export default function Asset() {
                             </Col>
                             <Col span={12}>
                                 {selectedRecord?.assetId && (
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
+                                    <Box sx={{ position: 'relative', width: 'fit-content', mb: 2 }}>
+
+                                        <Tooltip title="Download QR">
+                                            <DownloadOutlined
+                                                onClick={handleDownloadQR}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    right: 0,
+                                                    cursor: 'pointer',
+                                                    fontSize: 18,
+                                                    background: '#fff',
+                                                    borderRadius: '50%',
+                                                    padding: 4,
+                                                    boxShadow: '0 0 5px rgba(0,0,0,0.2)'
+                                                }}
+                                            />
+                                        </Tooltip>
+
                                         <Box sx={{ mt: 1, fontWeight: 700 }}>
                                             Asset Qr Code
                                         </Box>
                                         <QRCodeCanvas
+                                            id="qr-code-canvas"
                                             value={`AST_${selectedRecord.assetId}`}
                                             size={160}
                                         />

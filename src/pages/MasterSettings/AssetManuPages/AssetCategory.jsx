@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, TreeSelect, Spin } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, TreeSelect, Spin, Select } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetCheckListByClientQuery, useAddAssetCategoryMutation, useDeleteAssetCategoryMutation } from '../../../store/api/masterSettings.api'
 import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
@@ -22,6 +22,10 @@ export default function AssetCategory() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedRecord, setSelectedRecord] = useState(null)
 
+    const systemList = [
+        {id: 'ECS', name: 'ECS'},
+        {id: 'TVS', name: 'TVS'}
+    ]
     const { data: assetCategoryListData, isLoading: assetCategoryListLoading, isFetching } = useGetAllCategoryListQuery(clientId ? { clientId, pageNumber: 1, pageSize: 1000 } : skipToken)
     const { data: checkListData, isLoading: checkListLoading } = useGetCheckListByClientQuery({ clientId, pageNumber: 1, pageSize: 1000 })
 
@@ -42,6 +46,13 @@ export default function AssetCategory() {
             key: 'name',
             width: 250,
             sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
+        },
+        {
+            title: 'System',
+            dataIndex: 'systemName',
+            key: 'systemName',
+            width: 250,
+            sorter: (a, b) => (a?.systemName ?? '').localeCompare(b?.systemName ?? '')
         },
         {
             title: 'Description',
@@ -95,7 +106,7 @@ export default function AssetCategory() {
         }
 
         const filtered = assetCategoryListData?.data?.content?.filter((item) =>
-            `${item.name ?? ''} ${item?.description ?? ''}
+            `${item.name ?? ''} ${item?.description ?? ''} ${item?.systemName ?? ''}
          ${item?.assetsCategoryChecklistMapping?.map((checklist) => checklist?.checkList?.name || '').join(', ') || ''}`
                 .toLowerCase()
                 .includes(searchValue)
@@ -115,6 +126,7 @@ export default function AssetCategory() {
 
         form.setFieldsValue({
             name: record?.name,
+            system: record?.systemName,
             description: record?.description,
             checkList: record?.assetsCategoryChecklistMapping?.map(c => c.checkList.id)
         });
@@ -135,6 +147,7 @@ export default function AssetCategory() {
             clientId,
             domainName,
             name: values.name,
+            systemName: values.system,
             description: values.description,
             assetsCategoryChecklistMappingDtos
         };
@@ -308,6 +321,23 @@ export default function AssetCategory() {
                                     rules={[{ required: true, message: 'Please enter name!' }]}
                                 >
                                     <Input type="text" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    label="System"
+                                    name="system"
+                                    rules={[{ required: true, message: 'Please select system!' }]}
+                                >
+                                    <Select
+                                        placeholder="Select System"
+                                    >
+                                        {systemList?.map(l => (
+                                            <Select.Option key={l.id} value={l.id}>
+                                                {l.name}
+                                            </Select.Option>
+                                        ))}
+                                    </Select>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
