@@ -220,7 +220,7 @@ export default function ConsolidatedManpowerReport() {
               </Form.Item>
 
               <Form.Item name="type" label="Type" style={{ width: 250 }}>
-                <Select loading={userTypesLoading}>
+                <Select loading={userTypesLoading} showSearch optionFilterProp="children">
                   {userTypes?.map(type => (
                     <Select.Option key={type.id} value={type.id}>
                       {type.name}

@@ -284,7 +284,7 @@ export default function MonthlyDailyAttendanceReport() {
                 </Col>
                 <Col span={6}>
                   <Form.Item name="location" label="Location">
-                    <Select loading={locationsLoading}>
+                    <Select loading={locationsLoading} showSearch optionFilterProp="children">
                       {locationOptions.map(l =>
                         <Select.Option key={l.id} value={l.id}>{l.name}</Select.Option>
                       )}
@@ -293,7 +293,7 @@ export default function MonthlyDailyAttendanceReport() {
                 </Col>
                 <Col span={4}>
                   <Form.Item name="type" label="User Type">
-                    <Select loading={userTypesLoading}>
+                    <Select loading={userTypesLoading} showSearch optionFilterProp="children" >
                       {typeOptions.map(t =>
                         <Select.Option key={t.id} value={t.id}>{t.name}</Select.Option>
                       )}

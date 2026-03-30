@@ -724,7 +724,7 @@ const queryLoading = isLoading || isFetching
               </Form.Item>
 
               <Form.Item name="location" label="Location">
-                <Select style={{ width: 150 }} loading={locationsLoading}>
+                <Select style={{ width: '250px' }} loading={locationsLoading} showSearch optionFilterProp="children">
                   {locationOptions.map(location => (
                     <Select.Option key={location.id} value={location.id}>
                       {location.name}

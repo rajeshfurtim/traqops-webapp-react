@@ -305,6 +305,7 @@ export default function DailyAttendanceReport() {
                       placeholder="All Locations"
                       style={{ width: '100%' }}
                       loading={locationsLoading}
+                      showSearch optionFilterProp="children"
                     >
                       {locationOptions.map((location) => (
                         <Select.Option key={location.id} value={location.name}>
@@ -320,6 +321,7 @@ export default function DailyAttendanceReport() {
                     <Select
                       style={{ width: '100%' }}
                       loading={userTypesLoading}
+                      showSearch optionFilterProp="children"
                     >
                       {userTypeOptions.map((type) => (
                         <Select.Option key={type.id || 'all'} value={type.name}>

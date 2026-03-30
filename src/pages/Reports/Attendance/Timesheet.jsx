@@ -554,6 +554,7 @@ export default function TimesheetReport() {
                     <Select
                       loading={userTypesLoading}
                       style={{ width: '100%' }}
+                      showSearch optionFilterProp="children"
                     >
                       {typeOptions.map((type) => (
                         <Select.Option key={type.id} value={type.id}>
