@@ -733,7 +733,7 @@ export default function CorrectiveMaintenance() {
               }}
             >
               <Form.Item name="dateRange" label="Date Range">
-                <RangePicker />
+                <RangePicker  disabledDate={(current) => current && current > dayjs().endOf('day')} />
               </Form.Item>
 
               <Form.Item name="location" label="Location">
@@ -748,7 +748,7 @@ export default function CorrectiveMaintenance() {
 
               <Form.Item>
                 <Space>
-                  <AntButton type="primary" htmlType="submit" loading={queryLoading}>
+                  <AntButton type="primary" htmlType="submit" loading={queryLoading} icon={<SearchOutlined />}>
                     Search
                   </AntButton>
                   <AntButton onClick={handleResetFilters}>

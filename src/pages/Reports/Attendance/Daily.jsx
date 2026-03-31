@@ -295,6 +295,7 @@ export default function DailyAttendanceReport() {
                       format="MMM DD, YYYY"
                       style={{ width: '100%' }}
                       allowClear={false}
+                      disabledDate={(current) => current && current > dayjs().endOf('day')} 
                     />
                   </Form.Item>
                 </Col>

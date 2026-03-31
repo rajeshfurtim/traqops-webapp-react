@@ -365,7 +365,7 @@ export default function ScheduledMaintenanceDetailsReports() {
 
                 <Col span={4}>
                   <Form.Item name="dateRange" label="Date Range">
-                    <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                    <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" disabledDate={(current) => current && current > dayjs().endOf('day')} />
                   </Form.Item>
                 </Col>
 
