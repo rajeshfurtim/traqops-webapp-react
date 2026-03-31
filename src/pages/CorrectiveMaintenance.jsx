@@ -415,7 +415,7 @@ export default function CorrectiveMaintenance() {
         'id': result.id, 'name': result?.name, 'location': result.location.name, 'assets': result.assets?.name, 'cmKey': result?.cmKey,
         'category': result.category != null ? result.category.name : null, 'status': result.status.name, 'technician': result.technician, 'priority': result.priority != null ? result.priority.name : null,
         'faultCategory': result.faultCategory?.name, 'faultSubCategory': result.faultSubCategory?.name, 'time': '23-05-2023 11:31',
-        'allData': result, 'startTime': result.issueStartTime, 'endTime': result.issueEndTime, 'assignedTo': result.assignedTo != null ? result.assignedTo.firstName + " " + result.assignedTo.lastName : null, 'assignedId': result.assignedTo?.id
+        'allData': result, 'startTime': result.issueStartTime || null, 'endTime': result.issueEndTime || null, 'assignedTo': result.assignedTo != null ? result.assignedTo.firstName + " " + result.assignedTo.lastName : null, 'assignedId': result.assignedTo?.id
 
       }
     });
@@ -562,13 +562,28 @@ export default function CorrectiveMaintenance() {
       //   />
       // )
     },
+    // {
+    //   title: 'Date',
+    //   dataIndex: 'startTime',
+    //   key: 'startTime',
+    //   width: 120,
+    //   render: (date) => dayjs(date).format('DD-MM-YYYY HH:mm')
+    // },
     {
-      title: 'Date',
+      title: 'Issue Start Time',
       dataIndex: 'startTime',
       key: 'startTime',
-      width: 120,
-      render: (date) => dayjs(date).format('DD-MM-YYYY HH:mm')
+      width: 150,
+      render: (date) => date ? dayjs(date).format('DD-MM-YYYY HH:mm') : '-'
     },
+    {
+      title: 'Issue End Time',
+      dataIndex: 'endTime',
+      key: 'endTime',
+      width: 150,
+      render: (date) => date ? dayjs(date).format('DD-MM-YYYY HH:mm') : '-'
+    },
+
 
     {
       title: 'Assigned To',
