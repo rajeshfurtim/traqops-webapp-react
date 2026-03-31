@@ -1,13 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Box, Card, CardContent, Typography } from "@mui/material"
 import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Spin, TreeSelect } from "antd"
-import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
+import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons"
 import { useGetElementsCheckListQuery, useAddCheckListElementsMutation, useDeleteCheckListElementsMutation } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { useAuth } from '../../../context/AuthContext'
-import { domainName } from '../../../config/apiConfig'
-
-const { SHOW_PARENT } = TreeSelect;
 
 export default function CheckListElements() {
 
@@ -22,11 +19,19 @@ export default function CheckListElements() {
     const [selectedRecord, setSelectedRecord] = useState(null)
     const [elementType, setElementType] = useState(null)
     const [dataEntryType, setDataEntryType] = useState(null)
+    const [options, setOptions] = useState([]);
+    const [editingIndex, setEditingIndex] = useState(null);
 
     const { data: elementCheckList, isLoading: elementCheckListLoading, isFetching } = useGetElementsCheckListQuery(clientId ? { clientId, pageNumber: 1, pageSize: 2000 } : skipToken)
 
     const [addCheckListElements] = useAddCheckListElementsMutation();
     const [deleteCheckListElements] = useDeleteCheckListElementsMutation();
+
+    useEffect(() => {
+        if (selectedRecord?.elementsChecklistOptions) {
+            setOptions(selectedRecord.elementsChecklistOptions);
+        }
+    }, [selectedRecord]);
 
     const elementsTypeData = [
         { id: 'RADIO', name: 'RADIO' },
@@ -36,7 +41,8 @@ export default function CheckListElements() {
 
     const dataEntryData = [
         { id: 'TEXT', name: 'TEXT' },
-        { id: 'NUMERIC VALUE', name: 'NUMERIC VALUE' }
+        { id: 'NUMERIC VALUE', name: 'NUMERIC VALUE' },
+        { id: 'DROPDOWN', name: 'DROPDOWN' }
     ]
 
     const columns = [
@@ -159,7 +165,8 @@ export default function CheckListElements() {
             dataEntryType: values.dataEntry,
             minimumValue: values.minimumValue,
             maximumValue: values.maximumValue,
-            description: values.description
+            description: values.description,
+            elementsChecklistOptionsDtos: options
         };
 
         const cleanPayload = Object.fromEntries(
@@ -187,6 +194,8 @@ export default function CheckListElements() {
     }
 
     const handleModalCancel = () => {
+        setOptions([]);
+        setEditingIndex(null);
         form.resetFields();
         setSelectedRecord(null);
         setDataEntryType(null)
@@ -341,6 +350,7 @@ export default function CheckListElements() {
                                         placeholder="Select Elements Type"
                                         onChange={(data) => {
                                             setDataEntryType(null)
+                                            // setOptions([])
                                             setElementType(data)
                                             form.resetFields(['dataEntry', 'minimumValue', 'maximumValue'])
                                         }}
@@ -362,7 +372,10 @@ export default function CheckListElements() {
                                     >
                                         <Select
                                             placeholder="Select Data Entry"
-                                            onChange={(data) => setDataEntryType(data)}
+                                            onChange={(data) =>{
+                                                // setOptions([])
+                                                setDataEntryType(data)
+                                            }}
                                         >
                                             {dataEntryData?.map(l => (
                                                 <Select.Option key={l.id} value={l.id}>
@@ -393,6 +406,90 @@ export default function CheckListElements() {
                                             <Input type="number" />
                                         </Form.Item>
                                     </Col>
+                                </>
+                            }
+                            {(elementType === "RADIO" || elementType === "CHECKBOX" || (elementType === "DATA ENTRY" && dataEntryType === "DROPDOWN")) &&
+                                <>
+                                    <Col span={8}>
+                                        <Form.Item
+                                            label="Field Name"
+                                            name="fieldName"
+                                            rules={[{ required: false, message: 'Please enter field name!' }]}
+                                        >
+                                            <Input />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col span={4}>
+                                        <Form.Item
+                                            label=" "
+                                            name="add"
+                                            rules={[{ required: false }]}
+                                        >
+                                            <AntButton
+                                                type="primary"
+                                                onClick={() => {
+                                                    const fieldName = form.getFieldValue('fieldName');
+
+                                                    if (!fieldName) return;
+
+                                                    if (editingIndex !== null) {
+                                                        const updated = [...options];
+                                                        updated[editingIndex] = { optionType: fieldName };
+                                                        setOptions(updated);
+                                                        setEditingIndex(null);
+                                                    } else {
+                                                        setOptions([...options, { optionType: fieldName }]);
+                                                    }
+
+                                                    form.setFieldsValue({ fieldName: '' });
+                                                }}
+                                            >
+                                                {editingIndex !== null ? "Update" : "Add"}
+                                            </AntButton>
+                                        </Form.Item>
+                                    </Col>
+                                    {options.length > 0 && (
+                                        <Col span={24}>
+                                        <Table
+                                            dataSource={options}
+                                            rowKey={(record, index) => index}
+                                            pagination={false}
+                                            style={{ marginTop: 16 }}
+                                            columns={[
+                                                {
+                                                    title: 'Option',
+                                                    dataIndex: 'optionType',
+                                                },
+                                                {
+                                                    title: 'Actions',
+                                                    width: 80,
+                                                    render: (_, record, index) => (
+                                                        <>
+                                                            <a
+                                                                onClick={() => {
+                                                                    form.setFieldsValue({ fieldName: record.optionType });
+                                                                    setEditingIndex(index);
+                                                                }}
+                                                                style={{ marginRight: 12, color:'green' }}
+                                                            >
+                                                                <EditOutlined />
+                                                            </a>
+                                                            <a
+                                                                onClick={() => {
+                                                                    const updated = options.filter((_, i) => i !== index);
+                                                                    setOptions(updated);
+                                                                }}
+                                                                style={{ color:'red' }}
+                                                            >
+                                                                <DeleteOutlined />
+                                                            </a>
+                                                        </>
+                                                    ),
+                                                },
+                                            ]}
+                                        />
+                                        </Col>
+                                    )}
                                 </>
                             }
                             <Col span={24}>
