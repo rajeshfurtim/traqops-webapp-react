@@ -50,7 +50,7 @@ export default function CorrectiveMaintenance() {
       }
     )
 
-const queryLoading = isLoading || isFetching
+  const queryLoading = isLoading || isFetching
 
   const statusMap = {
     '1': 640, // Open
@@ -77,7 +77,7 @@ const queryLoading = isLoading || isFetching
     }
   }, [locations])
 
-  const { data: cmresponse, isLoading: cmqueryLoading,   isFetching: cmisFetching } =
+  const { data: cmresponse, isLoading: cmqueryLoading, isFetching: cmisFetching } =
     correctiveApi.useGetcorrectivemaintenanceQuery(
       {
         fromdate: filters.startdate,
@@ -124,6 +124,11 @@ const queryLoading = isLoading || isFetching
     try {
       const formData = new FormData()
 
+      if (isEditing && editingRecord?.id) {
+        formData.append("id", editingRecord.id)
+      }
+
+
       formData.append("domainName", domainName)
       formData.append("clientId", clientId)
       formData.append("locationId", values.station || "")
@@ -143,7 +148,7 @@ const queryLoading = isLoading || isFetching
       formData.append("isWorking", values.workingstatus)
       formData.append("rectificationDetails", values.rectification || "")
       formData.append("reasonForBreakdown", values.breakdownreason || "")
-      formData.append("confirmed", isRetry) // 🔥 important
+      formData.append("confirmed", isRetry)
       formData.append("statusId", 640)
 
       formData.append("issueStartTime", dayjs().format("YYYY-MM-DD HH:mm:ss"))
@@ -446,29 +451,37 @@ const queryLoading = isLoading || isFetching
   const [editingRecord, setEditingRecord] = useState(null);
 
   const handleEditClick = () => {
-    if (selectedRowKeys.length === 1) { // only allow editing one row
+    if (selectedRowKeys.length === 1) {
       const record = Cmreports.find(r => r.id === selectedRowKeys[0]);
       if (!record) return;
       console.log("Edit ticket", record)
+      const data = record.allData;
 
       setEditingRecord(record);
       setIsEditing(true);
       setopen(true);
+      setSelectedLocation(data?.location?.id);
+      setSelectedSystem(data?.systemName);
+      setSelectedCategory(data?.category?.id);
+      setSelectedEquipment(data?.category?.id);
+      setSelectedFaultCategory(data?.faultCategory?.id);
 
-      // Populate form fields
       modalForm.setFieldsValue({
         ticketno: record.cmKey,
-        station: record.location,
-        system: record.allData?.systemName,
-        equipment: record.category,
-        itemcode: record.assets,
-        faultCategory: record.faultCategory,
-        faultsubcategory: record.faultSubCategory,
+        station: data?.location?.id,
+        system: data?.systemName,
+        workingstatus: data?.isWorking ? "Y" : "N",
+        equipment: data?.category?.id,
+        itemcode: data?.assets?.id,
+        faultCategory: data?.faultCategory?.id,
+        faultsubcategory: data?.faultSubCategory?.id,
         user: record.assignedId,
-        priority: record.priority,
-        description: record.allData?.description || '',
-        faultrecord: record.allData?.recordedBy || '',
-      });
+        priority: data?.priority?.id,
+        description: data?.description || '',
+        faultrecord: data?.recordedBy || '',
+        rectification: data?.rectificationDetails || '',
+        breakdownreason: data?.reasonForBreakdown || ''
+      })
     } else {
       message.warning("Please select only one row to edit");
     }
