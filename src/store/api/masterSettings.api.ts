@@ -306,6 +306,18 @@ export const masterSettingsApi = baseApi.injectEndpoints({
     error ? [] :["UserInfo"], // refresh user list after add
 }),
 
+uploadUserInfo: build.mutation({
+  query: (payload) => {
+    return {
+      url: `${API_BASE_URL}/upload/userinfo/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["UserInfo"], // refresh user list after add
+}),
+
 deleteUser: build.mutation({
   query: (queryString) => ({
     url: `${API_BASE_URL}/userinfo/delete/poov?${queryString}`,
@@ -687,6 +699,18 @@ addShiftLocationMapping: build.mutation({
     error ? [] :["ShiftLocationMapping"], 
 }),
 
+uploadShiftLocationMapping: build.mutation({
+  query: (payload) => {
+    return {
+      url: `${API_BASE_URL}/excelupload/shiftlocation/poov`,
+      method: "POST",
+      body: payload,
+    };
+  },
+  invalidatesTags: (result, error) =>
+    error ? [] :["ShiftLocationMapping"], 
+}),
+
 deleteShiftLocationMapping: build.mutation({
   query: (queryString) => ({
     url: `${API_BASE_URL}/delete/shiftmapping/poov?${queryString}`,
@@ -912,6 +936,25 @@ getInventoryList: build.query({
             clientId: clientId.toString(),
             pn: pageNumber.toString(),
             ps: pageSize.toString(),
+          },
+        }
+      },
+      providesTags: ['Inventory'],
+    }),
+
+getBMRCLInventoryList: build.query({
+      query: (params) => {
+        const { clientId } = params
+
+        if (!clientId) {
+          throw new Error('ClientId is required for getBMRCLInventoryList')
+        }
+
+        return {
+          url: `${API_BASE_URL}/bmrcl/getinventorys`,
+          method: 'GET',
+          params: {
+            clientId: clientId.toString()
           },
         }
       },
@@ -1621,5 +1664,8 @@ export const {
   useDeleteKPIsMutation,
   useGetAllTypeListQuery,
   useGetPenaltyCategoryByKpiIdQuery,
-  useGetPenaltyByCategoryIdQuery
+  useGetPenaltyByCategoryIdQuery,
+  useUploadUserInfoMutation,
+  useUploadShiftLocationMappingMutation,
+  useGetBMRCLInventoryListQuery
 } = masterSettingsApi

@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { Box, Card, CardContent, Typography } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, DatePicker, Tag, Spin } from "antd"
-import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
-import { useGetShiftLocationMappingListQuery, useAddShiftLocationMappingMutation, useDeleteShiftLocationMappingMutation, useGetLocationListQuery, useGetAllUserTypeQuery } from '../../../store/api/masterSettings.api'
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, DatePicker, Tag, Spin, Tooltip, Upload } from "antd"
+import { SearchOutlined, PlusOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from "@ant-design/icons"
+import { useGetShiftLocationMappingListQuery, useAddShiftLocationMappingMutation, useDeleteShiftLocationMappingMutation, useGetLocationListQuery, useGetAllUserTypeQuery, useUploadShiftLocationMappingMutation } from '../../../store/api/masterSettings.api'
 import { useGetAllShiftListQuery } from '../../../store/api/maintenance.api'
 import { skipToken } from '@reduxjs/toolkit/query'
 import { useAuth } from '../../../context/AuthContext'
@@ -14,12 +14,15 @@ export default function ShiftLocationMapping() {
     const { user } = useAuth()
     const clientId = user?.client?.id || user?.clientId
     const [form] = Form.useForm()
+    const [uploadForm] = Form.useForm()
 
     const [current, setCurrent] = useState(1);
     const [pageSize, setPagesize] = useState(25);
     const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [selectedRecord, setSelectedRecord] = useState(null)
+    const [fileList, setFileList] = useState([]);
+    const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
     const { data: shiftLocationMappingListData, isLoading: shiftLocationMappingLoading, isFetching } = useGetShiftLocationMappingListQuery(clientId ? { clientId, pageNumber: 1, pageSize: 1000 } : skipToken)
     const { data: locationList, isLoading: locationListLoading } = useGetLocationListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
@@ -27,6 +30,7 @@ export default function ShiftLocationMapping() {
     const { data: shiftListData, isLoading: shiftListLoading } = useGetAllShiftListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
 
     const [addShiftLocationMapping] = useAddShiftLocationMappingMutation();
+    const [uploadShiftLocation] = useUploadShiftLocationMappingMutation();
     const [deleteShiftLocationMapping] = useDeleteShiftLocationMappingMutation();
 
     const columns = [
@@ -234,6 +238,42 @@ export default function ShiftLocationMapping() {
         }
     };
 
+    const getExcelDownload = () => {
+        const url = `/unsecure/downloadexcel?clientId=${clientId}&domainName=${domainName}`;
+
+        window.open(url, '_blank');
+    };
+
+    const uploadModalCancel = () => {
+        setFileList([]);
+        uploadForm.resetFields();
+        setUploadModalOpen(false)
+    }
+
+    const uploadModalOk = async () => {
+
+        try {
+            await uploadForm.validateFields();
+
+            if (fileList.length === 0) return;
+
+            const formData = new FormData();
+            formData.append('file', fileList[0]);
+            formData.append('clientId', clientId);
+            formData.append('domainName', domainName);
+
+            console.log('Uploading...', formData);
+
+            const response = await uploadShiftLocation(formData).unwrap();
+            message.success(response?.message || "Shift location mapping upload successfully");
+
+            uploadModalCancel();
+
+        } catch (error) {
+            message.error(error?.data?.message || error?.data?.error || "Failed to upload shift location mapping");
+        }
+    }
+
     return (
         <>
             <Box>
@@ -257,6 +297,14 @@ export default function ShiftLocationMapping() {
                                         </>
                                     )}
                                 </>
+                                <Tooltip title="Import Directory File">
+                                    <AntButton icon={<UploadOutlined />} onClick={() => {
+                                        setUploadModalOpen(true)
+                                    }} />
+                                </Tooltip>
+                                <Tooltip title="Download Shift Location Template">
+                                    <AntButton icon={<DownloadOutlined />} onClick={getExcelDownload} />
+                                </Tooltip>
                                 <Input
                                     placeholder="Search"
                                     prefix={<SearchOutlined />}
@@ -389,6 +437,63 @@ export default function ShiftLocationMapping() {
                         </Row>
                     </Form>
                 </Modal>
+
+                <Modal
+                    title="Import File"
+                    open={uploadModalOpen}
+                    onCancel={uploadModalCancel}
+                    footer={[
+                        <AntButton key="cancel" onClick={uploadModalCancel}>
+                            Cancel
+                        </AntButton>,
+                        <AntButton key="submit" type="primary" onClick={uploadModalOk}>
+                            Submit
+                        </AntButton>,
+                    ]}
+                >
+                    <Form
+                        form={uploadForm}
+                        layout="vertical"
+                        style={{ marginTop: 24 }}
+                    >
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Form.Item
+                                    label="File"
+                                    name="file"
+                                    rules={[{ required: true, message: 'Please upload a file!' }]}
+                                >
+                                    <Upload
+                                        fileList={fileList}
+                                        beforeUpload={(file) => {
+                                            const isExcel =
+                                                file.type ===
+                                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                                                file.type === 'application/vnd.ms-excel';
+
+                                            if (!isExcel) {
+                                                message.error('Only Excel files are allowed!');
+                                                return Upload.LIST_IGNORE;
+                                            }
+
+                                            setFileList([file]);
+                                            return false;
+                                        }}
+                                        onRemove={() => {
+                                            setFileList([]);
+                                        }}
+                                    >
+                                        <AntButton icon={<UploadOutlined />}>
+                                            Click to Upload
+                                        </AntButton>
+                                    </Upload>
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}> </Col>
+                        </Row>
+                    </Form>
+                </Modal>
+
             </Box>
         </>
     )
