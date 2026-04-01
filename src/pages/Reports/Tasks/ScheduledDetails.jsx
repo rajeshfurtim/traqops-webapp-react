@@ -79,6 +79,11 @@ export default function ScheduledMaintenanceDetailsReports() {
         : '-',
       isOverdue,
       raw: item,
+      verifiedBy: item.verifiedBy || '-',
+      verifiedDate: item.verifiedDate
+        ? dayjs(item.verifiedDate).format('DD-MM-YYYY HH:mm')
+        : '-',
+      remarks: item.remarks || '-'
     }
   })
 
@@ -248,7 +253,10 @@ export default function ScheduledMaintenanceDetailsReports() {
     { title: 'WorkDone By', dataIndex: 'workdoneby', key: 'workdoneby', sorter: stringSorter("workdoneby") },
     { title: 'WorkDone Date', dataIndex: 'workdonedate', key: 'workdonedate', sorter: stringSorter("workdonedate") },
     { title: 'Completed By', dataIndex: 'completedBy', key: 'completedBy', sorter: stringSorter("completedBy") },
-    { title: 'Completed Date', dataIndex: 'completedDate', key: 'completedDate', sorter: stringSorter("completedDate") }
+    { title: 'Completed Date', dataIndex: 'completedDate', key: 'completedDate', sorter: stringSorter("completedDate") },
+    { title: 'Verified By', dataIndex: 'verifiedBy', key: 'verifiedBy', sorter: stringSorter("verifiedBy") },
+    { title: 'Verified Date', dataIndex: 'verifiedDate', key: 'verifiedDate', sorter: stringSorter("verifiedDate") },
+    { title: 'Remarks', dataIndex: 'remarks', key: 'remarks', sorter: stringSorter("remarks") },
   ]
 
   const handleApplyFilters = (values) => {
