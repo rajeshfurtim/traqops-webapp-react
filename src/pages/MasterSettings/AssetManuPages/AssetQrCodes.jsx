@@ -100,6 +100,10 @@ export default function AssetQrCode() {
                                         <Box sx={{ fontSize: 13, color: "#555" }}>
                                             {asset.assetName}
                                         </Box>
+
+                                        <Box sx={{ fontSize: 13, color: "#555" }}>
+                                            {asset.itemCode}
+                                        </Box>
                                     </Box>
                                 ))}
                             </Box>

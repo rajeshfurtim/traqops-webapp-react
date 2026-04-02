@@ -5,7 +5,8 @@ import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, messa
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationByIsStoreQuery, useGetAllInventoryCategoryQuery } from '../../../store/api/masterSettings.api'
-import { useGetQuantityReportQuery } from '../../../store/api/reports.api'
+import { useGetBMRCLQuantityReportQuery } from '../../../store/api/reports.api'
+import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
 import { useAuth } from '../../../context/AuthContext'
 
@@ -21,12 +22,11 @@ export default function QuantityReports() {
 
   const { data: inventoryCategoryList, isLoading: inventoryCategoryLoading } = useGetAllInventoryCategoryQuery({ clientId, pageNumber: 1, pageSize: 1000 })
   const { data: locationList, isLoading: locationLoading } = useGetLocationByIsStoreQuery({ clientId, pageNumber: 1, pageSize: 1000 })
+  const { data: assetCategoryList, isLoading: assetCategoryLoading } = useGetAllCategoryListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
   const { data: quantityReportData, isLoading: quantityReportLoading, isFetching } =
-    useGetQuantityReportQuery(
+  useGetBMRCLQuantityReportQuery(
       {
-        ...filters,
-        pn: 1,
-        ps: 1000
+        ...filters
       },
       {
         skip: !filters.locationId || !filters.InventoryCategoryId
@@ -38,6 +38,7 @@ export default function QuantityReports() {
     const newFilters = {}
     if (values.location) newFilters.locationId = values.location
     if (values.inventoryCategory) newFilters.InventoryCategoryId = values.inventoryCategory
+    if (values.assetCategory && values.assetCategory != -1) newFilters.categoryId = values.assetCategory
     setFilters(newFilters)
   }
 
@@ -56,29 +57,39 @@ export default function QuantityReports() {
     },
     {
       title: 'Location',
-      dataIndex: 'location',
-      key: 'location',
-      render: (_, record) => record?.location?.name,
-      sorter: (a, b) => (a.location?.name ?? '').localeCompare(b.location?.name ?? '')
+      dataIndex: 'locationName',
+      key: 'locationName',
+      sorter: (a, b) => (a?.locationName ?? '').localeCompare(b?.locationName ?? '')
     },
     {
       title: 'Inventory Category',
-      dataIndex: 'inventoryCategory',
-      key: 'inventoryCategory',
-      render: (_, record) => record?.inventoryCategory?.name,
-      sorter: (a, b) => (a.inventoryCategory?.name ?? '').localeCompare(b.inventoryCategory?.name ?? '')
+      dataIndex: 'inventoryCategoryName',
+      key: 'inventoryCategoryName',
+      sorter: (a, b) => (a?.inventoryCategoryName ?? '').localeCompare(b?.inventoryCategoryName ?? '')
+    },
+    {
+      title: 'Category',
+      dataIndex: 'categoryName',
+      key: 'categoryName',
+      sorter: (a, b) => (a?.categoryName ?? '').localeCompare(b?.categoryName ?? '')
     },
     {
       title: 'Inventory',
-      dataIndex: 'name',
-      key: 'name',
-      sorter: (a, b) => (a?.name ?? '').localeCompare(b?.name ?? '')
+      dataIndex: 'inventoryName',
+      key: 'inventoryName',
+      sorter: (a, b) => (a?.inventoryName ?? '').localeCompare(b?.inventoryName ?? '')
     },
     {
       title: 'Quantity',
       dataIndex: 'quantity',
       key: 'quantity',
       sorter: (a, b) => a?.quantity - b?.quantity
+    },
+    {
+      title: 'Safety Stock',
+      dataIndex: 'safetyStock',
+      key: 'safetyStock',
+      sorter: (a, b) => a?.safetyStock - b?.safetyStock
     },
     {
       title: 'Units',
@@ -103,9 +114,9 @@ export default function QuantityReports() {
       return;
     }
 
-    const filtered = quantityReportData?.data?.content?.filter((item) =>
-      `${item?.location?.name ?? ''} ${item?.inventoryCategory?.name ?? ''} ${item?.name ?? ''}
-        ${item?.quantity ?? ''} ${item?.units ?? ''}`
+    const filtered = quantityReportData?.data?.filter((item) =>
+      `${item?.locationName ?? ''} ${item?.inventoryCategoryName ?? ''} ${item?.categoryName ?? ''}
+        ${item?.quantity ?? ''} ${item?.units ?? ''} ${item?.safetyStock ?? ''} ${item?.inventoryName}`
         .toLowerCase()
         .includes(searchValue)
     );
@@ -120,12 +131,13 @@ export default function QuantityReports() {
       setExporting(prev => ({ ...prev, pdf: true }))
       const locationName = locationList.data?.content?.filter(loc => loc.id === filters.locationId)
       const categoryName = inventoryCategoryList.data?.content?.filter(loc => loc.id === filters.InventoryCategoryId)
-      console.log(locationName, categoryName)
+      const assetName = assetCategoryList.data?.content?.filter(loc => loc.id === filters.categoryId)
+      console.log(locationName, categoryName, assetName)
 
       await exportToPDF(
         columns,
-        quantityReportData?.data?.content,
-        `quantity-report (Location: ${locationName[0]?.name ?? 'All'} / Type: ${categoryName[0]?.name ?? 'All'})`
+        quantityReportData?.data,
+        `quantity-report (Location: ${locationName[0]?.name ?? 'All'} / Type: ${categoryName[0]?.name ?? 'All'} / Asset Category: ${assetName[0]?.name ?? 'All'})`
       )
 
       message.success('PDF exported successfully')
@@ -141,11 +153,12 @@ export default function QuantityReports() {
       setExporting(prev => ({ ...prev, excel: true }))
       const locationName = locationList.data?.content?.filter(loc => loc.id === filters.locationId)
       const categoryName = inventoryCategoryList.data?.content?.filter(loc => loc.id === filters.InventoryCategoryId)
+      const assetName = assetCategoryList.data?.content?.filter(loc => loc.id === filters.categoryId)
 
       await exportToExcel(
         columns,
-        quantityReportData?.data?.content,
-        `quantity-report (Location: ${locationName[0]?.name ?? 'All'} / Type: ${categoryName[0]?.name ?? 'All'})`
+        quantityReportData?.data,
+        `quantity-report (Location: ${locationName[0]?.name ?? 'All'} / Type: ${categoryName[0]?.name ?? 'All'} / Asset Category: ${assetName[0]?.name ?? 'All'})`
       )
 
       message.success('Excel exported successfully')
@@ -210,6 +223,24 @@ export default function QuantityReports() {
                     </Select>
                   </Form.Item>
                 </Col>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Asset Category"
+                    name="assetCategory"
+                    rules={[{ required: true, message: 'Please select asset category!' }]}
+                  >
+                    <Select
+                      placeholder="Select Asset Category"
+                    >
+                      <Select.Option key={-1} value={-1}> All Asset Category</Select.Option>
+                      {assetCategoryList?.data?.content?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
                 <Col xs={24} sm={24} md={24} lg={6}>
                   <Form.Item label=" ">
                     <Space>
@@ -242,7 +273,7 @@ export default function QuantityReports() {
                 <AntButton
                   icon={<FileExcelOutlined />}
                   onClick={handleExportExcel}
-                  disabled={!quantityReportData || quantityReportData?.data?.content?.length === 0}
+                  disabled={!quantityReportData || quantityReportData?.data?.length === 0}
                 >
                   Export Excel
                 </AntButton>
@@ -250,7 +281,7 @@ export default function QuantityReports() {
                 <AntButton
                   icon={<FilePdfOutlined />}
                   onClick={handleExportPDF}
-                  disabled={!quantityReportData || quantityReportData?.data?.content?.length === 0}
+                  disabled={!quantityReportData || quantityReportData?.data?.length === 0}
                 >
                   Export PDF
                 </AntButton>
@@ -263,7 +294,7 @@ export default function QuantityReports() {
               </Box>
             ) : (
               <Table
-                dataSource={filteredData ?? quantityReportData?.data?.content}
+                dataSource={filteredData ?? quantityReportData?.data}
                 columns={columns}
                 loading={quantityReportLoading || isFetching}
                 rowKey={(record, index) => record.id + "_" + index}

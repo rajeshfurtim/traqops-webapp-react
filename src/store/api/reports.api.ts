@@ -229,6 +229,33 @@ export const reportsApi = baseApi.injectEndpoints({
       providesTags: ['QuantityReports'],
     }),
 
+    getBMRCLQuantityReport: build.query({
+      query: (params) => {
+        const { locationId, InventoryCategoryId, categoryId } = params
+
+        if (!locationId) {
+          throw new Error('LocationId is required for getBMRCLQuantityReport')
+        }
+
+        if (!InventoryCategoryId) {
+          throw new Error('InventoryCategoryId is required for getBMRCLQuantityReport')
+        }
+
+        const queryParams = {
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString(),
+          inventoryCategoryId: Array.isArray(InventoryCategoryId) ? InventoryCategoryId.join(',') : InventoryCategoryId?.toString(),
+          categoryId: Array.isArray(categoryId) ? categoryId.join(',') : categoryId?.toString()
+        }
+
+        return {
+          url: `${API_BASE_URL}/bmrcl/getquantityreports`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['QuantityReports'],
+    }),
+
     getSpareUsageReport: build.query({
       query: (params) => {
         const { clientId, fromDate, toDate, locationId, inventoryId, pn, ps } = params
@@ -458,5 +485,6 @@ export const {
   useGetInvoiceSummaryQuery,
   useInvoiceGenerateMutation,
   useGetAuditReportQuery,
-  useGetKpiReportQuery
+  useGetKpiReportQuery,
+  useGetBMRCLQuantityReportQuery
 } = reportsApi
