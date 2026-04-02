@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Box, Card, CardContent } from '@mui/material'
-import { Form, Select, Space, Button as AntButton, Row, Col, Spin, DatePicker } from 'antd'
+import { Box, Card, CardContent, Typography } from '@mui/material'
+import { Form, Select, Space, Button as AntButton, Row, Col, Spin, DatePicker, Table, Empty } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery } from '../../../store/api/masterSettings.api'
@@ -60,6 +60,274 @@ export default function TaskReportExtended() {
     })
     setSystemValue(value)
   }
+
+  const getDotClassByStatus = (status) => {
+    if (status === 'Running') return 'dot-running'
+    if (status === 'Not Running') return 'dot-standby'
+    if (status === 'Breakdown') return 'dot-breakdown'
+    return 'dot-default'
+  }
+
+  const getStatusLabelByStatus = (status) => {
+    if (status === 'Running') return 'Online'
+    if (status === 'Not Running') return 'Standby'
+    if (status === 'Breakdown') return 'Breakdown'
+    return 'Unknown'
+  }
+
+  const cmColumns = [
+    { title: 'S.No', dataIndex: 'sno', key: 'sno', width: 90 },
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      width: 160,
+      render: (val) => val || '-',
+    },
+    {
+      title: 'System',
+      dataIndex: 'system',
+      key: 'system',
+      width: 160,
+      render: (val) => val || '-',
+    },
+    {
+      title: 'Asset Category',
+      dataIndex: 'category',
+      key: 'category',
+      width: 180,
+      render: (val) => val || '-',
+    },
+    {
+      title: 'Asset',
+      dataIndex: 'asset',
+      key: 'asset',
+      width: 200,
+      render: (val) => val || '-',
+    },
+    {
+      title: 'Remarks',
+      dataIndex: 'remarks',
+      key: 'remarks',
+      render: (val) => val || '-',
+    },
+  ]
+
+  /* {taskreport?.pm?.map((pm, pmIndex) => {
+    const pmAssets = Array.isArray(pm?.assets) ? pm.assets : []
+    const pmData = pmAssets.map((asset, index) => ({
+      ...asset,
+      key: asset?.id ?? index,
+    }))
+
+    const pmColumns = [
+      {
+        title: 'ID',
+        dataIndex: 'id',
+        key: 'id',
+        width: 180,
+        render: (_, record) => (
+          <span className="pm-id-cell">
+            <span
+              className={`status-dot ${getDotClassByStatus(record?.status)}`}
+              aria-label={record?.status || 'Unknown'}
+            />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                            <span>{record?.id ?? '-'}</span>
+                            <span className="pm-status-text">{getStatusLabelByStatus(record?.status)}</span>
+                          </span>
+          </span>
+        ),
+      },
+      {
+        title: 'WEEKLY',
+        children: [
+          {
+            title: 'Done Date',
+            dataIndex: 'weeklyDone',
+            key: 'weeklyDone',
+            render: (val) => val || '-',
+          },
+          {
+            title: 'Due Date',
+            dataIndex: 'weeklyDue',
+            key: 'weeklyDue',
+            render: (val) => val || '-',
+          },
+        ],
+      },
+      {
+        title: 'MONTHLY',
+        children: [
+          {
+            title: 'Done Date',
+            dataIndex: 'monthlyDone',
+            key: 'monthlyDone',
+            render: (val) => val || '-',
+          },
+          {
+            title: 'Due Date',
+            dataIndex: 'monthlyDue',
+            key: 'monthlyDue',
+            render: (val) => val || '-',
+          },
+        ],
+      },
+      {
+        title: 'QUARTERLY',
+        children: [
+          {
+            title: 'Done Date',
+            dataIndex: 'quarterlyDone',
+            key: 'quarterlyDone',
+            render: (val) => val || '-',
+          },
+          {
+            title: 'Due Date',
+            dataIndex: 'quarterlyDue',
+            key: 'quarterlyDue',
+            render: (val) => val || '-',
+          },
+        ],
+      },
+      {
+        title: 'HALF-YEARLY',
+        children: [
+          {
+            title: 'Done Date',
+            dataIndex: 'halfDone',
+            key: 'halfDone',
+            render: (val) => val || '-',
+          },
+          {
+            title: 'Due Date',
+            dataIndex: 'halfDue',
+            key: 'halfDue',
+            render: (val) => val || '-',
+          },
+        ],
+      },
+      {
+        title: 'YEARLY',
+        children: [
+          {
+            title: 'Done Date',
+            dataIndex: 'yearlyDone',
+            key: 'yearlyDone',
+            render: (val) => val || '-',
+          },
+          {
+            title: 'Due Date',
+            dataIndex: 'yearlyDue',
+            key: 'yearlyDue',
+            render: (val) => val || '-',
+          },
+        ],
+      },
+    ] */
+      const pmColumns = [
+        {
+          title: 'ID',
+          dataIndex: 'id',
+          key: 'id',
+          width: 180,
+          render: (_, record) => (
+            <span className="pm-id-cell">
+              <span
+                className={`status-dot ${getDotClassByStatus(record?.status)}`}
+                aria-label={record?.status || 'Unknown'}
+              />
+              <span>{record?.id ?? '-'}</span>
+            </span>
+          ),
+        },
+        {
+          title: 'WEEKLY',
+          children: [
+            {
+              title: 'Done Date',
+              dataIndex: 'weeklyDone',
+              key: 'weeklyDone',
+              render: (val) => val || '-',
+            },
+            {
+              title: 'Due Date',
+              dataIndex: 'weeklyDue',
+              key: 'weeklyDue',
+              render: (val) => val || '-',
+            },
+          ],
+        },
+        {
+          title: 'MONTHLY',
+          children: [
+            {
+              title: 'Done Date',
+              dataIndex: 'monthlyDone',
+              key: 'monthlyDone',
+              render: (val) => val || '-',
+            },
+            {
+              title: 'Due Date',
+              dataIndex: 'monthlyDue',
+              key: 'monthlyDue',
+              render: (val) => val || '-',
+            },
+          ],
+        },
+        {
+          title: 'QUARTERLY',
+          children: [
+            {
+              title: 'Done Date',
+              dataIndex: 'quarterlyDone',
+              key: 'quarterlyDone',
+              render: (val) => val || '-',
+            },
+            {
+              title: 'Due Date',
+              dataIndex: 'quarterlyDue',
+              key: 'quarterlyDue',
+              render: (val) => val || '-',
+            },
+          ],
+        },
+        {
+          title: 'HALF-YEARLY',
+          children: [
+            {
+              title: 'Done Date',
+              dataIndex: 'halfDone',
+              key: 'halfDone',
+              render: (val) => val || '-',
+            },
+            {
+              title: 'Due Date',
+              dataIndex: 'halfDue',
+              key: 'halfDue',
+              render: (val) => val || '-',
+            },
+          ],
+        },
+        {
+          title: 'YEARLY',
+          children: [
+            {
+              title: 'Done Date',
+              dataIndex: 'yearlyDone',
+              key: 'yearlyDone',
+              render: (val) => val || '-',
+            },
+            {
+              title: 'Due Date',
+              dataIndex: 'yearlyDue',
+              key: 'yearlyDue',
+              render: (val) => val || '-',
+            },
+          ],
+        },
+      ]
+
   return (
     <>
       <Helmet>
@@ -175,108 +443,94 @@ export default function TaskReportExtended() {
                 <Spin />
               </Box>
             ) : (
-                <>
-                {(!taskreport?.pm?.length && !taskreport?.cm?.length) && (
-                    <Box textAlign="center" p={5}>
-                      <h5>No Data Available</h5>
+              <>
+                {(!taskreport?.pm?.length && !taskreport?.cm?.length) ? (
+                  <Box textAlign="center" p={5}>
+                    <Empty description="No Data Available" />
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      flexWrap: 'wrap',
+                      mb: 2,
+                      mt: 1,
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                      Legend:
+                    </Typography>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                      <span className="status-dot dot-running" />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        Online
+                      </Typography>
                     </Box>
-                  )}
-    {/*== PM SECTION == */}
-    {taskreport?.pm?.map((pm, pmIndex) => (
-      <div key={pmIndex} style={{ marginBottom: 30 }}>
-        <table className="report-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th colSpan={11} style={{ textAlign: "center" }}>
-                <h4>PM - {pm.category}</h4>
-              </th>
-            </tr>
-            <tr>
-              <th rowSpan={2}>ID</th>
-              <th colSpan={2}>WEEKLY</th>
-              <th colSpan={2}>MONTHLY</th>
-              <th colSpan={2}>QUARTERLY</th>
-              <th colSpan={2}>HALF-YEARLY</th>
-              <th colSpan={2}>YEARLY</th>
-            </tr>
-            <tr>
-              <th>Done Date</th>
-              <th>Due Date</th>
-              <th>Done Date</th>
-              <th>Due Date</th>
-              <th>Done Date</th>
-              <th>Due Date</th>
-              <th>Done Date</th>
-              <th>Due Date</th>
-              <th>Done Date</th>
-              <th>Due Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pm.assets?.map((asset, index) => {
-              const statusClass =
-                asset.status === 'Running'
-                  ? 'available'
-                  : asset.status === 'Not Running'
-                  ? 'standBY'
-                  : asset.status === 'Breakdown'
-                  ? 'Breakdown'
-                  : '';
-              return (
-                <tr key={index}>
-                  <td className={statusClass}>
-                    {asset.id}
-                  </td>
-                  <td>{asset.weeklyDone || '-'}</td>
-                  <td>{asset.weeklyDue || '-'}</td>
-                  <td>{asset.monthlyDone || '-'}</td>
-                  <td>{asset.monthlyDue || '-'}</td>
-                  <td>{asset.quarterlyDone || '-'}</td>
-                  <td>{asset.quarterlyDue || '-'}</td>
-                  <td>{asset.halfDone || '-'}</td>
-                  <td>{asset.halfDue || '-'}</td>
-                  <td>{asset.yearlyDone || '-'}</td>
-                  <td>{asset.yearlyDue || '-'}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    ))}
-    {/*== CM SECTION == */}
-    {taskreport?.cm?.length > 0 && (
-      <div style={{ marginTop: 30 }}>
-        <div style={{ textAlign: "center", marginBottom: 10 }}>
-          <h4>CM</h4>
-        </div>
-        <table className="report-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th>S.No</th>
-              <th>Date</th>
-              <th>System</th>
-              <th>Asset Category</th>
-              <th>Asset</th>
-              <th>Remarks</th>
-            </tr>
-          </thead>
-          <tbody>
-            {taskreport.cm.map((cm, index) => (
-              <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{cm.date}</td>
-                <td>{cm.system}</td>
-                <td>{cm.category}</td>
-                <td>{cm.asset}</td>
-                <td>{cm.remarks}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )}
-                  </>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                      <span className="status-dot dot-standby" />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        Standby
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                      <span className="status-dot dot-breakdown" />
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        Breakdown
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
+                {/*== PM SECTION == */}
+                {taskreport?.pm?.map((pm, pmIndex) => {
+                  const pmAssets = Array.isArray(pm?.assets) ? pm.assets : []
+                  const pmData = pmAssets.map((asset, index) => ({
+                    ...asset,
+                    key: asset?.id ?? index,
+                  }))
+
+                  return (
+                    <div key={pmIndex} style={{ marginBottom: 30 }}>
+                      <Box sx={{ textAlign: 'center', mb: 1 }}>
+                        <h4 style={{ margin: 0 }}>PM - {pm?.category}</h4>
+                      </Box>
+                      <Table
+                        size="small"
+                        bordered
+                        pagination={false}
+                        rowKey="key"
+                        dataSource={pmData}
+                        columns={pmColumns}
+                        scroll={{ x: 'max-content' }}
+                      />
+                    </div>
+                  )
+                })}
+
+                {/*== CM SECTION == */}
+                {taskreport?.cm?.length > 0 && (
+                  <div style={{ marginTop: 30 }}>
+                    <div style={{ textAlign: 'center', marginBottom: 10 }}>
+                      <h4>CM</h4>
+                    </div>
+                    <Table
+                      size="small"
+                      bordered
+                      pagination={false}
+                      rowKey={(row, index) => row?.key ?? index}
+                      dataSource={(taskreport?.cm || []).map((cm, index) => ({
+                        ...cm,
+                        key: cm?.id ?? index,
+                        sno: index + 1,
+                      }))}
+                      columns={cmColumns}
+                      scroll={{ x: 'max-content' }}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

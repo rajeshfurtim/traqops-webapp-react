@@ -9,17 +9,39 @@
     background-color: #f1f0f0;
 }
 
-.available {
+.pm-id-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pm-status-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.dot-running {
   background-color: #26e452;
-  color: #fff;
 }
 
-.standBY {
-  background-color: #4045ea;
-  color: #fff;
+.dot-standby {
+  background-color: #1677ff;
 }
 
-.Breakdown {
-    background-color: #f3bb07;
-    color: #fff;
+.dot-breakdown {
+  background-color: #fa8c16;
+}
+
+.dot-default {
+  background-color: #bfbfbf;
 }
