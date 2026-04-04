@@ -18,7 +18,9 @@ import {
   Select,
   DatePicker,
   Switch,
-  Divider
+  Divider,
+  Upload,
+  message as antdMessage
 } from 'antd'
 import {
   FileExcelOutlined,
@@ -26,12 +28,15 @@ import {
   SearchOutlined,
   ReloadOutlined,
   PlusOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  DownloadOutlined,
+  UploadOutlined
 } from '@ant-design/icons'
 import { message } from 'antd'
 import dayjs from 'dayjs'
 import { mockApi } from '../services/api'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
+import { domainName } from '../config/apiConfig'
 import {
   useLazyGetIndentFilterQuery,
   useGetInventoryCategoryListQuery,
@@ -40,6 +45,7 @@ import {
   useDeleteStockIndentMutation
 } from '../store/api/inventory.api'
 import { useGetLocationByIsStoreQuery } from '../store/api/masterSettings.api'
+import * as XLSX from 'xlsx'
 
 const { Title, Text } = Typography
 const { RangePicker } = DatePicker
@@ -316,6 +322,319 @@ export default function Inventory() {
     return Math.round((item.quantity / item.maxQuantity) * 100)
   }
 
+  // Bulk Update Template Generation
+  const getTemplateHeaders = (tabKey) => {
+    const baseHeaders = []
+    const itemHeaders = ['Inventory Category ID', 'Inventory Category Name', 'Inventory ID', 'Inventory Name', 'Quantity', 'Units']
+
+    switch (tabKey) {
+      case 'inventoryInward':
+        baseHeaders.push(
+          'Location ID',
+          'Location Name',
+          'Inward Ref #',
+          'Date (YYYY-MM-DD)',
+          'From Type (supplier/location)',
+          'Address',
+          'Reason',
+          'From Location ID',
+          'From Location Name',
+          'Status',
+          'Inward Passed By',
+          'Inward Passed Date (YYYY-MM-DD HH:mm)',
+          'Is Returnable (Y/N)',
+          'PassedBy Remark'
+        )
+        break
+      case 'assetInward':
+        baseHeaders.push(
+          'Date (YYYY-MM-DD)',
+          'Asset Inward Ref #',
+          'Location ID',
+          'Location Name',
+          'Type (supplier/other)',
+          'Status',
+          'Supplier',
+          'Inward Pass By Name',
+          'Inward Pass By Date (YYYY-MM-DD HH:mm)',
+          'Verified By',
+          'Verified By Date (YYYY-MM-DD HH:mm)',
+          'Reason',
+          'Is Returnable (Y/N)'
+        )
+        break
+      case 'inventoryOutward':
+        baseHeaders.push(
+          'Location ID',
+          'Location Name',
+          'Outward Ref #',
+          'Date (YYYY-MM-DD)',
+          'To Location ID',
+          'To Location Name',
+          'Returnable (yes/no)',
+          'Status',
+          'To Type (location/external/scrap)',
+          'Outward Passed By',
+          'Outward Passed Date (YYYY-MM-DD HH:mm)',
+          'Supplier',
+          'Address',
+          'PassedBy Remark',
+          'Reason'
+        )
+        break
+      case 'assetOutward':
+        baseHeaders.push(
+          'Date (YYYY-MM-DD)',
+          'Asset Outward Ref #',
+          'Location ID',
+          'Location Name',
+          'Returnable (yes/no)',
+          'Type (supplier/other)',
+          'Supplier',
+          'To Location ID',
+          'To Location Name',
+          'Status',
+          'Material Outward Reference',
+          'Transportation Details',
+          'Outward Pass By Name',
+          'Outward Pass By Date (YYYY-MM-DD HH:mm)',
+          'Verified By',
+          'Verified By Date (YYYY-MM-DD HH:mm)',
+          'Reason'
+        )
+        break
+      default:
+        return []
+    }
+
+    return [...baseHeaders, ...itemHeaders]
+  }
+
+  const downloadBulkUpdateTemplate = () => {
+    const headers = getTemplateHeaders(activeTab)
+    // const instructions = [
+    //   'INSTRUCTIONS:',
+    //   '1. Fill in the data starting from row 3 (after this instruction and headers)',
+    //   '2. For ID fields, use the actual IDs from the system. Name fields are for reference only.',
+    //   '3. Date fields should be in YYYY-MM-DD format',
+    //   '4. DateTime fields should be in YYYY-MM-DD HH:mm format',
+    //   '5. Boolean fields use Y/N or yes/no as specified',
+    //   '6. Do not modify the header row',
+    //   '7. Each row represents one transaction with its items',
+    //   '',
+    //   'SAMPLE DATA BELOW:'
+    // ]
+    // const sampleData = getSampleData(activeTab)
+    // const worksheetData = [ headers, ...sampleData]
+        const worksheetData = [ headers]
+
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+    const workbook = XLSX.utils.book_new()
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template')
+
+    const tabNames = {
+      inventoryInward: 'Inventory_Inward',
+      inventoryOutward: 'Inventory_Outward',
+      assetInward: 'Asset_Inward',
+      assetOutward: 'Asset_Outward'
+    }
+
+    XLSX.writeFile(workbook, `${tabNames[activeTab]}_Bulk_Update_Template.xlsx`)
+    message.success('Template downloaded successfully')
+  }
+
+  // const getSampleData = (tabKey) => {
+  //   switch (tabKey) {
+  //     case 'inventoryInward':
+  //       return [[
+  //         '1', 'Main Warehouse', 'INV-001', '2024-01-15', 'supplier', '123 Supplier St', 'New stock arrival',
+  //         '2', 'Branch Office', 'approved', 'John Doe', '2024-01-15 10:30', 'Y', 'Approved by manager',
+  //         '1', 'Electronics', '101', 'Laptop', '5', 'Nos'
+  //       ]]
+  //     case 'assetInward':
+  //       return [[
+  //         '2024-01-15', 'AST-001', '1', 'Main Warehouse', 'supplier', 'approved', 'ABC Corp',
+  //         'John Doe', '2024-01-15 10:30', 'Jane Smith', '2024-01-15 11:00', 'New asset purchase', 'Y',
+  //         '1', 'Electronics', '101', 'Server', '1', 'Nos'
+  //       ]]
+  //     case 'inventoryOutward':
+  //       return [[
+  //         '1', 'Main Warehouse', 'OUT-001', '2024-01-15', '2', 'Branch Office', 'yes', 'approved',
+  //         'location', 'John Doe', '2024-01-15 10:30', '', '', 'Transfer to branch', '',
+  //         '1', 'Electronics', '101', 'Laptop', '2', 'Nos'
+  //       ]]
+  //     case 'assetOutward':
+  //       return [[
+  //         '2024-01-15', 'AST-OUT-001', '1', 'Main Warehouse', 'yes', 'supplier', 'XYZ Corp',
+  //         '2', 'Branch Office', 'approved', 'REF-123', 'By truck', 'John Doe', '2024-01-15 10:30',
+  //         'Jane Smith', '2024-01-15 11:00', 'Asset transfer',
+  //         '1', 'Electronics', '101', 'Server', '1', 'Nos'
+  //       ]]
+  //     default:
+  //       return []
+  //   }
+  // }
+
+  const handleBulkUpload = (file) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result)
+        const workbook = XLSX.read(data, { type: 'array' })
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+
+        if (jsonData.length < 2) {
+          antdMessage.error('Excel file must contain at least header row and one data row')
+          return
+        }
+
+        const headers = jsonData[0]
+        const rows = jsonData.slice(1).filter(row => row.some(cell => cell !== undefined && cell !== ''))
+
+        if (rows.length === 0) {
+          antdMessage.error('No data rows found in the Excel file')
+          return
+        }
+
+        // Process bulk data
+        processBulkData(headers, rows)
+      } catch (error) {
+        console.error('Error processing Excel file:', error)
+        antdMessage.error('Error processing Excel file. Please check the file format.')
+      }
+    }
+    reader.readAsArrayBuffer(file)
+    return false // Prevent default upload behavior
+  }
+
+  const processBulkData = async (headers, rows) => {
+    try {
+      const processedData = rows.map(row => {
+        const record = {}
+        headers.forEach((header, index) => {
+          record[header] = row[index] || ''
+        })
+        return record
+      })
+
+      let successCount = 0
+      let errorCount = 0
+
+      for (const record of processedData) {
+        try {
+          await processSingleRecord(record)
+          successCount++
+        } catch (error) {
+          console.error('Error processing record:', record, error)
+          errorCount++
+        }
+      }
+
+      if (successCount > 0) {
+        antdMessage.success(`Successfully processed ${successCount} records`)
+        // Refresh the table data
+        fetchTableData(1, tablePagination.pageSize)
+      }
+
+      if (errorCount > 0) {
+        antdMessage.warning(`${errorCount} records failed to process`)
+      }
+
+    } catch (error) {
+      console.error('Error processing bulk data:', error)
+      antdMessage.error('Error processing bulk data')
+    }
+  }
+
+  const processSingleRecord = async (record) => {
+    const clientId = localStorage.getItem('clientId') || '1090'
+
+    switch (activeTab) {
+      case 'inventoryInward':
+        await processInventoryInwardRecord(record, clientId)
+        break
+      case 'assetInward':
+        await processAssetInwardRecord(record, clientId)
+        break
+      case 'inventoryOutward':
+        await processInventoryOutwardRecord(record, clientId)
+        break
+      case 'assetOutward':
+        await processAssetOutwardRecord(record, clientId)
+        break
+      default:
+        throw new Error('Unknown tab type')
+    }
+  }
+
+  const processInventoryInwardRecord = async (record, clientId) => {
+    const locationId = record['Location ID'] || locationOptions.find(loc => loc.name === record['Location Name'])?.id
+    if (!locationId) throw new Error('Invalid location')
+
+    const date = record['Date (YYYY-MM-DD)'] ? dayjs(record['Date (YYYY-MM-DD)']).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')
+    const fromType = record['From Type (supplier/location)']?.toLowerCase() === 'supplier' ? 2 : 1
+    const statusId = 640
+    const inwardPassByName = record['Inward Passed By']
+    const inwardPassDateTime = record['Inward Passed Date (YYYY-MM-DD HH:mm)']
+      ? dayjs(record['Inward Passed Date (YYYY-MM-DD HH:mm)']).format('YYYY-MM-DD[T]HH:mm')
+      : dayjs().format('YYYY-MM-DD[T]HH:mm')
+    const passByRemarks = record['PassedBy Remark']
+    const isReturnableFlag = record['Is Returnable (Y/N)']?.toUpperCase() === 'Y' ? 'Y' : 'N'
+
+    const fromLocationId = record['From Location ID'] || locationOptions.find(loc => loc.name === record['From Location Name'])?.id
+
+    const payload = {
+      locationId,
+      indentNumber: record['Inward Ref #'],
+      date,
+      fromType,
+      statusId,
+      inwardPassByName,
+      inwardPassDateTime,
+      passByRemarks,
+      supplier: record['Supplier'] || null,
+      address: record['Address'] || null,
+      reason: record['Reason'] || null,
+      domainName,
+      clientId,
+      type: 'INWARD',
+      outwardReferenceNumber: null,
+      isReturnableFlag,
+      sequelNumber: '1',
+      stockIndentItemsDtos: [{
+        inventoryId: record['Inventory ID'] || record['Inventory Name'], // Assuming ID is provided, fallback to name
+        quantity: parseFloat(record['Quantity']) || 0,
+        inventoryCategoryId: record['Inventory Category ID'] || record['Inventory Category Name'], // Assuming ID is provided, fallback to name
+        units: record['Units']
+      }]
+    }
+
+    await addOrUpdateStockIndentInward(payload).unwrap()
+  }
+
+  const processAssetInwardRecord = async (record, clientId) => {
+    // TODO: Implement asset inward bulk processing
+    console.log('Processing asset inward record:', record)
+    antdMessage.info('Asset Inward bulk processing not yet implemented')
+    // This would follow similar pattern as inventory inward but with asset-specific fields
+  }
+
+  const processInventoryOutwardRecord = async (record, clientId) => {
+    // TODO: Implement inventory outward bulk processing
+    console.log('Processing inventory outward record:', record)
+    antdMessage.info('Inventory Outward bulk processing not yet implemented')
+    // This would follow similar pattern as inventory inward but for outward transactions
+  }
+
+  const processAssetOutwardRecord = async (record, clientId) => {
+    // TODO: Implement asset outward bulk processing
+    console.log('Processing asset outward record:', record)
+    antdMessage.info('Asset Outward bulk processing not yet implemented')
+    // This would follow similar pattern as asset inward but for outward transactions
+  }
+
   const summaryCards = inventoryData
     ? [
         {
@@ -502,9 +821,26 @@ export default function Inventory() {
 
             <Row justify="end" style={{ marginBottom: 16 }}>
               <Col>
-                <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenModal}>
-                  Add
-                </Button>
+                <Space>
+                  <Button
+                    icon={<DownloadOutlined />}
+                    onClick={downloadBulkUpdateTemplate}
+                  >
+                    Download Bulk Update Template
+                  </Button>
+                  <Upload
+                    accept=".xlsx,.xls"
+                    showUploadList={false}
+                    beforeUpload={handleBulkUpload}
+                  >
+                    <Button icon={<UploadOutlined />}>
+                      Upload Bulk Update
+                    </Button>
+                  </Upload>
+                  <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenModal}>
+                    Add
+                  </Button>
+                </Space>
               </Col>
             </Row>
 
