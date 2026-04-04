@@ -445,6 +445,29 @@ export default function CorrectiveMaintenance() {
   };
   const isActionEnabled = selectedRowKeys.length > 0;
 
+  // Table Header Filter
+  const [selectedFilterColumn, setSelectedFilterColumn] = useState(null);
+  const [filterSearchValue, setFilterSearchValue] = useState('');
+
+  const getFilteredTableData = () => {
+    if (!selectedFilterColumn || !filterSearchValue.trim()) {
+      return Cmreports;
+    }
+
+    return Cmreports.filter((record) => {
+      const columnValue = record[selectedFilterColumn];
+      if (columnValue === null || columnValue === undefined) {
+        return false;
+      }
+      return String(columnValue).toLowerCase().includes(filterSearchValue.toLowerCase());
+    });
+  };
+
+  const handleClearFilter = () => {
+    setSelectedFilterColumn(null);
+    setFilterSearchValue('');
+  };
+
 
   //edit 
   const [isEditing, setIsEditing] = useState(false);
@@ -683,43 +706,88 @@ export default function CorrectiveMaintenance() {
             <Skeleton variant="rounded" width="100%" height={360} />
           </Box>
         ) : (
-          <Table
-            rowKey="id"
-            dataSource={Cmreports}
-            columns={columns}
-            rowSelection={rowSelection}
-            bordered
-            scroll={{ x: 'max-content', y: 400 }}
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: true,
-              pageSizeOptions: ['10', '20', '50'],
-              responsive: true,
-            }}
-            onRow={(record) => ({
-              onClick: () => {
-                setIsViewMode(true)
-                setIsEditing(false)
-                setopen(true)
+          <>
+            {/* Table Header Filter */}
+            <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Select
+                placeholder="Select Column to Filter"
+                style={{ width: 200 }}
+                value={selectedFilterColumn}
+                onChange={(value) => {
+                  setSelectedFilterColumn(value);
+                  setFilterSearchValue('');
+                }}
+                allowClear
+              >
+                {columns
+                  .filter((col) => col.dataIndex && col.dataIndex !== 'action')
+                  .map((col) => (
+                    <Select.Option key={col.key} value={col.dataIndex}>
+                      {col.title}
+                    </Select.Option>
+                  ))}
+              </Select>
 
-                modalForm.setFieldsValue({
-                  ticketno: record.cmKey,
-                  station: record.location,
-                  system: record.allData?.systemName,
-                  equipment: record.category,
-                  itemcode: record.assets,
-                  faultCategory: record.faultCategory,
-                  faultsubcategory: record.faultSubCategory,
-                  user: record.assignedId,
-                  priority: record.priority,
-                  description: record.allData?.description || '',
-                  faultrecord: record.allData?.recordedBy || '',
-                  rectification: record.allData?.rectificationDetails || '',
-                  breakdownreason: record.allData?.reasonForBreakdown || ''
-                })
-              }
-            })}
-          />
+              <Input
+                placeholder="Type to search..."
+                value={filterSearchValue}
+                onChange={(e) => setFilterSearchValue(e.target.value)}
+                style={{ width: 200 }}
+                allowClear
+              />
+
+              <AntButton
+                onClick={handleClearFilter}
+                disabled={!selectedFilterColumn && !filterSearchValue}
+              >
+                Clear Filter
+              </AntButton>
+
+              {selectedFilterColumn && (
+                <span style={{ color: '#666', fontSize: '12px' }}>
+                  Results: {getFilteredTableData().length} of {Cmreports.length}
+                </span>
+              )}
+            </div>
+
+            <Table
+              rowKey="id"
+              dataSource={getFilteredTableData()}
+              columns={columns}
+              rowSelection={rowSelection}
+              bordered
+              scroll={{ x: 'max-content', y: 400 }}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50'],
+                responsive: true,
+              }}
+              onRow={(record) => ({
+                onClick: () => {
+                  setIsViewMode(true)
+                  setIsEditing(false)
+                  setopen(true)
+
+                  modalForm.setFieldsValue({
+                    ticketno: record.cmKey,
+                    station: record.location,
+                    system: record.allData?.systemName,
+                    equipment: record.category,
+                    itemcode: record.assets,
+                    faultCategory: record.faultCategory,
+                    faultsubcategory: record.faultSubCategory,
+                    user: record.assignedId,
+                    priority: record.priority,
+                    description: record.allData?.description || '',
+                    faultrecord: record.allData?.recordedBy || '',
+                    rectification: record.allData?.rectificationDetails || '',
+                    breakdownreason: record.allData?.reasonForBreakdown || ''
+                  })
+                }
+              })}
+            />
+          </>
         )}
       </>
     )
