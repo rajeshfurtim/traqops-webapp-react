@@ -270,7 +270,7 @@ export default function ScheduledMaintenanceDetailsReports() {
       fromDate: values.dateRange?.[0]?.format('YYYY-MM-DD'),
       toDate: values.dateRange?.[1]?.format('YYYY-MM-DD'),
       locationId: values.location ?? defaultLocationId,
-      statusId: values.statusId ?? -1,
+      statusId: values.statusId ?? 640,
       system: values.system,
       categoryId: values.categoryId ?? -1,
     })
@@ -364,7 +364,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                 dateRange: [dayjs().subtract(1, 'day'), dayjs()],
                 location: defaultLocationId,
                 frequencyId: -1,
-                statusId: -1,
+                statusId: 640,
                 system: "ECS",
                 categoryId: -1
               }}
@@ -372,13 +372,14 @@ export default function ScheduledMaintenanceDetailsReports() {
               <Row gutter={[16, 16]}>
 
                 <Col span={4}>
-                  <Form.Item name="dateRange" label="Date Range">
+                  <Form.Item name="dateRange" label="Date Range" rules={[{ required: true, message: 'Please select date range!' }]}
+>
                     <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" disabledDate={(current) => current && current > dayjs().endOf('day')} />
                   </Form.Item>
                 </Col>
 
                 <Col span={4}>
-                  <Form.Item name="location" label="Location">
+                  <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Please select location!' }]}>
                     <Select allowClear loading={locationsLoading}>
                       <Select.Option value={-1}>All Location</Select.Option>
                       {locations?.map((loc) => (
@@ -391,9 +392,9 @@ export default function ScheduledMaintenanceDetailsReports() {
                 </Col>
 
                 <Col span={4}>
-                  <Form.Item name="statusId" label="Status">
+                  <Form.Item name="statusId" label="Status" rules={[{ required: true, message: 'Please select status!' }]}>
                     <Select allowClear>
-                      <Select.Option value={-1}>All Status</Select.Option>
+                      {/* <Select.Option value={-1}>All Status</Select.Option> */}
                       <Select.Option value={640}>Open</Select.Option>
                       <Select.Option value={631}>Completed</Select.Option>
                       <Select.Option value={15}>Verified</Select.Option>
@@ -402,7 +403,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                 </Col>
 
                 <Col span={4}>
-                  <Form.Item name="frequencyId" label="Frequency">
+                  <Form.Item name="frequencyId" label="Frequency" rules={[{ required: true, message: 'Please select frequency!' }]}>
                     <Select allowClear loading={frequencyLoading}>
                       <Select.Option value={-1}>All Frequency</Select.Option>
                       {freqencyList?.map((fre) => (
@@ -415,7 +416,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                 </Col>
 
                 <Col span={4}>
-                  <Form.Item name="system" label="System">
+                  <Form.Item name="system" label="System" rules={[{ required: true, message: 'Please select system!' }]}>
                     <Select
                       onChange={(value) => {
                         setSelectedSystem(value || 'ECS');
@@ -429,7 +430,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                 </Col>
 
                 <Col span={4}>
-                  <Form.Item name="categoryId" label="Category">
+                  <Form.Item name="categoryId" label="Category" rules={[{ required: true, message: 'Please select category!' }]}>
                     <Select loading={categoryLoading} allowClear>
                       <Select.Option value={-1}>All</Select.Option>
                       {(categories?.data || []).map((cat) => (
