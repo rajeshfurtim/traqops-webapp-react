@@ -138,7 +138,7 @@ export const sidebarMenuConfig = [
           {
             key: '/reports/tasks/task-report-extended',
             icon: 'FileTextOutlined',
-            label: 'Task Report Extended',
+            label: 'Task Report',
             path: '/reports/tasks/task-report-extended'
           },
           {
@@ -171,12 +171,12 @@ export const sidebarMenuConfig = [
             label: 'CheckList Report',
             path: '/reports/tasks/checklist-report'
           },
-          {
-            key: '/reports/tasks/task-report',
-            icon: 'FileTextOutlined',
-            label: 'Task Report',
-            path: '/reports/tasks/task-report'
-          },
+          // {
+          //   key: '/reports/tasks/task-report',
+          //   icon: 'FileTextOutlined',
+          //   label: 'Task Report',
+          //   path: '/reports/tasks/task-report'
+          // },
           {
             key: '/reports/tasks/asset-history',
             icon: 'FileTextOutlined',
