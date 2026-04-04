@@ -551,6 +551,10 @@ export default function CorrectiveMaintenance() {
     })
   }
 
+   const stringSorter = (key) => (a, b) =>
+    (a[key] || "").localeCompare(b[key] || "");
+
+
   const columns = [
     {
       title: 'S.No',
@@ -562,20 +566,23 @@ export default function CorrectiveMaintenance() {
       title: 'Fault Id',
       dataIndex: 'cmKey',
       key: 'cmKey',
-      width: 220
+      width: 220,
+      sorter: stringSorter("cmKey")
     },
     {
       title: 'Location',
       dataIndex: 'location',
       key: 'location',
-      width: 180
+      width: 180,
+      sorter: stringSorter("location")
 
     },
     {
       title: 'Category',
       dataIndex: 'category',
       key: 'category',
-      width: 140
+      width: 140,
+      sorter: stringSorter("category")
       // width: 120,
       // render: (priority) => (
       //   <Chip
@@ -612,13 +619,15 @@ export default function CorrectiveMaintenance() {
       title: 'Assigned To',
       dataIndex: 'assignedTo',
       key: 'assignedTo',
-      width: 150
+      width: 150,
+       sorter: stringSorter("assignedTo")
     },
     {
       title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
-      width: 150
+      width: 150,
+      sorter: stringSorter("priority")
     },
 
     {
@@ -708,7 +717,7 @@ export default function CorrectiveMaintenance() {
         ) : (
           <>
             {/* Table Header Filter */}
-            <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', float: 'right' }}>
               <Select
                 placeholder="Select Column to Filter"
                 style={{ width: 200 }}
