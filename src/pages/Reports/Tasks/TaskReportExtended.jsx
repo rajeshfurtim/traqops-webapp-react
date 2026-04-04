@@ -23,7 +23,7 @@ export default function TaskReportExtended() {
   const { data: categoryList, isLoading: categoryLoading } = useGetSystemCategorysQuery({ clientId, system: systemValue }, { skip: !systemValue })
   const { data: locationList } = useGetLocationListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
   const { data: reportData, isLoading: reportLoading, isFetching } =
-  useGetTaskDetailedReportQuery(
+    useGetTaskDetailedReportQuery(
       {
         ...filters,
       },
@@ -31,12 +31,29 @@ export default function TaskReportExtended() {
         skip: !filters.locationId || !filters.system
       }
     )
-    const taskreport = reportData?.data || {};
+  const taskreport = reportData?.data || {};
   useEffect(() => {
     form.setFieldsValue({
       date: [dayjs().startOf('month'), dayjs()],
     })
   }, [])
+
+  useEffect(() => {
+  if (locationList?.data?.content?.length) {
+    const firstLocation = locationList.data.content[0]
+
+    form.setFieldsValue({
+      date: [dayjs().startOf('month'), dayjs()],
+      location: firstLocation.id,  
+      system: 'ECS',                
+      category: 'ALL'               
+    })
+
+    setSystemValue('ECS') 
+  }
+}, [locationList])
+
+
   const handleFilterChange = (values) => {
     console.log('Filter values:', values)
     const newFilters = {}
@@ -225,108 +242,108 @@ export default function TaskReportExtended() {
         ],
       },
     ] */
-      const pmColumns = [
+  const pmColumns = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 180,
+      render: (_, record) => (
+        <span className="pm-id-cell">
+          <span
+            className={`status-dot ${getDotClassByStatus(record?.status)}`}
+            aria-label={record?.status || 'Unknown'}
+          />
+          <span>{record?.id ?? '-'}</span>
+        </span>
+      ),
+    },
+    {
+      title: 'WEEKLY',
+      children: [
         {
-          title: 'ID',
-          dataIndex: 'id',
-          key: 'id',
-          width: 180,
-          render: (_, record) => (
-            <span className="pm-id-cell">
-              <span
-                className={`status-dot ${getDotClassByStatus(record?.status)}`}
-                aria-label={record?.status || 'Unknown'}
-              />
-              <span>{record?.id ?? '-'}</span>
-            </span>
-          ),
+          title: 'Done Date',
+          dataIndex: 'weeklyDone',
+          key: 'weeklyDone',
+          render: (val) => val || '-',
         },
         {
-          title: 'WEEKLY',
-          children: [
-            {
-              title: 'Done Date',
-              dataIndex: 'weeklyDone',
-              key: 'weeklyDone',
-              render: (val) => val || '-',
-            },
-            {
-              title: 'Due Date',
-              dataIndex: 'weeklyDue',
-              key: 'weeklyDue',
-              render: (val) => val || '-',
-            },
-          ],
+          title: 'Due Date',
+          dataIndex: 'weeklyDue',
+          key: 'weeklyDue',
+          render: (val) => val || '-',
+        },
+      ],
+    },
+    {
+      title: 'MONTHLY',
+      children: [
+        {
+          title: 'Done Date',
+          dataIndex: 'monthlyDone',
+          key: 'monthlyDone',
+          render: (val) => val || '-',
         },
         {
-          title: 'MONTHLY',
-          children: [
-            {
-              title: 'Done Date',
-              dataIndex: 'monthlyDone',
-              key: 'monthlyDone',
-              render: (val) => val || '-',
-            },
-            {
-              title: 'Due Date',
-              dataIndex: 'monthlyDue',
-              key: 'monthlyDue',
-              render: (val) => val || '-',
-            },
-          ],
+          title: 'Due Date',
+          dataIndex: 'monthlyDue',
+          key: 'monthlyDue',
+          render: (val) => val || '-',
+        },
+      ],
+    },
+    {
+      title: 'QUARTERLY',
+      children: [
+        {
+          title: 'Done Date',
+          dataIndex: 'quarterlyDone',
+          key: 'quarterlyDone',
+          render: (val) => val || '-',
         },
         {
-          title: 'QUARTERLY',
-          children: [
-            {
-              title: 'Done Date',
-              dataIndex: 'quarterlyDone',
-              key: 'quarterlyDone',
-              render: (val) => val || '-',
-            },
-            {
-              title: 'Due Date',
-              dataIndex: 'quarterlyDue',
-              key: 'quarterlyDue',
-              render: (val) => val || '-',
-            },
-          ],
+          title: 'Due Date',
+          dataIndex: 'quarterlyDue',
+          key: 'quarterlyDue',
+          render: (val) => val || '-',
+        },
+      ],
+    },
+    {
+      title: 'HALF-YEARLY',
+      children: [
+        {
+          title: 'Done Date',
+          dataIndex: 'halfDone',
+          key: 'halfDone',
+          render: (val) => val || '-',
         },
         {
-          title: 'HALF-YEARLY',
-          children: [
-            {
-              title: 'Done Date',
-              dataIndex: 'halfDone',
-              key: 'halfDone',
-              render: (val) => val || '-',
-            },
-            {
-              title: 'Due Date',
-              dataIndex: 'halfDue',
-              key: 'halfDue',
-              render: (val) => val || '-',
-            },
-          ],
+          title: 'Due Date',
+          dataIndex: 'halfDue',
+          key: 'halfDue',
+          render: (val) => val || '-',
+        },
+      ],
+    },
+    {
+      title: 'YEARLY',
+      children: [
+        {
+          title: 'Done Date',
+          dataIndex: 'yearlyDone',
+          key: 'yearlyDone',
+          render: (val) => val || '-',
         },
         {
-          title: 'YEARLY',
-          children: [
-            {
-              title: 'Done Date',
-              dataIndex: 'yearlyDone',
-              key: 'yearlyDone',
-              render: (val) => val || '-',
-            },
-            {
-              title: 'Due Date',
-              dataIndex: 'yearlyDue',
-              key: 'yearlyDue',
-              render: (val) => val || '-',
-            },
-          ],
+          title: 'Due Date',
+          dataIndex: 'yearlyDue',
+          key: 'yearlyDue',
+          render: (val) => val || '-',
         },
-      ]
+      ],
+    },
+  ]
 
   return (
     <>
@@ -345,9 +362,9 @@ export default function TaskReportExtended() {
               onFinish={handleFilterChange}
               layout="vertical"
             >
-              <Row gutter={[16, 16]}>
+              <Row gutter={[16, 16]} align="middle">
                 {/* Date */}
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col span={4}>
                   <Form.Item
                     label="Date"
                     name="date"
@@ -362,8 +379,9 @@ export default function TaskReportExtended() {
                     />
                   </Form.Item>
                 </Col>
+
                 {/* Location */}
-                <Col xs={24} sm={12} md={8} lg={6}>
+                <Col span={4}>
                   <Form.Item
                     label="Location"
                     name="location"
@@ -378,15 +396,15 @@ export default function TaskReportExtended() {
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col xs={24} sm={12} md={8} lg={6}>
+
+                {/* System */}
+                <Col span={4}>
                   <Form.Item
                     label="System"
                     name="system"
                     rules={[{ required: true, message: 'Please select system!' }]}
                   >
-                    <Select placeholder="Select System"
-                    onChange={handleSystemChange}
-                    >
+                    <Select placeholder="Select System" onChange={handleSystemChange}>
                       {systemList?.map(l => (
                         <Select.Option key={l.id} value={l.id}>
                           {l.name}
@@ -395,17 +413,16 @@ export default function TaskReportExtended() {
                     </Select>
                   </Form.Item>
                 </Col>
-                {/* Inventory */}
-                <Col xs={24} sm={12} md={8} lg={6}>
+
+                {/* Category */}
+                <Col span={4}>
                   <Form.Item
                     label="Category"
                     name="category"
                     rules={[{ required: true, message: 'Please select Category!' }]}
                   >
                     <Select placeholder="Select Category" loading={categoryLoading}>
-                      <Select.Option value="ALL">
-                        All
-                      </Select.Option>
+                      <Select.Option value="ALL">All</Select.Option>
                       {categoryList?.data?.map(l => (
                         <Select.Option key={l.id} value={l.id}>
                           {l.name}
@@ -414,9 +431,10 @@ export default function TaskReportExtended() {
                     </Select>
                   </Form.Item>
                 </Col>
+
                 {/* Buttons */}
-                <Col xs={24} sm={24} md={24} lg={6}>
-                  <Form.Item>
+                <Col span={8}>
+                  <Form.Item label=" ">
                     <Space>
                       <AntButton
                         type="primary"
