@@ -51,7 +51,7 @@ export default function ScheduledMaintenanceDetailsReports() {
     form.setFieldsValue({
       dateRange: [dayjs().startOf('month'), dayjs()],
       location: -1,
-      statusId: -1,
+      statusId : 640,
       system: 'ECS',
       category: 'All'
     })
