@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme, alpha, Chip, Grid } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Row, Col, Tabs, Modal, Upload, Button, message } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Row, Col, Tabs, Modal, Upload, Carousel, Button, message } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, UploadOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { FaClipboardList, FaExternalLinkAlt, FaCheckSquare, FaCheckCircle, FaTasks, FaClock } from 'react-icons/fa'
@@ -16,7 +16,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { correctiveApi } from '../store/api/correctivemaintenance.api';
 import { color } from 'framer-motion'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { domainName } from '../config/apiConfig'
+import { domainName, apiBaseUrl } from '../config/apiConfig'
 
 
 
@@ -29,6 +29,7 @@ export default function CorrectiveMaintenance() {
   const [tickets, setTickets] = useState([])
   const [selectedTicket, setSelectedTicket] = useState(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [viewRecord, setViewRecord] = useState(null)
   const [filters, setFilters] = useState({})
   const [isViewMode, setIsViewMode] = useState(false)
   // filter form
@@ -468,6 +469,254 @@ export default function CorrectiveMaintenance() {
     setFilterSearchValue('');
   };
 
+  const getHistoryImages = (source) => {
+    const images = [];
+    const addUrl = (item) => {
+      if (!item) return;
+      let url = item.filePath || item.url || item.path || item.filepath || null;
+      if (!url) return;
+      if (typeof url === 'string') {
+        if (url.startsWith('//')) {
+          url = `${window.location.protocol}${url}`;
+        } else if (url.startsWith('/')) {
+          url = `${window.location.origin}${url}`;
+        } else if (!url.startsWith('http')) {
+          url = `${apiBaseUrl}${url.startsWith('/') ? url : `/${url}`}`;
+        }
+      }
+      if (!images.includes(url)) images.push(url);
+    };
+
+    if (Array.isArray(source?.images)) {
+      source.images.forEach((img) => addUrl(img));
+    } else if (source?.images) {
+      addUrl(source.images);
+    }
+
+    if (Array.isArray(source?.files)) {
+      source.files.forEach((file) => addUrl(file));
+    } else if (source?.files) {
+      addUrl(source.files);
+    }
+
+    if (Array.isArray(source?.client?.files)) {
+      source.client.files.forEach((file) => addUrl(file));
+    } else if (source?.client?.files) {
+      addUrl(source.client.files);
+    }
+
+    return images;
+  };
+
+  const getHistorySections = () => {
+    if (!viewRecord) return [];
+    console.log("View Record:", viewRecord)
+    const asset = viewRecord.allData?.assets?.name || {};
+    const source = viewRecord.allData || {};
+    const location = source.location || {};
+    const assignedUser = source.assignedTo ? `${source.assignedTo?.firstName || ''} ${source.assignedTo?.lastName || ''}`.trim() : '-';
+    const login = [location.code, location.locationGroup?.alias || location.locationGroup?.name].filter(Boolean).join(' ');
+    const equipmentName = source.category?.name || source.systemName || viewRecord.category || '-';
+    const imageUrls = getHistoryImages(source);
+    const performedBy = source.performedBy || source.assignedTo ? assignedUser : '-';
+    const verifiedBy = source.verifiedBy || source.verifiedByName || '-';
+    const verifiedDate = source.verifiedAt || source.verifiedDate || source.verifiedOn || '-';
+    const statusLabel = (viewRecord.status || source.status?.name || '').toUpperCase();
+    const remarkText = source.rectificationDetails || source.actionTaken || source.description || '-';
+    const faultDate = viewRecord.startTime ? dayjs(viewRecord.startTime).format('DD-MM-YYYY HH:mm') : '-';
+    const endDate = viewRecord.endTime ? dayjs(viewRecord.endTime).format('DD-MM-YYYY HH:mm') : '-';
+
+    const sections = [];
+
+    if (['1', '2', '3', '4'].includes(activeTab)) {
+      sections.push({
+        key: 'open',
+        title: 'Details',
+        badgeColor: '#f0ad4e',
+        statusLabel: statusLabel || 'OPEN',
+        details: [
+          { label: 'CM Key', value: viewRecord.cmKey || '-' },
+          { label: 'System', value: source.systemName || '-' },
+          { label: 'Asset Name', value: asset || '-' },
+          { label: 'Category', value: equipmentName || '-' },
+          { label: 'Priority', value: source.priority?.name || '-' },
+          { label: 'Login', value: login || location.name || '-' },
+          { label: 'Date', value: faultDate },
+          { label: 'Assigned To', value: viewRecord.assignedTo || assignedUser },
+          { label: 'Performed By', value: performedBy },
+        ],
+        remarks: remarkText,
+        images: imageUrls,
+      });
+    }
+
+    if (['2', '3', '4'].includes(activeTab)) {
+      sections.push({
+        key: 'workdone',
+        title: 'Work Done',
+        badgeColor: '#1890ff',
+        statusLabel: statusLabel || 'WORK DONE',
+        details: [
+          { label: 'Start Date', value: viewRecord.startTime ? dayjs(viewRecord.startTime).format('DD-MM-YYYY HH:mm') : '-' },
+          { label: 'End Date', value: viewRecord.endTime ? dayjs(viewRecord.endTime).format('DD-MM-YYYY HH:mm') : '-' },
+          { label: 'Action Taken', value: source.actionTaken || '-' },
+          // { label: 'Rectification Details', value: source.rectificationDetails || '-' },
+          { label: 'Reason', value: source.reasonForBreakdown || '-' },
+        ],
+        remarks: source.rectificationDetails || source.actionTaken || '-',
+        images: imageUrls,
+      });
+    }
+
+    if (['3', '4'].includes(activeTab)) {
+      sections.push({
+        key: 'completed',
+        title: 'Completed',
+        badgeColor: '#52c41a',
+        statusLabel: statusLabel || 'COMPLETED',
+        details: [
+          { label: 'Start Date', value: viewRecord.startTime ? dayjs(viewRecord.startTime).format('DD-MM-YYYY HH:mm') : '-' },
+          { label: 'End Date', value: viewRecord.endTime ? dayjs(viewRecord.endTime).format('DD-MM-YYYY HH:mm') : '-' },
+          // { label: 'Completed Date', value: endDate },
+          { label: 'Verified By', value: source.verifiedBy || '-' },
+        ],
+        remarks: source.conclusion || source.actionTaken || '-',
+        images: imageUrls,
+      });
+    }
+
+    if (['4'].includes(activeTab)) {
+      sections.push({
+        key: 'verified',
+        title: 'Verified',
+        badgeColor: '#13c2c2',
+        statusLabel: statusLabel || 'VERIFIED',
+        details: [
+          { label: 'Start Date', value: viewRecord.startTime ? dayjs(viewRecord.startTime).format('DD-MM-YYYY HH:mm') : '-' },
+          { label: 'End Date', value: viewRecord.endTime ? dayjs(viewRecord.endTime).format('DD-MM-YYYY HH:mm') : '-' },
+          { label: 'Verified By', value: source.verifiedBy || source.verifiedByName || '-' },
+          { label: 'Verified Date', value: verifiedDate || '-' },
+        ],
+        remarks: source.conclusion || source.actionTaken || '-',
+        images: imageUrls,
+      });
+    }
+
+    if (activeTab === '5') {
+      sections.push({
+        key: 'overdue',
+        title: 'Overdue',
+        badgeColor: '#ff4d4f',
+        statusLabel: statusLabel || 'OVERDUE',
+        details: [
+          { label: 'CM Key', value: viewRecord.cmKey || '-' },
+          { label: 'System', value: source.systemName || '-' },
+          { label: 'Asset Name', value: asset || '-' },
+          { label: 'Category', value: equipmentName || '-' },
+          { label: 'Priority', value: source.priority?.name || '-' },
+          { label: 'Login', value: login || location.name || '-' },
+          { label: 'Date', value: faultDate },
+          { label: 'Assigned To', value: viewRecord.assignedTo || assignedUser },
+          { label: 'Performed By', value: performedBy },
+        ],
+        remarks: remarkText,
+        images: imageUrls,
+      });
+    }
+
+    return sections;
+  };
+
+  const downloadHistoryPdf = async () => {
+    if (!viewRecord) return;
+    const sections = getHistorySections();
+
+    const pdfData = [];
+    sections.forEach((section) => {
+      pdfData.push({ field: section.title.toUpperCase(), value: '' });
+      section.details.forEach((detail) => {
+        pdfData.push({ field: detail.label, value: detail.value || '-' });
+      });
+      pdfData.push({ field: 'Remarks', value: section.remarks || '-' });
+      if (section.images && section.images.length > 0) {
+        pdfData.push({ field: 'Images', value: section.images.join(', ') });
+      }
+      pdfData.push({ field: ' ', value: ' ' });
+    });
+
+    await exportToPDF(
+      [
+        { title: 'Field', dataIndex: 'field' },
+        { title: 'Value', dataIndex: 'value' }
+      ],
+      pdfData,
+      `CM_History_${viewRecord.cmKey || dayjs().format('YYYYMMDD_HHmm')}`,
+      { orientation: 'portrait', format: 'a4' }
+    );
+  };
+
+  const renderHistoryView = () => {
+    const sections = getHistorySections();
+
+    if (!sections.length) {
+      return <Empty description="No history data available" />;
+    }
+
+    return (
+      <div style={{ display: 'grid', gap: 16 }}>
+        {sections.map((section) => (
+          <Card key={section.key} sx={{ borderRadius: 3, border: '1px solid #f0f0f0', boxShadow: 'none' }}>
+            <CardContent sx={{ padding: '20px' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Tag color="default" style={{ backgroundColor: section.badgeColor, color: '#fff', fontWeight: 700 }}>
+                    {section.title.toUpperCase()}
+                  </Tag>
+                  <Typography variant="body2" sx={{ color: '#666' }}>
+                    {section.statusLabel}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ display: 'grid', gap: 16, gridTemplateColumns: section.images && section.images.length > 0 ? { xs: '1fr', md: '1.6fr 1.2fr 300px' } : { xs: '1fr', md: '1.8fr 1.2fr' }, alignItems: 'start' }}>
+                <Box>
+                  {section.details.map((detail) => (
+                    <Box key={detail.label} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '140px minmax(0, 1fr)' }, gap: '0 8px', alignItems: 'center', mb: 1, whiteSpace: 'nowrap' }}>
+                      <Typography sx={{ fontWeight: 700, color: '#333', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail.label}:</Typography>
+                      <Typography sx={{ color: '#444', overflow: 'hidden', textOverflow: 'ellipsis' }}>{detail.value || '-'}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                <Box sx={{ borderLeft: { xs: 'none', md: '1px solid #f0f0f0' }, pl: { xs: 0, md: 2 }, pt: { xs: 2, md: 0 } }}>
+                  <Typography sx={{ fontWeight: 700, mb: 1 }}>Remarks</Typography>
+                  <Typography sx={{ whiteSpace: 'pre-wrap', color: '#333' }}>{section.remarks || '-'}</Typography>
+                </Box>
+
+                {section.images && section.images.length > 0 && (
+                  <Box sx={{ textAlign: 'center', borderLeft: { xs: 'none', md: '1px solid #f0f0f0' }, pl: { xs: 0, md: 2 }, pt: { xs: 2, md: 0 } }}>
+                    <Typography sx={{ fontWeight: 700, mb: 1 }}>Work Done Image</Typography>
+                    <Carousel dots autoplay={false} style={{ maxWidth: 300 }}>
+                      {section.images.map((url, index) => (
+                        <Box key={`${section.key}-img-${index}`} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 220 }}>
+                          <img
+                            src={url}
+                            alt={`history-image-${index}`}
+                            style={{ width: '100%', maxWidth: 300, maxHeight: 220, borderRadius: 12, objectFit: 'cover' }}
+                          />
+                        </Box>
+                      ))}
+                    </Carousel>
+                  </Box>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  };
+
 
   //edit 
   const [isEditing, setIsEditing] = useState(false);
@@ -777,6 +1026,7 @@ export default function CorrectiveMaintenance() {
                   setIsViewMode(true)
                   setIsEditing(false)
                   setopen(true)
+                  setViewRecord(record)
 
                   modalForm.setFieldsValue({
                     ticketno: record.cmKey,
@@ -939,12 +1189,14 @@ export default function CorrectiveMaintenance() {
         title={isViewMode ? "View Details" : isEditing ? "Edit Task" : "Add Details"}
         open={open}
         centered
-        width={800}
+        width={1100}
+        confirmLoading={saveLoading}
         onCancel={() => {
           setopen(false)
           setIsEditing(false)
           setIsViewMode(false)
           setEditingRecord(null)
+          setViewRecord(null)
           modalForm.resetFields()
         }}
         onOk={() => {
@@ -957,17 +1209,28 @@ export default function CorrectiveMaintenance() {
         okText={isViewMode ? "Close" : isEditing ? "Update" : "Add"}
       >
         <Form layout="vertical" form={modalForm} onFinish={addticket} >
-          <Row gutter={[16, 16]}>
+          {isViewMode ? (
+            <div style={{ padding: '8px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+                <div style={{ fontSize: 18, fontWeight: 700 }}>History Details</div>
+                <AntButton type="" icon={<FilePdfOutlined />} onClick={downloadHistoryPdf}>
+                  Download PDF
+                </AntButton>
+              </div>
+              {renderHistoryView()}
+            </div>
+          ) : (
+            <Row gutter={[16, 16]}>
 
-            {/* Ticket Info */}
-            <Col span={12}>
-              <Form.Item
-                label="Ticket No"
-                name="ticketno"
-              >
-                <Input disabled />
-              </Form.Item>
-            </Col>
+              {/* Ticket Info */}
+              <Col span={12}>
+                <Form.Item
+                  label="Ticket No"
+                  name="ticketno"
+                >
+                  <Input disabled />
+                </Form.Item>
+              </Col>
 
             <Col span={12}>
               <Form.Item
@@ -1267,7 +1530,8 @@ export default function CorrectiveMaintenance() {
             </Col>
 
           </Row>
-        </Form>
+            )}
+          </Form>
       </Modal>
 
       <Modal
