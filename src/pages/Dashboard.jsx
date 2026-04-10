@@ -121,7 +121,7 @@ export default function Dashboard() {
       const v = (s?.value || s?.name || "").trim();
       return { label: v, value: v };
     })
-    
+
     .reduce((acc, opt) => {
       if (!acc.some((x) => x.value === opt.value)) acc.push(opt);
       return acc;
@@ -130,6 +130,15 @@ export default function Dashboard() {
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  useEffect(() => {
+    if (!locationOptions?.length) return;
+
+    filterForm.submit();
+    handleScheduleTaskSubmit()
+    handleCorrectiveTaskSubmit()
+
+  }, [locationOptions]);
 
   const loadDashboardData = async () => {
     try {
@@ -187,6 +196,7 @@ export default function Dashboard() {
   };
 
   const handleSearch = (values, tabKeyOverride) => {
+    console.log(values, tabKeyOverride)
     const fromDate = values?.fromDate?.startOf?.("month")?.format?.("YYYY-MM-DD")
     const toDate = values?.fromDate?.endOf?.("month")?.format?.("YYYY-MM-DD")
     const attendanceDate = values?.fromDate?.format?.("YYYY-MM-DD")
@@ -212,81 +222,81 @@ export default function Dashboard() {
 
     if (!fromDate || !toDate || !locationIds.length) return
 
-    ;(async () => {
-      setConsolidateChartsLoading(true)
-      setAttendanceChartsLoading(true)
-      try {
-        const engineerUserTypeId = getUserTypeIdByName("ENGINEER");
-        const technicianUserTypeId = getUserTypeIdByName("TECHNICIAN");
-        const teamLeaderUserTypeId = getUserTypeIdByName("Team Leader");
-        const helpdeskUserTypeId = getUserTypeIdByName("Helpdesk");
+      ; (async () => {
+        setConsolidateChartsLoading(true)
+        setAttendanceChartsLoading(true)
+        try {
+          const engineerUserTypeId = getUserTypeIdByName("ENGINEER");
+          const technicianUserTypeId = getUserTypeIdByName("TECHNICIAN");
+          const teamLeaderUserTypeId = getUserTypeIdByName("Team Leader");
+          const helpdeskUserTypeId = getUserTypeIdByName("Helpdesk");
 
-        const [
-          ecsFailureRes,
-          tvsFailureRes,
-          ecsTopRes,
-          tvsTopRes,
-          topSparesRes,
-          spareTrendRes,
-          lowStockRes,
-          engineerAttendanceRes,
-          technicianAttendanceRes,
-          teamLeaderAttendanceRes,
-          helpdeskAttendanceRes,
-        ] = await Promise.all([
-          triggerGetFailureRateSystem({
-            system: "ECS",
-            fromDate,
-            toDate,
-            locationId: locationIds,
-            tabKey,
-            shiftId,
-          }).unwrap(),
-          triggerGetFailureRateSystem({
-            system: "TVS",
-            fromDate,
-            toDate,
-            locationId: locationIds,
-            tabKey,
-            shiftId,
-          }).unwrap(),
-          triggerGetTopAssetsFailureSystem({
-            system: "ECS",
-            fromDate,
-            toDate,
-            locationId: locationIds,
-            tabKey,
-            shiftId,
-          }).unwrap(),
-          triggerGetTopAssetsFailureSystem({
-            system: "TVS",
-            fromDate,
-            toDate,
-            locationId: locationIds,
-            tabKey,
-            shiftId,
-          }).unwrap(),
-          triggerGetTopUsedSpares({
-            fromDate,
-            toDate,
-            locationIds,
-            tabKey,
-            shiftId,
-          }).unwrap(),
-          triggerGetSpareConsumptionByLocationTrend({
-            fromDate: yearFromDate,
-            toDate: yearToDate,
-            locationIds,
-            tabKey,
-            shiftId,
-          }).unwrap(),
-          triggerGetLowStockSpares({
-            locationId: locationIds,
-            tabKey,
-            shiftId,
-          }).unwrap(),
-          engineerUserTypeId
-            ? getAttendanceChartData({
+          const [
+            ecsFailureRes,
+            tvsFailureRes,
+            ecsTopRes,
+            tvsTopRes,
+            topSparesRes,
+            spareTrendRes,
+            lowStockRes,
+            engineerAttendanceRes,
+            technicianAttendanceRes,
+            teamLeaderAttendanceRes,
+            helpdeskAttendanceRes,
+          ] = await Promise.all([
+            triggerGetFailureRateSystem({
+              system: "ECS",
+              fromDate,
+              toDate,
+              locationId: locationIds,
+              tabKey,
+              shiftId,
+            }).unwrap(),
+            triggerGetFailureRateSystem({
+              system: "TVS",
+              fromDate,
+              toDate,
+              locationId: locationIds,
+              tabKey,
+              shiftId,
+            }).unwrap(),
+            triggerGetTopAssetsFailureSystem({
+              system: "ECS",
+              fromDate,
+              toDate,
+              locationId: locationIds,
+              tabKey,
+              shiftId,
+            }).unwrap(),
+            triggerGetTopAssetsFailureSystem({
+              system: "TVS",
+              fromDate,
+              toDate,
+              locationId: locationIds,
+              tabKey,
+              shiftId,
+            }).unwrap(),
+            triggerGetTopUsedSpares({
+              fromDate,
+              toDate,
+              locationIds,
+              tabKey,
+              shiftId,
+            }).unwrap(),
+            triggerGetSpareConsumptionByLocationTrend({
+              fromDate: yearFromDate,
+              toDate: yearToDate,
+              locationIds,
+              tabKey,
+              shiftId,
+            }).unwrap(),
+            triggerGetLowStockSpares({
+              locationId: locationIds,
+              tabKey,
+              shiftId,
+            }).unwrap(),
+            engineerUserTypeId
+              ? getAttendanceChartData({
                 date: attendanceDate,
                 locationIds,
                 userTypeId: engineerUserTypeId,
@@ -294,9 +304,9 @@ export default function Dashboard() {
                 shiftId: shiftId ?? -1,
                 tabKey,
               })
-            : Promise.resolve([]),
-          technicianUserTypeId
-            ? getAttendanceChartData({
+              : Promise.resolve([]),
+            technicianUserTypeId
+              ? getAttendanceChartData({
                 date: attendanceDate,
                 locationIds,
                 userTypeId: technicianUserTypeId,
@@ -304,9 +314,9 @@ export default function Dashboard() {
                 shiftId: shiftId ?? -1,
                 tabKey,
               })
-            : Promise.resolve([]),
-          teamLeaderUserTypeId
-            ? getAttendanceChartData({
+              : Promise.resolve([]),
+            teamLeaderUserTypeId
+              ? getAttendanceChartData({
                 date: attendanceDate,
                 locationIds,
                 userTypeId: teamLeaderUserTypeId,
@@ -314,9 +324,9 @@ export default function Dashboard() {
                 shiftId: shiftId ?? -1,
                 tabKey,
               })
-            : Promise.resolve([]),
-          helpdeskUserTypeId
-            ? getAttendanceChartData({
+              : Promise.resolve([]),
+            helpdeskUserTypeId
+              ? getAttendanceChartData({
                 date: attendanceDate,
                 locationIds,
                 userTypeId: helpdeskUserTypeId,
@@ -324,141 +334,141 @@ export default function Dashboard() {
                 shiftId: shiftId ?? -1,
                 tabKey,
               })
-            : Promise.resolve([]),
-        ])
+              : Promise.resolve([]),
+          ])
 
-        setEcsFailureRateBySystemData(
-          (ecsFailureRes?.data || []).map((x) => ({
-            system: x?.categoryName,
-            failureRate: x?.count,
-          }))
-        )
-
-        setTvsFailureRateBySystemData(
-          (tvsFailureRes?.data || []).map((x) => ({
-            system: x?.categoryName,
-            failureRate: x?.count,
-          }))
-        )
-
-        setEcsTop10AssetsByFailureData(
-          (ecsTopRes?.data || []).map((x) => ({
-            asset: x?.assetName,
-            failures: x?.count,
-          }))
-        )
-
-        setTvsTop10AssetsByFailureData(
-          (tvsTopRes?.data || []).map((x) => ({
-            asset: x?.assetName,
-            failures: x?.count,
-          }))
-        )
-
-        setTopUsedSparesData(
-          (topSparesRes?.data || []).map((x) => ({
-            sparePart: x?.spareName,
-            timesUsed: x?.usedCount,
-          }))
-        )
-
-        const trendRows = spareTrendRes?.data || []
-        if (trendRows.length) {
-          setSpareConsumptionTrendByStationData(
-            trendRows.map((row) => {
-              const stations = row?.stations || {}
-              return {
-                month: row?.month,
-                ...Object.fromEntries(
-                  Object.entries(stations).map(([k, v]) => [
-                    k,
-                    Number(v ?? 0),
-                  ])
-                ),
-              }
-            })
+          setEcsFailureRateBySystemData(
+            (ecsFailureRes?.data || []).map((x) => ({
+              system: x?.categoryName,
+              failureRate: x?.count,
+            }))
           )
-        } else {
-          setSpareConsumptionTrendByStationData([])
-        }
 
-        const lowStockItems = lowStockRes?.data || []
-        if (lowStockItems.length) {
-          const normalizeLocationName = (name) =>
-            String(name || "Unknown").replace(/\r?\n/g, " ").trim()
+          setTvsFailureRateBySystemData(
+            (tvsFailureRes?.data || []).map((x) => ({
+              system: x?.categoryName,
+              failureRate: x?.count,
+            }))
+          )
 
-          const shortageByStation = {}
-          lowStockItems.forEach((it) => {
-            const stationName = normalizeLocationName(it?.locationName)
-            const shortage = Number(it?.shortage || 0)
-            shortageByStation[stationName] =
-              (shortageByStation[stationName] || 0) + shortage
-          })
+          setEcsTop10AssetsByFailureData(
+            (ecsTopRes?.data || []).map((x) => ({
+              asset: x?.assetName,
+              failures: x?.count,
+            }))
+          )
 
-          const topStations = Object.entries(shortageByStation)
-            .sort((a, b) => b[1] - a[1])
-            .map(([name]) => name)
-            .filter((name) => name && name !== "undefined" && name !== "null")
-            .slice(0, 3)
+          setTvsTop10AssetsByFailureData(
+            (tvsTopRes?.data || []).map((x) => ({
+              asset: x?.assetName,
+              failures: x?.count,
+            }))
+          )
 
-          if (!topStations.length) {
-            setLowStockSparesAcrossStationsData([])
+          setTopUsedSparesData(
+            (topSparesRes?.data || []).map((x) => ({
+              sparePart: x?.spareName,
+              timesUsed: x?.usedCount,
+            }))
+          )
+
+          const trendRows = spareTrendRes?.data || []
+          if (trendRows.length) {
+            setSpareConsumptionTrendByStationData(
+              trendRows.map((row) => {
+                const stations = row?.stations || {}
+                return {
+                  month: row?.month,
+                  ...Object.fromEntries(
+                    Object.entries(stations).map(([k, v]) => [
+                      k,
+                      Number(v ?? 0),
+                    ])
+                  ),
+                }
+              })
+            )
           } else {
-            const [stationAName, stationBName, stationCName] = topStations
+            setSpareConsumptionTrendByStationData([])
+          }
 
-            const spareMap = new Map()
+          const lowStockItems = lowStockRes?.data || []
+          if (lowStockItems.length) {
+            const normalizeLocationName = (name) =>
+              String(name || "Unknown").replace(/\r?\n/g, " ").trim()
+
+            const shortageByStation = {}
             lowStockItems.forEach((it) => {
-              const spareName = it?.spareName || ""
-              if (!spareName) return
-
-              if (!spareMap.has(spareName)) {
-                const baseRow = { sparePart: spareName }
-                if (stationAName) baseRow[stationAName] = 0
-                if (stationBName) baseRow[stationBName] = 0
-                if (stationCName) baseRow[stationCName] = 0
-                spareMap.set(spareName, baseRow)
-              }
-
-              const row = spareMap.get(spareName)
               const stationName = normalizeLocationName(it?.locationName)
               const shortage = Number(it?.shortage || 0)
-
-              if (stationAName && stationName === stationAName) row[stationAName] += shortage
-              else if (stationBName && stationName === stationBName)
-                row[stationBName] += shortage
-              else if (stationCName && stationName === stationCName)
-                row[stationCName] += shortage
+              shortageByStation[stationName] =
+                (shortageByStation[stationName] || 0) + shortage
             })
 
-            const chartRows = Array.from(spareMap.values())
-              .map((r) => ({
-                ...r,
-                __total:
-                  (stationAName ? r[stationAName] || 0 : 0) +
-                  (stationBName ? r[stationBName] || 0 : 0) +
-                  (stationCName ? r[stationCName] || 0 : 0),
-              }))
-              .sort((a, b) => b.__total - a.__total)
-              .slice(0, 6)
-              .map(({ __total, ...rest }) => rest)
+            const topStations = Object.entries(shortageByStation)
+              .sort((a, b) => b[1] - a[1])
+              .map(([name]) => name)
+              .filter((name) => name && name !== "undefined" && name !== "null")
+              .slice(0, 3)
 
-            setLowStockSparesAcrossStationsData(chartRows)
+            if (!topStations.length) {
+              setLowStockSparesAcrossStationsData([])
+            } else {
+              const [stationAName, stationBName, stationCName] = topStations
+
+              const spareMap = new Map()
+              lowStockItems.forEach((it) => {
+                const spareName = it?.spareName || ""
+                if (!spareName) return
+
+                if (!spareMap.has(spareName)) {
+                  const baseRow = { sparePart: spareName }
+                  if (stationAName) baseRow[stationAName] = 0
+                  if (stationBName) baseRow[stationBName] = 0
+                  if (stationCName) baseRow[stationCName] = 0
+                  spareMap.set(spareName, baseRow)
+                }
+
+                const row = spareMap.get(spareName)
+                const stationName = normalizeLocationName(it?.locationName)
+                const shortage = Number(it?.shortage || 0)
+
+                if (stationAName && stationName === stationAName) row[stationAName] += shortage
+                else if (stationBName && stationName === stationBName)
+                  row[stationBName] += shortage
+                else if (stationCName && stationName === stationCName)
+                  row[stationCName] += shortage
+              })
+
+              const chartRows = Array.from(spareMap.values())
+                .map((r) => ({
+                  ...r,
+                  __total:
+                    (stationAName ? r[stationAName] || 0 : 0) +
+                    (stationBName ? r[stationBName] || 0 : 0) +
+                    (stationCName ? r[stationCName] || 0 : 0),
+                }))
+                .sort((a, b) => b.__total - a.__total)
+                .slice(0, 6)
+                .map(({ __total, ...rest }) => rest)
+
+              setLowStockSparesAcrossStationsData(chartRows)
+            }
+          } else {
+            setLowStockSparesAcrossStationsData([])
           }
-        } else {
-          setLowStockSparesAcrossStationsData([])
-        }
 
-        setAttendanceEngineerData(engineerAttendanceRes)
-        setAttendanceTechnicianData(technicianAttendanceRes)
-        setAttendanceTeamLeaderData(teamLeaderAttendanceRes)
-        setAttendanceHelpdeskData(helpdeskAttendanceRes)
-      } catch (err) {
-        console.error("Failure rate API error:", err)
-      } finally {
-        setConsolidateChartsLoading(false)
-        setAttendanceChartsLoading(false)
-      }
-    })()
+          setAttendanceEngineerData(engineerAttendanceRes)
+          setAttendanceTechnicianData(technicianAttendanceRes)
+          setAttendanceTeamLeaderData(teamLeaderAttendanceRes)
+          setAttendanceHelpdeskData(helpdeskAttendanceRes)
+        } catch (err) {
+          console.error("Failure rate API error:", err)
+        } finally {
+          setConsolidateChartsLoading(false)
+          setAttendanceChartsLoading(false)
+        }
+      })()
   };
 
   const ecs = dashboardData?.ecs || {};
@@ -524,8 +534,8 @@ export default function Dashboard() {
 
   const scheduleTaskChartData = scheduleTaskChartFilter
     ? scheduleTaskView.chartData.filter(
-        (d) => d.label === scheduleTaskChartFilter,
-      )
+      (d) => d.label === scheduleTaskChartFilter,
+    )
     : scheduleTaskView.chartData;
 
   const handleScheduleTaskBarClick = (payload) => {
@@ -607,10 +617,10 @@ export default function Dashboard() {
       Array.isArray(selectedLocationIds) && selectedLocationIds.length > 0
         ? selectedLocationIds
         : Array.isArray(locationOptions)
-            ? locationOptions
-                .map((l) => l?.id)
-                .filter((id) => id !== undefined && id !== null)
-            : [];
+          ? locationOptions
+            .map((l) => l?.id)
+            .filter((id) => id !== undefined && id !== null)
+          : [];
 
     if (!clientId || locationIds.length === 0 || !statusId) {
       setCorrectiveTaskView({
@@ -683,10 +693,10 @@ export default function Dashboard() {
       Array.isArray(selectedLocationIds) && selectedLocationIds.length > 0
         ? selectedLocationIds
         : Array.isArray(locationOptions)
-            ? locationOptions
-                .map((l) => l?.id)
-                .filter((id) => id !== undefined && id !== null)
-            : [];
+          ? locationOptions
+            .map((l) => l?.id)
+            .filter((id) => id !== undefined && id !== null)
+          : [];
 
     if (!fromDate || !toDate || !frequencyId || locationIds.length === 0) {
       setScheduleTaskView({
@@ -726,10 +736,10 @@ export default function Dashboard() {
         chartData:
           total > 0
             ? [
-                { label: "Open", value: totals.open },
-                { label: "Completed", value: totals.completed },
-                { label: "Verified", value: totals.verified },
-              ]
+              { label: "Open", value: totals.open },
+              { label: "Completed", value: totals.completed },
+              { label: "Verified", value: totals.verified },
+            ]
             : [],
       });
       setScheduleTaskChartFilter(null);
@@ -763,10 +773,10 @@ export default function Dashboard() {
   const spareConsumptionTrendByStation = spareConsumptionTrendByStationData;
   const spareConsumptionStationKeys =
     spareConsumptionTrendByStationData?.[0] &&
-    typeof spareConsumptionTrendByStationData[0] === "object"
+      typeof spareConsumptionTrendByStationData[0] === "object"
       ? Object.keys(spareConsumptionTrendByStationData[0]).filter(
-          (k) => k !== "month"
-        )
+        (k) => k !== "month"
+      )
       : [];
 
   const spareConsumptionStationColors = [
@@ -783,12 +793,12 @@ export default function Dashboard() {
   const lowStockStationKeys = Array.isArray(lowStockSparesAcrossStations) &&
     lowStockSparesAcrossStations.length > 0
     ? Object.keys(lowStockSparesAcrossStations[0]).filter(
-        (k) =>
-          k !== "sparePart" &&
-          k !== "undefined" &&
-          k !== "null" &&
-          k?.trim?.() !== ""
-      )
+      (k) =>
+        k !== "sparePart" &&
+        k !== "undefined" &&
+        k !== "null" &&
+        k?.trim?.() !== ""
+    )
     : [];
 
   const lowStockStationColors = [
@@ -799,6 +809,22 @@ export default function Dashboard() {
     "#13c2c2",
     "#595959",
   ];
+
+  useEffect(() => {
+    if (
+      !scheduleTaskDate ||
+      !scheduleTaskFrequency ||
+      !frequencyOptions?.length ||
+      !correctiveTaskStatus ||
+      !statusOptions?.length
+    ) {
+      return;
+    }
+
+    handleScheduleTaskSubmit();
+    handleCorrectiveTaskSubmit();
+
+  }, [scheduleTaskDate, scheduleTaskFrequency, frequencyOptions, correctiveTaskStatus, statusOptions]);
 
   return (
     <>
@@ -832,1223 +858,1231 @@ export default function Dashboard() {
               onChange={(key) => {
                 setActiveTab(key);
                 handleSearch(filterForm.getFieldsValue(), key);
+                handleScheduleTaskSubmit();
+                handleCorrectiveTaskSubmit();
               }}
               items={tabItems}
               style={{ marginBottom: 16 }}
             />
 
             <Card style={{ marginBottom: 16 }}>
-                <CardContent>
-                  <Form
-                    form={filterForm}
-                    layout="inline"
-                    onFinish={handleSearch}
-                    initialValues={{
-                      fromDate: dayjs().startOf("month"),
-                      shiftId: undefined,
-                      locationIds: [],
-                    }}
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 12,
-                      alignItems: "flex-start",
-                    }}
+              <CardContent>
+                <Form
+                  form={filterForm}
+                  layout="inline"
+                  onFinish={handleSearch}
+                  initialValues={{
+                    fromDate: dayjs().startOf("month"),
+                    shiftId: -1,
+                    locationIds: [-1],
+                  }}
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 12,
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <Form.Item
+                    name="fromDate"
+                    label="From Date"
+                    style={{ marginBottom: 0 }}
+                    rules={[
+                      { required: true, message: "Please select From Date" },
+                    ]}
                   >
-                    <Form.Item
-                      name="fromDate"
-                      label="From Date"
-                      style={{ marginBottom: 0 }}
-                      rules={[
-                        { required: true, message: "Please select From Date" },
+                    <DatePicker style={{ width: 180 }} />
+                  </Form.Item>
+
+                  <Form.Item name="shiftId" label="Shift">
+                    <Select
+                      placeholder="Select Shift"
+                      allowClear
+                      style={{ width: 200 }}
+                      loading={shiftsLoading}
+                      options={[
+                        { label: "ALL", value: -1 },
+                        ...shiftOptions.map((s) => ({
+                          label: s.name,
+                          value: s.id,
+                        })),
                       ]}
-                    >
-                      <DatePicker style={{ width: 180 }} />
-                    </Form.Item>
+                    />
+                  </Form.Item>
 
-                    <Form.Item name="shiftId" label="Shift">
-                      <Select
-                        placeholder="Select Shift"
-                        allowClear
-                        style={{ width: 200 }}
-                        loading={shiftsLoading}
-                        options={[
-                          { label: "ALL", value: -1 },
-                          ...shiftOptions.map((s) => ({
-                            label: s.name,
-                            value: s.id,
-                          })),
-                        ]}
-                      />
-                    </Form.Item>
+                  <Form.Item name="locationIds" label="Location">
+                    <Select
+                      mode="multiple"
+                      placeholder="Select Location"
+                      allowClear
+                      optionFilterProp="label"
+                      maxTagCount="responsive"
+                      maxTagTextLength={18}
+                      loading={locationsLoading}
+                      style={{ width: 360 }}
+                      options={[
+                        { label: "ALL", value: -1 },
+                        ...locationOptions.map((l) => ({
+                          label: (l.name || "").trim(),
+                          value: l.id,
+                        })),
+                      ]}
+                    />
+                  </Form.Item>
 
-                    <Form.Item name="locationIds" label="Location">
-                      <Select
-                        mode="multiple"
-                        placeholder="Select Location"
-                        allowClear
-                        optionFilterProp="label"
-                        maxTagCount="responsive"
-                        maxTagTextLength={18}
-                        loading={locationsLoading}
-                        style={{ width: 360 }}
-                        options={[
-                          { label: "ALL", value: -1 },
-                          ...locationOptions.map((l) => ({
-                            label: (l.name || "").trim(),
-                            value: l.id,
-                          })),
-                        ]}
-                      />
-                    </Form.Item>
-
-                    <Form.Item style={{ marginBottom: 0 }}>
-                      <Button type="primary" htmlType="submit">
-                        Search
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                </CardContent>
-              </Card>
+                  <Form.Item style={{ marginBottom: 0 }}>
+                    <Button type="primary" htmlType="submit">
+                      Search
+                    </Button>
+                  </Form.Item>
+                </Form>
+              </CardContent>
+            </Card>
 
             <Box>
+              <Grid container spacing={2}>
                 {/* ECS Section */}
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom fontWeight="bold">
-                      ECS
-                    </Typography>
-                    <Grid container spacing={2} sx={{ mb: 2 }}>
-                      {ecsMetricBoxes.map((m) => (
-                        <Grid item xs={12} sm={6} md={3} key={m.label}>
-                          <Card
-                            sx={{
-                              borderRadius: 2,
-                              border: "1px solid #e5e7eb",
-                              boxShadow: "none",
-                              background: "#fafafa",
-                            }}
-                          >
-                            <CardContent sx={{ py: 2 }}>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                  textTransform: "uppercase",
-                                  letterSpacing: 0.6,
-                                }}
-                              >
-                                {m.label}
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                fontWeight="bold"
-                                sx={{ mt: 0.5 }}
-                              >
-                                {m.value}
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              FAILURE Rate by System
-                            </Typography>
-                            {consolidateChartsLoading ? (
-                              <Skeleton active style={{ height: 280 }} />
-                            ) : failureRateBySystem?.length ? (
-                              <RechartsResponsiveBox height={280}>
-                                <BarChart
-                                  data={failureRateBySystem}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 0,
-                                    bottom: 10,
-                                  }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    dataKey="system"
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <YAxis tick={{ fontSize: 12 }} />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="failureRate"
-                                    fill="#1677ff"
-                                    radius={[6, 6, 0, 0]}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty description="No data" />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              Top 10 Asset by Failure
-                            </Typography>
-                            {consolidateChartsLoading ? (
-                              <Skeleton active style={{ height: 280 }} />
-                            ) : top10AssetsByFailure?.length ? (
-                              <RechartsResponsiveBox height={280}>
-                                <BarChart
-                                  layout="vertical"
-                                  data={top10AssetsByFailure}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 10,
-                                    bottom: 10,
-                                  }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis type="number" tick={{ fontSize: 12 }} />
-                                  <YAxis
-                                    type="category"
-                                    dataKey="asset"
-                                    width={120}
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="failures"
-                                    fill="#52c41a"
-                                    radius={[0, 8, 8, 0]}
-                                    barSize={14}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty description="No data" />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-
-                {/* TVS Section */}
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom fontWeight="bold">
-                      TVS
-                    </Typography>
-
-                    <Grid container spacing={2} sx={{ mb: 2 }}>
-                      {tvsMetricBoxes.map((m) => (
-                        <Grid item xs={12} sm={6} md={3} key={m.label}>
-                          <Card
-                            sx={{
-                              borderRadius: 2,
-                              border: "1px solid #e5e7eb",
-                              boxShadow: "none",
-                              background: "#fafafa",
-                            }}
-                          >
-                            <CardContent sx={{ py: 2 }}>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                  textTransform: "uppercase",
-                                  letterSpacing: 0.6,
-                                }}
-                              >
-                                {m.label}
-                              </Typography>
-                              <Typography
-                                variant="h6"
-                                fontWeight="bold"
-                                sx={{ mt: 0.5 }}
-                              >
-                                {m.value}
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              FAILURE Rate by System
-                            </Typography>
-                            {consolidateChartsLoading ? (
-                              <Skeleton active style={{ height: 280 }} />
-                            ) : tvsFailureRateBySystem?.length ? (
-                              <RechartsResponsiveBox height={280}>
-                                <BarChart
-                                  data={tvsFailureRateBySystem}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 0,
-                                    bottom: 10,
-                                  }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    dataKey="system"
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <YAxis tick={{ fontSize: 12 }} />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="failureRate"
-                                    fill="#722ed1"
-                                    radius={[6, 6, 0, 0]}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty description="No data" />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              Top 10 Asset by Failure
-                            </Typography>
-                            {consolidateChartsLoading ? (
-                              <Skeleton active style={{ height: 280 }} />
-                            ) : tvsTop10AssetsByFailure?.length ? (
-                              <RechartsResponsiveBox height={280}>
-                                <BarChart
-                                  layout="vertical"
-                                  data={tvsTop10AssetsByFailure}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 10,
-                                    bottom: 10,
-                                  }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis type="number" tick={{ fontSize: 12 }} />
-                                  <YAxis
-                                    type="category"
-                                    dataKey="asset"
-                                    width={120}
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="failures"
-                                    fill="#fa8c16"
-                                    radius={[0, 8, 8, 0]}
-                                    barSize={14}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty description="No data" />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-                {/* ENGINEER Section */}
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      {engineerRoleBoxes.map((m) => (
-                        <Grid item xs={12} md={4} key={m.label}>
-                          <Card
-                            sx={{
-                              borderRadius: 3,
-                              border: `1px solid ${m.color}40`,
-                              boxShadow: "none",
-                              background: `linear-gradient(135deg, ${m.color}14 0%, rgba(255,255,255,0.85) 55%, ${m.color}10 100%)`,
-                              backdropFilter: "blur(8px)",
-                            }}
-                          >
-                            <CardContent
+                <Grid item xs={12} md={6}>
+                  <Card style={{ marginBottom: 16 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom fontWeight="bold">
+                        ECS
+                      </Typography>
+                      <Grid container spacing={2} sx={{ mb: 2 }}>
+                        {ecsMetricBoxes.map((m) => (
+                          <Grid item xs={12} sm={6} md={3} key={m.label}>
+                            <Card
                               sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1.5,
-                                py: 1.4,
+                                borderRadius: 2,
+                                border: "1px solid #e5e7eb",
+                                boxShadow: "none",
+                                background: "#fafafa",
                               }}
                             >
-                              <Box
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: "50%",
-                                  background: `${m.color}22`,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <UserOutlined
-                                  style={{ fontSize: 18, color: m.color }}
-                                />
-                              </Box>
-
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  minWidth: 0,
-                                }}
-                              >
+                              <CardContent sx={{ py: 2 }}>
                                 <Typography
-                                  variant="body2"
-                                  fontWeight={600}
-                                  sx={{ lineHeight: 1.2 }}
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{
+                                    textTransform: "uppercase",
+                                    letterSpacing: 0.6,
+                                  }}
                                 >
                                   {m.label}
                                 </Typography>
                                 <Typography
                                   variant="h6"
                                   fontWeight="bold"
-                                  sx={{
-                                    mt: 0.5,
-                                    lineHeight: 1.1,
-                                    color: m.color,
-                                  }}
+                                  sx={{ mt: 0.5 }}
                                 >
                                   {m.value}
                                 </Typography>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </CardContent>
-                </Card>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))}
+                      </Grid>
 
-                {/* Schedule Task Section */}
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        mb: 2,
-                      }}
-                    >
-                      <Typography variant="h6" fontWeight="bold" sx={{ m: 0 }}>
-                        Schedule Task
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 2 }}>
-                      <Form
-                        layout="inline"
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 12,
-                          alignItems: "end",
-                        }}
-                      >
-                        <Form.Item
-                          label="Frequency"
-                          style={{ marginBottom: 0 }}
-                        >
-                          <Select
-                            value={scheduleTaskFrequency}
-                            onChange={setScheduleTaskFrequency}
-                            loading={frequenciesLoading}
-                            options={(frequencyOptions?.length
-                              ? frequencyOptions
-                              : [{ name: scheduleTaskFrequency }]
-                            ).map((f) => ({
-                              label: f.name,
-                              value: f.name,
-                            }))}
-                            style={{ width: 170 }}
-                          />
-                        </Form.Item>
-
-                        <Form.Item label="Date" style={{ marginBottom: 0 }}>
-                          <DatePicker
-                            value={scheduleTaskDate}
-                            onChange={(val) => setScheduleTaskDate(val)}
-                            style={{ width: 170 }}
-                          />
-                        </Form.Item>
-
-                        <Form.Item style={{ marginBottom: 0 }}>
-                          <Button
-                            type="primary"
-                            onClick={handleScheduleTaskSubmit}
-                          >
-                            Submit
-                          </Button>
-                        </Form.Item>
-
-                        <Form.Item style={{ marginBottom: 0 }}>
-                          <Button onClick={handleScheduleTaskExportPdf}>
-                            Export PDF
-                          </Button>
-                        </Form.Item>
-                      </Form>
-                    </Box>
-
-                    <Grid container spacing={1.5} sx={{ mb: 2 }}>
-                      {scheduleTaskMetricBoxes.map((m) => (
-                        <Grid item xs={12} sm={6} md={3} key={m.label}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={24} md={12}>
                           <Card
                             sx={{
                               borderRadius: 2,
-                              border: `1px solid ${m.color}26`,
-                              background: `${m.color}0f`,
+                              border: "1px solid #eef2f7",
                               boxShadow: "none",
                             }}
                           >
-                            <CardContent sx={{ py: 1.2, px: 1.6 }}>
+                            <CardContent>
                               <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {m.label}
-                              </Typography>
-                              <Typography
-                                variant="h6"
+                                variant="subtitle1"
+                                gutterBottom
                                 fontWeight="bold"
-                                sx={{ color: m.color, lineHeight: 1.2 }}
                               >
-                                {m.value}
+                                Failure Rate by System
                               </Typography>
+                              {consolidateChartsLoading ? (
+                                <Skeleton active style={{ height: 280 }} />
+                              ) : failureRateBySystem?.length ? (
+                                <RechartsResponsiveBox height={280}>
+                                  <BarChart
+                                    data={failureRateBySystem}
+                                    margin={{
+                                      top: 10,
+                                      right: 20,
+                                      left: 0,
+                                      bottom: 10,
+                                    }}
+                                  >
+                                    <CartesianGrid
+                                      strokeDasharray="3 3"
+                                      stroke="#f0f0f0"
+                                    />
+                                    <XAxis
+                                      dataKey="system"
+                                      tick={{ fontSize: 12 }}
+                                    />
+                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <Tooltip />
+                                    <Bar
+                                      dataKey="failureRate"
+                                      fill="#1677ff"
+                                      radius={[6, 6, 0, 0]}
+                                    />
+                                  </BarChart>
+                                </RechartsResponsiveBox>
+                              ) : (
+                                <Empty description="No data" />
+                              )}
                             </CardContent>
                           </Card>
                         </Grid>
-                      ))}
-                    </Grid>
 
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: "1px solid #eef2f7",
-                        boxShadow: "none",
-                      }}
-                    >
-                      <CardContent>
-                        {scheduleTaskPmCountLoading ? (
-                          <Skeleton active style={{ height: 320 }} />
-                        ) : scheduleTaskChartData?.length ? (
-                          <RechartsResponsiveBox height={320}>
-                            <BarChart
-                              data={scheduleTaskChartData}
-                              margin={{
-                                top: 10,
-                                right: 20,
-                                left: 0,
-                                bottom: 10,
-                              }}
-                            >
-                              <CartesianGrid
-                                strokeDasharray="3 3"
-                                stroke="#f0f0f0"
-                              />
-                              <XAxis
-                                dataKey="label"
-                                tick={ScheduleTaskXAxisTick}
-                              />
-                              <YAxis tick={{ fontSize: 12 }} />
-                              <Tooltip />
-                              <Bar
-                                dataKey="value"
-                                fill="#1677ff"
-                                radius={[6, 6, 0, 0]}
-                                style={{ cursor: "pointer" }}
-                                onClick={(data) =>
-                                  handleScheduleTaskBarClick(data?.payload)
-                                }
-                              />
-                            </BarChart>
-                          </RechartsResponsiveBox>
-                        ) : (
-                          <Empty />
-                        )}
-                      </CardContent>
-                    </Card>
-                  </CardContent>
-                </Card>
-
-                {/* Corrective Task - Upto Date */}
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        mb: 2,
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <Typography variant="h6" fontWeight="bold" sx={{ m: 0 }}>
-                        Corrective Task - Status
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ mb: 2 }}>
-                      <Form
-                        layout="inline"
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 12,
-                          alignItems: "end",
-                        }}
-                      >
-                        <Form.Item
-                          label="Status"
-                          style={{ marginBottom: 0 }}
-                        >
-                          <Select
-                            value={correctiveTaskStatus}
-                            onChange={setCorrectiveTaskStatus}
-                            loading={statusesLoading}
-                            style={{ width: 200 }}
-                            options={
-                              correctiveStatusSelectOptions?.length
-                                ? correctiveStatusSelectOptions
-                                : [
-                                    { label: "OPEN", value: "OPEN" },
-                                    { label: "COMPLETED", value: "COMPLETED" },
-                                    { label: "VERIFIED", value: "VERIFIED" },
-                                  ]
-                            }
-                          />
-                        </Form.Item>
-
-                        <Form.Item style={{ marginBottom: 0 }}>
-                          <Button
-                            type="primary"
-                            onClick={handleCorrectiveTaskSubmit}
-                          >
-                            Submit
-                          </Button>
-                        </Form.Item>
-                      </Form>
-                    </Box>
-
-                    <Grid container spacing={1.5} sx={{ mb: 2 }}>
-                      {correctiveTaskMetricBoxes.map((m) => (
-                        <Grid item xs={12} sm={6} md={3} key={m.label}>
+                        <Grid item xs={24} md={12}>
                           <Card
                             sx={{
                               borderRadius: 2,
-                              border: `1px solid ${m.color}26`,
-                              background: `${m.color}0f`,
+                              border: "1px solid #eef2f7",
                               boxShadow: "none",
                             }}
                           >
-                            <CardContent sx={{ py: 1.2, px: 1.6 }}>
+                            <CardContent>
                               <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {m.label}
-                              </Typography>
-                              <Typography
-                                variant="h6"
+                                variant="subtitle1"
+                                gutterBottom
                                 fontWeight="bold"
-                                sx={{ color: m.color, lineHeight: 1.2 }}
                               >
-                                {m.value}
+                                Top 10 Asset by Failure Count
                               </Typography>
+                              {consolidateChartsLoading ? (
+                                <Skeleton active style={{ height: 280 }} />
+                              ) : top10AssetsByFailure?.length ? (
+                                <RechartsResponsiveBox height={280}>
+                                  <BarChart
+                                    layout="vertical"
+                                    data={top10AssetsByFailure}
+                                    margin={{
+                                      top: 10,
+                                      right: 20,
+                                      left: 10,
+                                      bottom: 10,
+                                    }}
+                                  >
+                                    <CartesianGrid
+                                      strokeDasharray="3 3"
+                                      stroke="#f0f0f0"
+                                    />
+                                    <XAxis type="number" tick={{ fontSize: 12 }} />
+                                    <YAxis
+                                      type="category"
+                                      dataKey="asset"
+                                      width={120}
+                                      tick={{ fontSize: 12 }}
+                                    />
+                                    <Tooltip />
+                                    <Bar
+                                      dataKey="failures"
+                                      fill="#52c41a"
+                                      radius={[0, 8, 8, 0]}
+                                      barSize={14}
+                                    />
+                                  </BarChart>
+                                </RechartsResponsiveBox>
+                              ) : (
+                                <Empty description="No data" />
+                              )}
                             </CardContent>
                           </Card>
                         </Grid>
-                      ))}
-                    </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
 
-                    <Card
-                      sx={{
-                        borderRadius: 2,
-                        border: "1px solid #eef2f7",
-                        boxShadow: "none",
-                      }}
-                    >
-                      <CardContent>
-                        {correctiveCmGraphCountLoading ? (
-                          <Skeleton active style={{ height: 320 }} />
-                        ) : correctiveTaskChartData?.length ? (
-                          <RechartsResponsiveBox height={320}>
-                            <BarChart
-                              data={correctiveTaskChartData}
-                              margin={{
-                                top: 10,
-                                right: 20,
-                                left: 0,
-                                bottom: 10,
+                {/* TVS Section */}
+                <Grid item xs={12} md={6}>
+                  <Card style={{ marginBottom: 16 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom fontWeight="bold">
+                        TVS
+                      </Typography>
+
+                      <Grid container spacing={2} sx={{ mb: 2 }}>
+                        {tvsMetricBoxes.map((m) => (
+                          <Grid item xs={12} sm={6} md={3} key={m.label}>
+                            <Card
+                              sx={{
+                                borderRadius: 2,
+                                border: "1px solid #e5e7eb",
+                                boxShadow: "none",
+                                background: "#fafafa",
                               }}
                             >
-                              <CartesianGrid
-                                strokeDasharray="3 3"
-                                stroke="#f0f0f0"
-                              />
-                              <XAxis
-                                dataKey="label"
-                                tick={{ fontSize: 12 }}
-                              />
-                              <YAxis tick={{ fontSize: 12 }} />
-                              <Tooltip />
-                              <Bar
-                                dataKey="open"
-                                stackId="a"
-                                fill="#fa8c16"
-                                radius={[6, 6, 0, 0]}
-                              />
-                              <Bar
-                                dataKey="completed"
-                                stackId="a"
-                                fill="#52c41a"
-                              />
-                              <Bar
-                                dataKey="verified"
-                                stackId="a"
-                                fill="#13c2c2"
-                              />
-                            </BarChart>
-                          </RechartsResponsiveBox>
-                        ) : (
-                          <Empty />
-                        )}
-                      </CardContent>
-                    </Card>
-                  </CardContent>
-                </Card>
-
-                {/* Spares Usage & Trend */}
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              Top 10 Most Used Spares
-                            </Typography>
-                            {consolidateChartsLoading ? (
-                              <Skeleton active style={{ height: 340 }} />
-                            ) : top10MostUsedSpares?.length ? (
-                              <RechartsResponsiveBox height={340}>
-                                <BarChart
-                                  layout="vertical"
-                                  data={top10MostUsedSpares}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 10,
-                                    bottom: 10,
+                              <CardContent sx={{ py: 2 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{
+                                    textTransform: "uppercase",
+                                    letterSpacing: 0.6,
                                   }}
                                 >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    type="number"
-                                    domain={[0, 60]}
-                                    ticks={[0, 20, 40, 60]}
-                                    tick={{ fontSize: 12 }}
-                                    label={{
-                                      value: "Number of time used",
-                                      position: "insideBottom",
-                                      offset: -6,
-                                    }}
-                                  />
-                                  <YAxis
-                                    type="category"
-                                    dataKey="sparePart"
-                                    width={140}
-                                    tick={{ fontSize: 12 }}
-                                    label={{
-                                      value: "Spare part",
-                                      angle: -90,
-                                      position: "insideLeft",
-                                    }}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="timesUsed"
-                                    fill="#1677ff"
-                                    radius={[0, 8, 8, 0]}
-                                    barSize={14}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty description="No data" />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              Spare Consumption Trend by Station
-                            </Typography>
-                            {consolidateChartsLoading ? (
-                              <Skeleton active style={{ height: 340 }} />
-                            ) : spareConsumptionTrendByStation?.length ? (
-                              <RechartsResponsiveBox height={340}>
-                                <LineChart
-                                  data={spareConsumptionTrendByStation}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 0,
-                                    bottom: 10,
-                                  }}
+                                  {m.label}
+                                </Typography>
+                                <Typography
+                                  variant="h6"
+                                  fontWeight="bold"
+                                  sx={{ mt: 0.5 }}
                                 >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    dataKey="month"
-                                    tick={{ fontSize: 12 }}
-                                    label={{
-                                      value: "Month",
-                                      position: "insideBottom",
-                                      offset: -6,
-                                    }}
-                                  />
-                                  <YAxis
-                                    tick={{ fontSize: 12 }}
-                                    ticks={[0, 8, 16, 24, 32]}
-                                    label={{
-                                      value: "Units consumed",
-                                      angle: -90,
-                                      position: "insideLeft",
-                                    }}
-                                  />
-                                  <Tooltip />
-                                  {spareConsumptionStationKeys.map(
-                                    (stationKey, idx) => (
-                                      <Line
-                                        key={stationKey}
-                                        type="monotone"
-                                        dataKey={stationKey}
-                                        name={stationKey}
-                                        stroke={
-                                          spareConsumptionStationColors[
-                                            idx %
-                                              spareConsumptionStationColors
-                                                .length
-                                          ]
-                                        }
-                                        strokeWidth={2}
-                                        dot={{ r: 2 }}
-                                        activeDot={{ r: 4 }}
-                                      />
-                                    )
-                                  )}
-                                </LineChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty description="No data" />
-                            )}
-                          </CardContent>
-                        </Card>
+                                  {m.value}
+                                </Typography>
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        ))}
                       </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
 
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Typography
-                      variant="subtitle1"
-                      gutterBottom
-                      fontWeight="bold"
-                    >
-                      Low in Stock Spares Across Stations
+                      <Grid container spacing={2}>
+                        <Grid item xs={24} md={12}>
+                          <Card
+                            sx={{
+                              borderRadius: 2,
+                              border: "1px solid #eef2f7",
+                              boxShadow: "none",
+                            }}
+                          >
+                            <CardContent>
+                              <Typography
+                                variant="subtitle1"
+                                gutterBottom
+                                fontWeight="bold"
+                              >
+                                Failure Rate by System
+                              </Typography>
+                              {consolidateChartsLoading ? (
+                                <Skeleton active style={{ height: 280 }} />
+                              ) : tvsFailureRateBySystem?.length ? (
+                                <RechartsResponsiveBox height={280}>
+                                  <BarChart
+                                    data={tvsFailureRateBySystem}
+                                    margin={{
+                                      top: 10,
+                                      right: 20,
+                                      left: 0,
+                                      bottom: 10,
+                                    }}
+                                  >
+                                    <CartesianGrid
+                                      strokeDasharray="3 3"
+                                      stroke="#f0f0f0"
+                                    />
+                                    <XAxis
+                                      dataKey="system"
+                                      tick={{ fontSize: 12 }}
+                                    />
+                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <Tooltip />
+                                    <Bar
+                                      dataKey="failureRate"
+                                      fill="#722ed1"
+                                      radius={[6, 6, 0, 0]}
+                                    />
+                                  </BarChart>
+                                </RechartsResponsiveBox>
+                              ) : (
+                                <Empty description="No data" />
+                              )}
+                            </CardContent>
+                          </Card>
+                        </Grid>
+
+                        <Grid item xs={24} md={12}>
+                          <Card
+                            sx={{
+                              borderRadius: 2,
+                              border: "1px solid #eef2f7",
+                              boxShadow: "none",
+                            }}
+                          >
+                            <CardContent>
+                              <Typography
+                                variant="subtitle1"
+                                gutterBottom
+                                fontWeight="bold"
+                              >
+                                Top 10 Asset by Failure Count
+                              </Typography>
+                              {consolidateChartsLoading ? (
+                                <Skeleton active style={{ height: 280 }} />
+                              ) : tvsTop10AssetsByFailure?.length ? (
+                                <RechartsResponsiveBox height={280}>
+                                  <BarChart
+                                    layout="vertical"
+                                    data={tvsTop10AssetsByFailure}
+                                    margin={{
+                                      top: 10,
+                                      right: 20,
+                                      left: 10,
+                                      bottom: 10,
+                                    }}
+                                  >
+                                    <CartesianGrid
+                                      strokeDasharray="3 3"
+                                      stroke="#f0f0f0"
+                                    />
+                                    <XAxis type="number" tick={{ fontSize: 12 }} />
+                                    <YAxis
+                                      type="category"
+                                      dataKey="asset"
+                                      width={120}
+                                      tick={{ fontSize: 12 }}
+                                    />
+                                    <Tooltip />
+                                    <Bar
+                                      dataKey="failures"
+                                      fill="#fa8c16"
+                                      radius={[0, 8, 8, 0]}
+                                      barSize={14}
+                                    />
+                                  </BarChart>
+                                </RechartsResponsiveBox>
+                              ) : (
+                                <Empty description="No data" />
+                              )}
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              {/* Schedule Task Section */}
+              <Card style={{ marginBottom: 16 }}>
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      mb: 2,
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="bold" sx={{ m: 0 }}>
+                      Schedule Task
                     </Typography>
-                    {consolidateChartsLoading ? (
-                      <Skeleton active style={{ height: 340 }} />
-                    ) : lowStockSparesAcrossStations?.length ? (
-                      <RechartsResponsiveBox height={340}>
-                        <BarChart
-                          data={lowStockSparesAcrossStations}
-                          margin={{ top: 10, right: 20, left: 10, bottom: 20 }}
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Form
+                      layout="inline"
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 12,
+                        alignItems: "end",
+                      }}
+                    >
+                      <Form.Item
+                        label="Frequency"
+                        style={{ marginBottom: 0 }}
+                      >
+                        <Select
+                          value={scheduleTaskFrequency}
+                          onChange={setScheduleTaskFrequency}
+                          loading={frequenciesLoading}
+                          options={(frequencyOptions?.length
+                            ? frequencyOptions
+                            : [{ name: scheduleTaskFrequency }]
+                          ).map((f) => ({
+                            label: f.name,
+                            value: f.name,
+                          }))}
+                          style={{ width: 170 }}
+                        />
+                      </Form.Item>
+
+                      <Form.Item label="Date" style={{ marginBottom: 0 }}>
+                        <DatePicker
+                          value={scheduleTaskDate}
+                          onChange={(val) => setScheduleTaskDate(val)}
+                          style={{ width: 170 }}
+                        />
+                      </Form.Item>
+
+                      <Form.Item style={{ marginBottom: 0 }}>
+                        <Button
+                          type="primary"
+                          onClick={handleScheduleTaskSubmit}
                         >
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis
-                            dataKey="sparePart"
-                            tick={{ fontSize: 12 }}
-                            label={{
-                              value: "Spare part",
-                              position: "insideBottom",
-                              offset: -10,
+                          Submit
+                        </Button>
+                      </Form.Item>
+
+                      <Form.Item style={{ marginBottom: 0 }}>
+                        <Button onClick={handleScheduleTaskExportPdf}>
+                          Export PDF
+                        </Button>
+                      </Form.Item>
+                    </Form>
+                  </Box>
+
+                  <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                    {scheduleTaskMetricBoxes.map((m) => (
+                      <Grid item xs={12} sm={6} md={3} key={m.label}>
+                        <Card
+                          sx={{
+                            borderRadius: 2,
+                            border: `1px solid ${m.color}26`,
+                            background: `${m.color}0f`,
+                            boxShadow: "none",
+                          }}
+                        >
+                          <CardContent sx={{ py: 1.2, px: 1.6 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {m.label}
+                            </Typography>
+                            <Typography
+                              variant="h6"
+                              fontWeight="bold"
+                              sx={{ color: m.color, lineHeight: 1.2 }}
+                            >
+                              {m.value}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+
+                  <Card
+                    sx={{
+                      borderRadius: 2,
+                      border: "1px solid #eef2f7",
+                      boxShadow: "none",
+                    }}
+                  >
+                    <CardContent>
+                      {scheduleTaskPmCountLoading ? (
+                        <Skeleton active style={{ height: 320 }} />
+                      ) : scheduleTaskChartData?.length ? (
+                        <RechartsResponsiveBox height={320}>
+                          <BarChart
+                            data={scheduleTaskChartData}
+                            margin={{
+                              top: 10,
+                              right: 20,
+                              left: 0,
+                              bottom: 10,
                             }}
-                          />
-                          <YAxis
-                            tick={{ fontSize: 12 }}
-                            ticks={[0, 3, 6, 9, 12]}
-                            label={{
-                              value: "Quantity(units)",
-                              angle: -90,
-                              position: "insideLeft",
-                            }}
-                          />
-                          <Tooltip />
-                          {lowStockStationKeys.map((stationKey, idx) => (
-                            <Bar
-                              key={stationKey}
-                              dataKey={stationKey}
-                              name={stationKey}
-                              fill={
-                                lowStockStationColors[
-                                  idx % lowStockStationColors.length
-                                ]
-                              }
-                              radius={[10, 10, 0, 0]}
-                              barSize={12}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="#f0f0f0"
                             />
-                          ))}
-                        </BarChart>
-                      </RechartsResponsiveBox>
-                    ) : (
-                      <Empty description="No data" />
-                    )}
-                  </CardContent>
-                </Card>
+                            <XAxis
+                              dataKey="label"
+                              tick={ScheduleTaskXAxisTick}
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar
+                              dataKey="value"
+                              fill="#1677ff"
+                              radius={[6, 6, 0, 0]}
+                              style={{ cursor: "pointer" }}
+                              onClick={(data) =>
+                                handleScheduleTaskBarClick(data?.payload)
+                              }
+                            />
+                          </BarChart>
+                        </RechartsResponsiveBox>
+                      ) : (
+                        <Empty />
+                      )}
+                    </CardContent>
+                  </Card>
+                </CardContent>
+              </Card>
 
-                {/* Attendance charts */}
-                <Card style={{ marginBottom: 16 }}>
-                  <CardContent>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
+              {/* Corrective Task - Upto Date */}
+              <Card style={{ marginBottom: 16 }}>
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      mb: 2,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight="bold" sx={{ m: 0 }}>
+                      Corrective Task
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ mb: 2 }}>
+                    <Form
+                      layout="inline"
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 12,
+                        alignItems: "end",
+                      }}
+                    >
+                      <Form.Item
+                        label="Status"
+                        style={{ marginBottom: 0 }}
+                      >
+                        <Select
+                          value={correctiveTaskStatus}
+                          onChange={setCorrectiveTaskStatus}
+                          loading={statusesLoading}
+                          style={{ width: 200 }}
+                          options={
+                            correctiveStatusSelectOptions?.length
+                              ? correctiveStatusSelectOptions
+                              : [
+                                { label: "OPEN", value: "OPEN" },
+                                { label: "COMPLETED", value: "COMPLETED" },
+                                { label: "VERIFIED", value: "VERIFIED" },
+                              ]
+                          }
+                        />
+                      </Form.Item>
+
+                      <Form.Item style={{ marginBottom: 0 }}>
+                        <Button
+                          type="primary"
+                          onClick={handleCorrectiveTaskSubmit}
+                        >
+                          Submit
+                        </Button>
+                      </Form.Item>
+                    </Form>
+                  </Box>
+
+                  <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                    {correctiveTaskMetricBoxes.map((m) => (
+                      <Grid item xs={12} sm={6} md={3} key={m.label}>
                         <Card
                           sx={{
                             borderRadius: 2,
-                            border: "1px solid #eef2f7",
+                            border: `1px solid ${m.color}26`,
+                            background: `${m.color}0f`,
                             boxShadow: "none",
                           }}
                         >
-                          <CardContent>
+                          <CardContent sx={{ py: 1.2, px: 1.6 }}>
                             <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
+                              variant="caption"
+                              color="text.secondary"
                             >
-                              Attendance / ENGINEER
+                              {m.label}
                             </Typography>
-                            {attendanceChartsLoading ? (
-                              <Skeleton active style={{ height: 260 }} />
-                            ) : attendanceEngineerData?.length ? (
-                              <RechartsResponsiveBox height={260}>
-                                <BarChart
-                                  data={attendanceEngineerData}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 0,
-                                    bottom: 10,
-                                  }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    dataKey="label"
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <YAxis
-                                    tick={{ fontSize: 12 }}
-                                    domain={[0, 2]}
-                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="value"
-                                    fill="#1677ff"
-                                    radius={[10, 10, 0, 0]}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty />
-                            )}
+                            <Typography
+                              variant="h6"
+                              fontWeight="bold"
+                              sx={{ color: m.color, lineHeight: 1.2 }}
+                            >
+                              {m.value}
+                            </Typography>
                           </CardContent>
                         </Card>
                       </Grid>
+                    ))}
+                  </Grid>
 
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              Attendance / TECHNICIAN
-                            </Typography>
-                            {attendanceChartsLoading ? (
-                              <Skeleton active style={{ height: 260 }} />
-                            ) : attendanceTechnicianData?.length ? (
-                              <RechartsResponsiveBox height={260}>
-                                <BarChart
-                                  data={attendanceTechnicianData}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 0,
-                                    bottom: 10,
-                                  }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    dataKey="label"
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <YAxis
-                                    tick={{ fontSize: 12 }}
-                                    domain={[0, 2]}
-                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="value"
-                                    fill="#52c41a"
-                                    radius={[10, 10, 0, 0]}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
+                  <Card
+                    sx={{
+                      borderRadius: 2,
+                      border: "1px solid #eef2f7",
+                      boxShadow: "none",
+                    }}
+                  >
+                    <CardContent>
+                      {correctiveCmGraphCountLoading ? (
+                        <Skeleton active style={{ height: 320 }} />
+                      ) : correctiveTaskChartData?.length ? (
+                        <RechartsResponsiveBox height={320}>
+                          <BarChart
+                            data={correctiveTaskChartData}
+                            margin={{
+                              top: 10,
+                              right: 20,
+                              left: 0,
+                              bottom: 10,
+                            }}
+                          >
+                            <CartesianGrid
+                              strokeDasharray="3 3"
+                              stroke="#f0f0f0"
+                            />
+                            <XAxis
+                              dataKey="label"
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis tick={{ fontSize: 12 }} />
+                            <Tooltip />
+                            <Bar
+                              dataKey="open"
+                              stackId="a"
+                              fill="#fa8c16"
+                              radius={[6, 6, 0, 0]}
+                            />
+                            <Bar
+                              dataKey="completed"
+                              stackId="a"
+                              fill="#52c41a"
+                            />
+                            <Bar
+                              dataKey="verified"
+                              stackId="a"
+                              fill="#13c2c2"
+                            />
+                          </BarChart>
+                        </RechartsResponsiveBox>
+                      ) : (
+                        <Empty />
+                      )}
+                    </CardContent>
+                  </Card>
+                </CardContent>
+              </Card>
 
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              Attendance / Team Leader
-                            </Typography>
-                            {attendanceChartsLoading ? (
-                              <Skeleton active style={{ height: 260 }} />
-                            ) : attendanceTeamLeaderData?.length ? (
-                              <RechartsResponsiveBox height={260}>
-                                <BarChart
-                                  data={attendanceTeamLeaderData}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 0,
-                                    bottom: 10,
+              {/* Spares Usage & Trend */}
+              <Card style={{ marginBottom: 16 }}>
+                <CardContent>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          border: "1px solid #eef2f7",
+                          boxShadow: "none",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="subtitle1"
+                            gutterBottom
+                            fontWeight="bold"
+                          >
+                            Top 10 Most Used Spares
+                          </Typography>
+                          {consolidateChartsLoading ? (
+                            <Skeleton active style={{ height: 340 }} />
+                          ) : top10MostUsedSpares?.length ? (
+                            <RechartsResponsiveBox height={340}>
+                              <BarChart
+                                layout="vertical"
+                                data={top10MostUsedSpares}
+                                margin={{
+                                  top: 10,
+                                  right: 20,
+                                  left: 10,
+                                  bottom: 10,
+                                }}
+                              >
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  stroke="#f0f0f0"
+                                />
+                                <XAxis
+                                  type="number"
+                                  domain={[0, 60]}
+                                  ticks={[0, 20, 40, 60]}
+                                  tick={{ fontSize: 12 }}
+                                  label={{
+                                    value: "Number of time used",
+                                    position: "insideBottom",
+                                    offset: -6,
                                   }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    dataKey="label"
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <YAxis
-                                    tick={{ fontSize: 12 }}
-                                    domain={[0, 2]}
-                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="value"
-                                    fill="#722ed1"
-                                    radius={[10, 10, 0, 0]}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
-
-                      <Grid item xs={12} md={6}>
-                        <Card
-                          sx={{
-                            borderRadius: 2,
-                            border: "1px solid #eef2f7",
-                            boxShadow: "none",
-                          }}
-                        >
-                          <CardContent>
-                            <Typography
-                              variant="subtitle1"
-                              gutterBottom
-                              fontWeight="bold"
-                            >
-                              Attendance / Helpdesk
-                            </Typography>
-                            {attendanceChartsLoading ? (
-                              <Skeleton active style={{ height: 260 }} />
-                            ) : attendanceHelpdeskData?.length ? (
-                              <RechartsResponsiveBox height={260}>
-                                <BarChart
-                                  data={attendanceHelpdeskData}
-                                  margin={{
-                                    top: 10,
-                                    right: 20,
-                                    left: 0,
-                                    bottom: 10,
+                                />
+                                <YAxis
+                                  type="category"
+                                  dataKey="sparePart"
+                                  width={140}
+                                  tick={{ fontSize: 12 }}
+                                  label={{
+                                    value: "Spare part",
+                                    angle: -90,
+                                    position: "insideLeft",
                                   }}
-                                >
-                                  <CartesianGrid
-                                    strokeDasharray="3 3"
-                                    stroke="#f0f0f0"
-                                  />
-                                  <XAxis
-                                    dataKey="label"
-                                    tick={{ fontSize: 12 }}
-                                  />
-                                  <YAxis
-                                    tick={{ fontSize: 12 }}
-                                    domain={[0, 2]}
-                                    ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
-                                  />
-                                  <Tooltip />
-                                  <Bar
-                                    dataKey="value"
-                                    fill="#13c2c2"
-                                    radius={[10, 10, 0, 0]}
-                                  />
-                                </BarChart>
-                              </RechartsResponsiveBox>
-                            ) : (
-                              <Empty />
-                            )}
-                          </CardContent>
-                        </Card>
-                      </Grid>
+                                />
+                                <Tooltip />
+                                <Bar
+                                  dataKey="timesUsed"
+                                  fill="#1677ff"
+                                  radius={[0, 8, 8, 0]}
+                                  barSize={14}
+                                />
+                              </BarChart>
+                            </RechartsResponsiveBox>
+                          ) : (
+                            <Empty description="No data" />
+                          )}
+                        </CardContent>
+                      </Card>
                     </Grid>
-                  </CardContent>
-                </Card>
+
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          border: "1px solid #eef2f7",
+                          boxShadow: "none",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="subtitle1"
+                            gutterBottom
+                            fontWeight="bold"
+                          >
+                            Spare Consumption Trend by Station
+                          </Typography>
+                          {consolidateChartsLoading ? (
+                            <Skeleton active style={{ height: 340 }} />
+                          ) : spareConsumptionTrendByStation?.length ? (
+                            <RechartsResponsiveBox height={340}>
+                              <LineChart
+                                data={spareConsumptionTrendByStation}
+                                margin={{
+                                  top: 10,
+                                  right: 20,
+                                  left: 0,
+                                  bottom: 10,
+                                }}
+                              >
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  stroke="#f0f0f0"
+                                />
+                                <XAxis
+                                  dataKey="month"
+                                  tick={{ fontSize: 12 }}
+                                  label={{
+                                    value: "Month",
+                                    position: "insideBottom",
+                                    offset: -6,
+                                  }}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 12 }}
+                                  ticks={[0, 8, 16, 24, 32]}
+                                  label={{
+                                    value: "Units consumed",
+                                    angle: -90,
+                                    position: "insideLeft",
+                                  }}
+                                />
+                                <Tooltip />
+                                {spareConsumptionStationKeys.map(
+                                  (stationKey, idx) => (
+                                    <Line
+                                      key={stationKey}
+                                      type="monotone"
+                                      dataKey={stationKey}
+                                      name={stationKey}
+                                      stroke={
+                                        spareConsumptionStationColors[
+                                        idx %
+                                        spareConsumptionStationColors
+                                          .length
+                                        ]
+                                      }
+                                      strokeWidth={2}
+                                      dot={{ r: 2 }}
+                                      activeDot={{ r: 4 }}
+                                    />
+                                  )
+                                )}
+                              </LineChart>
+                            </RechartsResponsiveBox>
+                          ) : (
+                            <Empty description="No data" />
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              <Card style={{ marginBottom: 16 }}>
+                <CardContent>
+                  <Typography
+                    variant="subtitle1"
+                    gutterBottom
+                    fontWeight="bold"
+                  >
+                    Low in Stock Spares Across Stations
+                  </Typography>
+                  {consolidateChartsLoading ? (
+                    <Skeleton active style={{ height: 340 }} />
+                  ) : lowStockSparesAcrossStations?.length ? (
+                    <RechartsResponsiveBox height={340}>
+                      <BarChart
+                        layout="vertical"
+                        data={lowStockSparesAcrossStations}
+                        margin={{ top: 10, right: 20, left: 40, bottom: 20 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis
+                          type="number"
+                          allowDecimals={false}
+                          tick={{ fontSize: 12 }}
+                          label={{
+                            value: "Quantity (units)",
+                            position: "insideBottom",
+                            offset: -10,
+                          }}
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="sparePart"
+                          tick={{ fontSize: 12 }}
+                          width={150}   // 👈 increase if names are long
+                        />
+                        <Tooltip />
+                        {lowStockStationKeys.map((stationKey, idx) => (
+                          <Bar
+                            key={stationKey}
+                            dataKey={stationKey}
+                            name={stationKey}
+                            fill={
+                              lowStockStationColors[
+                              idx % lowStockStationColors.length
+                              ]
+                            }
+                            radius={[0, 10, 10, 0]}
+                            barSize={12}
+                          />
+                        ))}
+                      </BarChart>
+                    </RechartsResponsiveBox>
+                  ) : (
+                    <Empty description="No data" />
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Attendance charts */}
+              <Card style={{ marginBottom: 16 }}>
+                <CardContent>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          border: "1px solid #eef2f7",
+                          boxShadow: "none",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="subtitle1"
+                            gutterBottom
+                            fontWeight="bold"
+                          >
+                            Attendance / ENGINEER
+                          </Typography>
+                          {attendanceChartsLoading ? (
+                            <Skeleton active style={{ height: 260 }} />
+                          ) : attendanceEngineerData?.length ? (
+                            <RechartsResponsiveBox height={260}>
+                              <BarChart
+                                data={attendanceEngineerData}
+                                margin={{
+                                  top: 10,
+                                  right: 20,
+                                  left: 0,
+                                  bottom: 10,
+                                }}
+                              >
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  stroke="#f0f0f0"
+                                />
+                                <XAxis
+                                  dataKey="label"
+                                  tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 12 }}
+                                  domain={[0, 2]}
+                                  ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                />
+                                <Tooltip />
+                                <Bar
+                                  dataKey="value"
+                                  fill="#1677ff"
+                                  radius={[10, 10, 0, 0]}
+                                />
+                              </BarChart>
+                            </RechartsResponsiveBox>
+                          ) : (
+                            <Empty />
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          border: "1px solid #eef2f7",
+                          boxShadow: "none",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="subtitle1"
+                            gutterBottom
+                            fontWeight="bold"
+                          >
+                            Attendance / TECHNICIAN
+                          </Typography>
+                          {attendanceChartsLoading ? (
+                            <Skeleton active style={{ height: 260 }} />
+                          ) : attendanceTechnicianData?.length ? (
+                            <RechartsResponsiveBox height={260}>
+                              <BarChart
+                                data={attendanceTechnicianData}
+                                margin={{
+                                  top: 10,
+                                  right: 20,
+                                  left: 0,
+                                  bottom: 10,
+                                }}
+                              >
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  stroke="#f0f0f0"
+                                />
+                                <XAxis
+                                  dataKey="label"
+                                  tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 12 }}
+                                  domain={[0, 2]}
+                                  ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                />
+                                <Tooltip />
+                                <Bar
+                                  dataKey="value"
+                                  fill="#52c41a"
+                                  radius={[10, 10, 0, 0]}
+                                />
+                              </BarChart>
+                            </RechartsResponsiveBox>
+                          ) : (
+                            <Empty />
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          border: "1px solid #eef2f7",
+                          boxShadow: "none",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="subtitle1"
+                            gutterBottom
+                            fontWeight="bold"
+                          >
+                            Attendance / Team Leader
+                          </Typography>
+                          {attendanceChartsLoading ? (
+                            <Skeleton active style={{ height: 260 }} />
+                          ) : attendanceTeamLeaderData?.length ? (
+                            <RechartsResponsiveBox height={260}>
+                              <BarChart
+                                data={attendanceTeamLeaderData}
+                                margin={{
+                                  top: 10,
+                                  right: 20,
+                                  left: 0,
+                                  bottom: 10,
+                                }}
+                              >
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  stroke="#f0f0f0"
+                                />
+                                <XAxis
+                                  dataKey="label"
+                                  tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 12 }}
+                                  domain={[0, 2]}
+                                  ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                />
+                                <Tooltip />
+                                <Bar
+                                  dataKey="value"
+                                  fill="#722ed1"
+                                  radius={[10, 10, 0, 0]}
+                                />
+                              </BarChart>
+                            </RechartsResponsiveBox>
+                          ) : (
+                            <Empty />
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={6}>
+                      <Card
+                        sx={{
+                          borderRadius: 2,
+                          border: "1px solid #eef2f7",
+                          boxShadow: "none",
+                        }}
+                      >
+                        <CardContent>
+                          <Typography
+                            variant="subtitle1"
+                            gutterBottom
+                            fontWeight="bold"
+                          >
+                            Attendance / Helpdesk
+                          </Typography>
+                          {attendanceChartsLoading ? (
+                            <Skeleton active style={{ height: 260 }} />
+                          ) : attendanceHelpdeskData?.length ? (
+                            <RechartsResponsiveBox height={260}>
+                              <BarChart
+                                data={attendanceHelpdeskData}
+                                margin={{
+                                  top: 10,
+                                  right: 20,
+                                  left: 0,
+                                  bottom: 10,
+                                }}
+                              >
+                                <CartesianGrid
+                                  strokeDasharray="3 3"
+                                  stroke="#f0f0f0"
+                                />
+                                <XAxis
+                                  dataKey="label"
+                                  tick={{ fontSize: 12 }}
+                                />
+                                <YAxis
+                                  tick={{ fontSize: 12 }}
+                                  domain={[0, 2]}
+                                  ticks={[0.0, 0.4, 0.8, 1.2, 1.6, 2.0]}
+                                />
+                                <Tooltip />
+                                <Bar
+                                  dataKey="value"
+                                  fill="#13c2c2"
+                                  radius={[10, 10, 0, 0]}
+                                />
+                              </BarChart>
+                            </RechartsResponsiveBox>
+                          ) : (
+                            <Empty />
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+
+              {/* ENGINEER Section */}
+              <Card style={{ marginBottom: 16 }}>
+                <CardContent>
+                  <Grid container spacing={2}>
+                    {engineerRoleBoxes.map((m) => (
+                      <Grid item xs={12} md={4} key={m.label}>
+                        <Card
+                          sx={{
+                            borderRadius: 3,
+                            border: `1px solid ${m.color}40`,
+                            boxShadow: "none",
+                            background: `linear-gradient(135deg, ${m.color}14 0%, rgba(255,255,255,0.85) 55%, ${m.color}10 100%)`,
+                            backdropFilter: "blur(8px)",
+                          }}
+                        >
+                          <CardContent
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                              py: 1.4,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: "50%",
+                                background: `${m.color}22`,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <UserOutlined
+                                style={{ fontSize: 18, color: m.color }}
+                              />
+                            </Box>
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                minWidth: 0,
+                              }}
+                            >
+                              <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                sx={{ lineHeight: 1.2 }}
+                              >
+                                {m.label}
+                              </Typography>
+                              <Typography
+                                variant="h6"
+                                fontWeight="bold"
+                                sx={{
+                                  mt: 0.5,
+                                  lineHeight: 1.1,
+                                  color: m.color,
+                                }}
+                              >
+                                {m.value}
+                              </Typography>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
             </Box>
           </>
         )}
