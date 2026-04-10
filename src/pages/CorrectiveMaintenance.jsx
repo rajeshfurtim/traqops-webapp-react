@@ -200,7 +200,7 @@ export default function CorrectiveMaintenance() {
     try {
       const res = await getMaxSequence({ clientId }).unwrap()
 
-      if (res?.success) {
+      if (res?.data !== undefined) {
         const nextNumber = (res.data || 0) + 1
 
         setSequenceNumber(nextNumber)
