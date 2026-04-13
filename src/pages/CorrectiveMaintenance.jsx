@@ -533,7 +533,6 @@ export default function CorrectiveMaintenance() {
         key: 'open',
         title: 'Details',
         badgeColor: '#f0ad4e',
-        statusLabel: statusLabel || 'OPEN',
         details: [
           { label: 'CM Key', value: viewRecord.cmKey || '-' },
           { label: 'System', value: source.systemName || '-' },
@@ -555,7 +554,7 @@ export default function CorrectiveMaintenance() {
         key: 'workdone',
         title: 'Work Done',
         badgeColor: '#1890ff',
-        statusLabel: statusLabel || 'WORK DONE',
+        // statusLabel: statusLabel || 'WORK DONE',
         details: [
           { label: 'Start Date', value: viewRecord.startTime ? dayjs(viewRecord.startTime).format('DD-MM-YYYY HH:mm') : '-' },
           { label: 'End Date', value: viewRecord.endTime ? dayjs(viewRecord.endTime).format('DD-MM-YYYY HH:mm') : '-' },
@@ -573,7 +572,7 @@ export default function CorrectiveMaintenance() {
         key: 'completed',
         title: 'Completed',
         badgeColor: '#52c41a',
-        statusLabel: statusLabel || 'COMPLETED',
+        // statusLabel: statusLabel || 'COMPLETED',
         details: [
           { label: 'Start Date', value: viewRecord.startTime ? dayjs(viewRecord.startTime).format('DD-MM-YYYY HH:mm') : '-' },
           { label: 'End Date', value: viewRecord.endTime ? dayjs(viewRecord.endTime).format('DD-MM-YYYY HH:mm') : '-' },
@@ -590,7 +589,7 @@ export default function CorrectiveMaintenance() {
         key: 'verified',
         title: 'Verified',
         badgeColor: '#13c2c2',
-        statusLabel: statusLabel || 'VERIFIED',
+        // statusLabel: statusLabel || 'VERIFIED',
         details: [
           { label: 'Start Date', value: viewRecord.startTime ? dayjs(viewRecord.startTime).format('DD-MM-YYYY HH:mm') : '-' },
           { label: 'End Date', value: viewRecord.endTime ? dayjs(viewRecord.endTime).format('DD-MM-YYYY HH:mm') : '-' },
@@ -607,7 +606,7 @@ export default function CorrectiveMaintenance() {
         key: 'overdue',
         title: 'Overdue',
         badgeColor: '#ff4d4f',
-        statusLabel: statusLabel || 'OVERDUE',
+        // statusLabel: statusLabel || 'OVERDUE',
         details: [
           { label: 'CM Key', value: viewRecord.cmKey || '-' },
           { label: 'System', value: source.systemName || '-' },
@@ -1074,11 +1073,11 @@ export default function CorrectiveMaintenance() {
                 dateRange: [dayjs().startOf('month'), dayjs().endOf('month')]
               }}
             >
-              <Form.Item name="dateRange" label="Date Range">
+              <Form.Item name="dateRange" label="Date Range" rules={[{ required: true, message: "Please select Date Range" }]}>
                 <RangePicker  disabledDate={(current) => current && current > dayjs().endOf('day')} />
               </Form.Item>
 
-              <Form.Item name="location" label="Location">
+              <Form.Item name="location" label="Location" rules={[{ required: true, message: "Please select Location" }]}>
                 <Select style={{ width: '250px' }} loading={locationsLoading} showSearch optionFilterProp="children">
                   {locationOptions.map(location => (
                     <Select.Option key={location.id} value={location.id}>
@@ -1212,7 +1211,7 @@ export default function CorrectiveMaintenance() {
           {isViewMode ? (
             <div style={{ padding: '8px 0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-                <div style={{ fontSize: 18, fontWeight: 700 }}>History Details</div>
+                <div style={{ fontSize: 18, fontWeight: 700 }}></div>
                 <AntButton type="" icon={<FilePdfOutlined />} onClick={downloadHistoryPdf}>
                   Download PDF
                 </AntButton>
