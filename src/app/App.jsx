@@ -56,6 +56,7 @@ import AttendanceReport from '../pages/Reports/AttendanceReport'
 import AuditReport from '../pages/Reports/AuditReport'
 import InventoryReport from '../pages/Reports/InventoryReport'
 import ToolsReport from '../pages/Reports/ToolsReport'
+import CyclicCheckReport from '../pages/Reports/CyclicCheckReport'
 import MaintenanceChecklist from '../pages/Reports/MaintenanceChecklist'
 import OperationChecklist from '../pages/Reports/OperationChecklist'
 import ChillerMonitoring from '../pages/Reports/OperationChecklistPages/ChillerMonitoring'
@@ -168,6 +169,7 @@ function App() {
               <Route path="reports/evaluation/audit" element={<AuditReport />} />
               <Route path="reports/inventory-old" element={<InventoryReport />} />
               <Route path="reports/tools" element={<ToolsReport />} />
+              <Route path="reports/cyclic-check-report" element={<CyclicCheckReport />} />
               <Route path="reports/maintenance-checklist" element={<MaintenanceChecklist />} />
               <Route path="reports/operation-checklist" element={<OperationChecklist />} />
               <Route path="reports/operation-checklist/chiller-monitoring" element={<ChillerMonitoring />} />

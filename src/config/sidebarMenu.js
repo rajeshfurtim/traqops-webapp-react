@@ -258,6 +258,12 @@ export const sidebarMenuConfig = [
         label: 'Tools Report',
         path: '/reports/tools'
       },
+      {
+        key: '/reports/cyclic-check-report',
+        icon: 'FileTextOutlined',
+        label: 'Cyclic Check Report',
+        path: '/reports/cyclic-check-report'
+      },
       // {
       //   key: '/reports/operation-checklist',
       //   icon: 'UnorderedListOutlined',

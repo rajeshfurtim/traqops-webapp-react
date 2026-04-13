@@ -91,9 +91,9 @@ export const reportsApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
     //daily Report Energy Consumption
-     getEnergyConsumptionReport: build.query({
+    getEnergyConsumptionReport: build.query({
       query: (params) => {
-        const { fromdate,todate, locationId} = params
+        const { fromdate, todate, locationId } = params
         const queryParams = {
           fromdate,
           todate,
@@ -111,9 +111,9 @@ export const reportsApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
-     getEquipmentRunStatusReport: build.query({
+    getEquipmentRunStatusReport: build.query({
       query: (params) => {
-        const { fromdate,todate, locationId} = params
+        const { fromdate, todate, locationId } = params
         const queryParams = {
           fromdate,
           todate,
@@ -131,9 +131,9 @@ export const reportsApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
-     getTemperatureRunStatusReport: build.query({
+    getTemperatureRunStatusReport: build.query({
       query: (params) => {
-        const { fromdate,todate, locationId} = params
+        const { fromdate, todate, locationId } = params
         const queryParams = {
           fromdate,
           todate,
@@ -151,9 +151,9 @@ export const reportsApi = baseApi.injectEndpoints({
       },
       providesTags: ['Report'],
     }),
-     getTvsStatusReport: build.query({
+    getTvsStatusReport: build.query({
       query: (params) => {
-        const { fromdate,todate, locationId} = params
+        const { fromdate, todate, locationId } = params
         const queryParams = {
           fromdate,
           todate,
@@ -365,7 +365,7 @@ export const reportsApi = baseApi.injectEndpoints({
         if (!payload?.locationId) {
           throw new Error("locationId is required for add evaluation penalty");
         }
-    
+
         return {
           url: `${API_BASE_URL}/evaluationpenaltyelements/addorupdate/poov`,
           method: "POST",
@@ -373,7 +373,7 @@ export const reportsApi = baseApi.injectEndpoints({
         };
       },
       invalidatesTags: (result, error) =>
-        error ? [] :["EvaluationElementsPenaltys"], 
+        error ? [] : ["EvaluationElementsPenaltys"],
     }),
 
     getInvoiceSummary: build.query({
@@ -385,8 +385,8 @@ export const reportsApi = baseApi.injectEndpoints({
         }
 
         const queryParams = {
-         clientId: clientId.toString(),
-         kpiTypeId: kpiTypeId.toString(),
+          clientId: clientId.toString(),
+          kpiTypeId: kpiTypeId.toString(),
           pn: pn,
           ps: ps
         }
@@ -405,7 +405,7 @@ export const reportsApi = baseApi.injectEndpoints({
         if (!payload?.id) {
           throw new Error("id is required for invoice generate");
         }
-    
+
         return {
           url: `${API_BASE_URL}/invoice/generate/poov`,
           method: "GET",
@@ -413,7 +413,7 @@ export const reportsApi = baseApi.injectEndpoints({
         };
       },
       invalidatesTags: (result, error) =>
-        error ? [] :["InvoiceGenerate"], 
+        error ? [] : ["InvoiceGenerate"],
     }),
 
     getAuditReport: build.query({
@@ -463,6 +463,75 @@ export const reportsApi = baseApi.injectEndpoints({
       providesTags: ['Report'],
     }),
 
+    getCyclicCheckDetailedReport: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId } = params
+
+        if (!locationId) {
+          throw new Error('locationId is required for getCyclicCheckDetailedReport')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString()
+        }
+
+        return {
+          url: `${API_BASE_URL}/cmrlem/reports/getcycliccheck/detailed`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
+    getCyclicCheckReport: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId } = params
+
+        if (!locationId) {
+          throw new Error('locationId is required for getCyclicCheckReport')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString()
+        }
+
+        return {
+          url: `${API_BASE_URL}/cmrlem/getcycliccheck/reports`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
+    getCyclicCheckStatus: build.query({
+      query: (params) => {
+        const { fromDate, toDate, locationId } = params
+
+        if (!locationId) {
+          throw new Error('locationId is required for getCyclicCheckStatus')
+        }
+
+        const queryParams = {
+          fromDate,
+          toDate,
+          locationId: Array.isArray(locationId) ? locationId.join(',') : locationId?.toString()
+        }
+
+        return {
+          url: `${API_BASE_URL}/cmrlem/reports/getcyclic/checkstatus`,
+          method: 'GET',
+          params: queryParams,
+        }
+      },
+      providesTags: ['Report'],
+    }),
+
   }),
   overrideExisting: false,
 })
@@ -486,5 +555,8 @@ export const {
   useInvoiceGenerateMutation,
   useGetAuditReportQuery,
   useGetKpiReportQuery,
-  useGetBMRCLQuantityReportQuery
+  useGetBMRCLQuantityReportQuery,
+  useGetCyclicCheckDetailedReportQuery,
+  useGetCyclicCheckReportQuery,
+  useGetCyclicCheckStatusQuery
 } = reportsApi
