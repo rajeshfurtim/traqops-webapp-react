@@ -262,6 +262,18 @@ export default function MonthlyDailyAttendanceReport() {
     ...getDateColumns(),
   ]
 
+const handleResetFilters = () => {
+    const currentDate = dayjs()
+    setShouldFetch(false)
+    setReports([])
+    form.setFieldsValue({
+      dateRange: [currentDate, currentDate],
+      location: 'All Locations',
+      type: 'All',
+      filter: 'attendance',
+    })
+
+  }
   return (
     <>
       <Helmet>
@@ -278,12 +290,12 @@ export default function MonthlyDailyAttendanceReport() {
             <Form form={form} layout="vertical" onFinish={handleFilterChange}>
               <Row gutter={[16, 16]}>
                 <Col span={6}>
-                  <Form.Item name="dateRange" label="Date Range">
+                  <Form.Item name="dateRange" label="Date Range" rules={[{ required: true, message: "Please select Date Range" }]}>
                     <RangePicker style={{ width: '100%' }} disabledDate={(current) => current && current > dayjs().endOf('day')} />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item name="location" label="Location">
+                  <Form.Item name="location" label="Location" rules={[{ required: true, message: "Please select Location" }]}>
                     <Select loading={locationsLoading} showSearch optionFilterProp="children">
                       {locationOptions.map(l =>
                         <Select.Option key={l.id} value={l.id}>{l.name}</Select.Option>
@@ -292,7 +304,7 @@ export default function MonthlyDailyAttendanceReport() {
                   </Form.Item>
                 </Col>
                 <Col span={4}>
-                  <Form.Item name="type" label="User Type">
+                  <Form.Item name="type" label="User Type" rules={[{ required: true, message: "Please select User Type" }]}>
                     <Select loading={userTypesLoading} showSearch optionFilterProp="children" >
                       {typeOptions.map(t =>
                         <Select.Option key={t.id} value={t.id}>{t.name}</Select.Option>
@@ -301,7 +313,7 @@ export default function MonthlyDailyAttendanceReport() {
                   </Form.Item>
                 </Col>
                 <Col span={4}>
-                  <Form.Item name="filter" label="Filter">
+                  <Form.Item name="filter" label="Filter" rules={[{ required: true, message: "Please select Filter" }]}>
                     <Select>
                       <Select.Option value="attendance">Attendance</Select.Option>
                       <Select.Option value="time">Time</Select.Option>
@@ -311,7 +323,7 @@ export default function MonthlyDailyAttendanceReport() {
                 <Col span={4} style={{ display: 'flex', alignItems: 'center' }}>
                   <Space>
                     <AntButton type="primary" htmlType="submit">Apply</AntButton>
-                    <AntButton onClick={() => form.resetFields()}>Reset</AntButton>
+                    <AntButton onClick={handleResetFilters}>Reset</AntButton>
                   </Space>
                 </Col>
               </Row>

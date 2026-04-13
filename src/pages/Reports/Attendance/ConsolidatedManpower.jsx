@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Spin, Empty } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Spin, Empty, Col, Row } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -41,12 +41,12 @@ export default function ConsolidatedManpowerReport() {
   }, [])
 
   useEffect(() => {
-    if(userTypes && userTypes.length > 0) {
+    if (userTypes && userTypes.length > 0) {
       form.setFieldsValue({
         type: userTypes[0].id,
       })
     }
-  },[userTypes])
+  }, [userTypes])
 
   // Apply filters
   const handleFilterChange = values => {
@@ -182,13 +182,11 @@ export default function ConsolidatedManpowerReport() {
 
   const handleResetFilters = () => {
     const currentMonth = dayjs()
-    setApiError(null)
     setShouldFetch(false)
-    setReports([])
+    reports([])
     form.setFieldsValue({
       month: currentMonth,
-      location: 'All Locations',
-      department: 'All Departments'
+      type: '',
     })
   }
 
@@ -208,109 +206,124 @@ export default function ConsolidatedManpowerReport() {
         </Typography> */}
 
         {/* Filters */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Form form={form} layout="inline" onFinish={handleFilterChange}>
-              <Form.Item name="dateRange" label="Date Range">
-                <RangePicker
-                  format="DD-MM-YYYY"
-                  allowClear={false}
-                  disabledDate={d => d && d > dayjs().endOf('day')}
-                />
-              </Form.Item>
+        <Card className="filter-card" sx={{ mb: 3 }}>
+          <CardContent  className="filter-content">
+            <Form 
+              form={form} 
+              layout="vertical" 
+              className='filter-form' 
+              onFinish={handleFilterChange}
+              >
 
-              <Form.Item name="type" label="Type" style={{ width: 250 }}>
-                <Select loading={userTypesLoading} showSearch optionFilterProp="children">
-                  {userTypes?.map(type => (
-                    <Select.Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item>
-                <AntButton type="primary" htmlType="submit"
-                  loading={queryLoading}
-                  icon={<SearchOutlined />}
-                >
-                  Search
-                </AntButton>
-              </Form.Item>
-              <Form.Item>
-                <AntButton onClick={handleResetFilters}>
-                  Reset
-                </AntButton>
-              </Form.Item>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Table */}
-        <Card>
-          <CardContent>
-            {!shouldFetch ? (
-              <Empty description="Please apply filters to view the report" />
-            ) :
-              queryLoading ? (
-                <Box display="flex" justifyContent="center" p={4}>
-                  <Spin />
-                </Box>
-              ) : (
-                <>
-                  <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
-                    <Typography fontWeight="bold">
-                      Total Duty:{' '}
-                      <span style={{ color: '#52c41a' }}>
-                        {reportsWithTotal.find(r => r.id === 'total')?.totalDuties || 0}
-                      </span>
-                    </Typography>
-
-                    {/* Export buttons */}
-                    <Space style={{ marginLeft: 'auto' }} size={12}>
-                      <Input
-                        placeholder="Search"
-                        prefix={<SearchOutlined />}
-                        value={searchText}
-                        onChange={e => setSearchText(e.target.value)}
-                        allowClear
-                        style={{ width: 250 }}
-                        className="custom-search-input"
-                      />
-                      <AntButton
-                        type="default"
-                        icon={<FileExcelOutlined />}
-                        onClick={handleExportExcel}
-                        disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
-                      >Export Excel
-                      </AntButton>
-                      <AntButton
-                        type="default"
-                        icon={<FilePdfOutlined />}
-                        onClick={handleExportPDF}
-                        disabled={reports.length === 0}
-                      // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
-                      >Export PDF
-                      </AntButton>
-                    </Space>
-                  </Box>
-
-                  <Table
-                    rowKey="id"
-                    dataSource={filteredReports}
-                    columns={columns}
-                    pagination={{ pageSize: 20 }}
-                    scroll={{ x: 'max-content' }}
-                    size="small"
-                    bordered
-                    rowClassName={record => (record.id === 'total' ? 'ant-table-row-total' : '')}
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                <Form.Item name="dateRange" label="Date Range" className="filter-item"  rules={[{ required: true, message: "Please select Date" }]}>
+                  <RangePicker
+                    format="DD-MM-YYYY"
+                    allowClear={false}
+                    style={{ width: '100%' }}
+                    disabledDate={d => d && d > dayjs().endOf('day')}
                   />
-                </>
-              )}
-          </CardContent>
-        </Card>
-      </Box>
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={8} lg={6}>
+                <Form.Item name="type" label="Type" className="filter-item"  rules={[{ required: true, message: "Please select Type" }]}>
+                  <Select loading={userTypesLoading} showSearch optionFilterProp="children">
+                    {userTypes?.map(type => (
+                      <Select.Option key={type.id} value={type.id}>
+                        {type.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              <Col xs={24} sm={12} md={8} lg={6} style={{ display: 'flex', alignItems: 'center' }}>
+                <Form.Item style={{ marginBottom: 0 }} className="filter-item">
+                  <Space wrap>
+                  <AntButton type="primary" htmlType="submit"
+                    loading={queryLoading}
+                    icon={<SearchOutlined />}
+                  >
+                    Search
+                  </AntButton>
+                  <AntButton onClick={handleResetFilters}>
+                    Reset
+                  </AntButton>
+                  </Space>
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        </CardContent>
+      </Card>
+
+      {/* Table */}
+      <Card>
+        <CardContent>
+          {!shouldFetch ? (
+            <Empty description="Please apply filters to view the report" />
+          ) :
+            queryLoading ? (
+              <Box display="flex" justifyContent="center" p={4}>
+                <Spin />
+              </Box>
+            ) : (
+              <>
+                <Box display="flex" justifyContent="space-between" mb={2} alignItems="center">
+                  <Typography fontWeight="bold">
+                    Total Duty:{' '}
+                    <span style={{ color: '#52c41a' }}>
+                      {reportsWithTotal.find(r => r.id === 'total')?.totalDuties || 0}
+                    </span>
+                  </Typography>
+
+                  {/* Export buttons */}
+                  <Space style={{ marginLeft: 'auto' }} size={12}>
+                    <Input
+                      placeholder="Search"
+                      prefix={<SearchOutlined />}
+                      value={searchText}
+                      onChange={e => setSearchText(e.target.value)}
+                      allowClear
+                      style={{ width: 250 }}
+                      className="custom-search-input"
+                    />
+                    <AntButton
+                      type="default"
+                      icon={<FileExcelOutlined />}
+                      onClick={handleExportExcel}
+                      disabled={reports.length === 0}
+                    // style={{ backgroundColor: '#52c41a', color: '#fff', borderColor: '#52c41a' }}
+                    >Export Excel
+                    </AntButton>
+                    <AntButton
+                      type="default"
+                      icon={<FilePdfOutlined />}
+                      onClick={handleExportPDF}
+                      disabled={reports.length === 0}
+                    // style={{ backgroundColor: '#ff4d4f', color: '#fff', borderColor: '#ff4d4f' }}
+                    >Export PDF
+                    </AntButton>
+                  </Space>
+                </Box>
+
+                <Table
+                  rowKey="id"
+                  dataSource={filteredReports}
+                  columns={columns}
+                  pagination={{ pageSize: 20 }}
+                  scroll={{ x: 'max-content' }}
+                  size="small"
+                  bordered
+                  rowClassName={record => (record.id === 'total' ? 'ant-table-row-total' : '')}
+                />
+              </>
+            )}
+        </CardContent>
+      </Card>
+    </Box >
 
       <style>{`
         .ant-table-row-total {

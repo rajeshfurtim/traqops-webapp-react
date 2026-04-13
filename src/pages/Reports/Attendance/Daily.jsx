@@ -290,7 +290,7 @@ export default function DailyAttendanceReport() {
             >
               <Row gutter={[16, 16]}>
                 <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="date" label="Date" className="filter-item">
+                  <Form.Item name="date" label="Date" className="filter-item"  rules={[{ required: true, message: "Please select Date" }]}>
                     <DatePicker
                       format="MMM DD, YYYY"
                       style={{ width: '100%' }}
@@ -301,7 +301,7 @@ export default function DailyAttendanceReport() {
                 </Col>
 
                 <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="location" label="Location" className="filter-item">
+                  <Form.Item name="location" label="Location" className="filter-item"  rules={[{ required: true, message: "Please select Location" }]}>
                     <Select
                       placeholder="All Locations"
                       style={{ width: '100%' }}
@@ -318,7 +318,7 @@ export default function DailyAttendanceReport() {
                 </Col>
 
                 <Col xs={24} sm={12} md={8} lg={6}>
-                  <Form.Item name="type" label="Type" className="filter-item">
+                  <Form.Item name="type" label="Type" className="filter-item"  rules={[{ required: true, message: "Please select Type" }]}>
                     <Select
                       style={{ width: '100%' }}
                       loading={userTypesLoading}

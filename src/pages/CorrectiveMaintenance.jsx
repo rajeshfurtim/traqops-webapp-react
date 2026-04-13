@@ -652,7 +652,7 @@ export default function CorrectiveMaintenance() {
     const sectionHeaderHeight = 10;
     const bodyWidth = pageWidth - margin * 2;
 
-    drawText(`CM History - ${viewRecord.cmKey || ''}`, margin, cursorY, {
+    drawText(`CM Details - ${viewRecord.cmKey || ''}`, margin, cursorY, {
       fontSize: 16,
       fontStyle: 'bold'
     });
@@ -744,7 +744,7 @@ export default function CorrectiveMaintenance() {
       }
     });
 
-    doc.save(`CM_History_${viewRecord.cmKey || dayjs().format('YYYYMMDD_HHmm')}.pdf`);
+    doc.save(`CM_Details_${viewRecord.cmKey || dayjs().format('YYYYMMDD_HHmm')}.pdf`);
   };
 
   const getRgbFromHex = (hex) => {
