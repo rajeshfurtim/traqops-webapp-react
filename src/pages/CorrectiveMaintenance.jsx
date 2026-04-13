@@ -11,6 +11,7 @@ import { getPageTitle, APP_CONFIG } from '../config/constants'
 import { useGetEquipmentRunStatusReportQuery } from '../store/api/reports.api';
 import { useGetLocationList } from '../hooks/useGetLocationList';
 import { exportToExcel, exportToPDF } from '../utils/exportUtils';
+import jsPDF from 'jspdf'
 const { RangePicker } = DatePicker
 import { SearchOutlined } from '@ant-design/icons';
 import { correctiveApi } from '../store/api/correctivemaintenance.api';
@@ -529,15 +530,17 @@ export default function CorrectiveMaintenance() {
     const sections = [];
 
     if (['1', '2', '3', '4'].includes(activeTab)) {
+      
       sections.push({
         key: 'open',
         title: 'Details',
         badgeColor: '#f0ad4e',
-        details: [
+        headerDetails: [
           { label: 'CM Key', value: viewRecord.cmKey || '-' },
-          { label: 'System', value: source.systemName || '-' },
           { label: 'Asset Name', value: asset || '-' },
           { label: 'Category', value: equipmentName || '-' },
+        ],
+        details: [
           { label: 'Priority', value: source.priority?.name || '-' },
           { label: 'Login', value: login || location.name || '-' },
           { label: 'Date', value: faultDate },
@@ -607,11 +610,12 @@ export default function CorrectiveMaintenance() {
         title: 'Overdue',
         badgeColor: '#ff4d4f',
         // statusLabel: statusLabel || 'OVERDUE',
-        details: [
+        headerDetails: [
           { label: 'CM Key', value: viewRecord.cmKey || '-' },
-          { label: 'System', value: source.systemName || '-' },
           { label: 'Asset Name', value: asset || '-' },
           { label: 'Category', value: equipmentName || '-' },
+        ],
+        details: [
           { label: 'Priority', value: source.priority?.name || '-' },
           { label: 'Login', value: login || location.name || '-' },
           { label: 'Date', value: faultDate },
@@ -630,28 +634,129 @@ export default function CorrectiveMaintenance() {
     if (!viewRecord) return;
     const sections = getHistorySections();
 
-    const pdfData = [];
-    sections.forEach((section) => {
-      pdfData.push({ field: section.title.toUpperCase(), value: '' });
-      section.details.forEach((detail) => {
-        pdfData.push({ field: detail.label, value: detail.value || '-' });
-      });
-      pdfData.push({ field: 'Remarks', value: section.remarks || '-' });
-      if (section.images && section.images.length > 0) {
-        pdfData.push({ field: 'Images', value: section.images.join(', ') });
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 14;
+    let cursorY = 20;
+
+    const drawText = (text, x, y, opts = {}) => {
+      const fontStyle = opts.fontStyle || 'normal';
+      doc.setFont('helvetica', fontStyle);
+      if (opts.fontSize) doc.setFontSize(opts.fontSize);
+      if (opts.color) doc.setTextColor(opts.color.r, opts.color.g, opts.color.b);
+      doc.text(text, x, y, { maxWidth: opts.maxWidth });
+      doc.setFont('helvetica', 'normal');
+      if (opts.color) doc.setTextColor(33, 37, 41);
+    };
+
+    const sectionHeaderHeight = 10;
+    const bodyWidth = pageWidth - margin * 2;
+
+    drawText(`CM History - ${viewRecord.cmKey || ''}`, margin, cursorY, {
+      fontSize: 16,
+      fontStyle: 'bold'
+    });
+    cursorY += 8;
+    drawText(`Generated on ${dayjs().format('DD-MM-YYYY HH:mm')}`, margin, cursorY, {
+      fontSize: 10,
+      color: { r: 100, g: 100, b: 100 }
+    });
+    cursorY += 12;
+
+    sections.forEach((section, sectionIndex) => {
+      if (cursorY + 60 > doc.internal.pageSize.getHeight()) {
+        doc.addPage();
+        cursorY = 20;
       }
-      pdfData.push({ field: ' ', value: ' ' });
+
+      const badgeColor = getRgbFromHex(section.badgeColor || '#1677ff');
+      doc.setFillColor(badgeColor.r, badgeColor.g, badgeColor.b);
+      doc.rect(margin, cursorY, bodyWidth, sectionHeaderHeight, 'F');
+      drawText(section.title.toUpperCase(), margin + 2, cursorY + 7, {
+        fontSize: 11,
+        fontStyle: 'bold',
+        color: { r: 255, g: 255, b: 255 }
+      });
+
+      if (section.statusLabel) {
+        const statusX = pageWidth - margin - doc.getTextWidth(section.statusLabel) - 2;
+        drawText(section.statusLabel, statusX, cursorY + 7, {
+          fontSize: 9,
+          color: { r: 255, g: 255, b: 255 }
+        });
+      }
+
+      cursorY += sectionHeaderHeight + 6;
+
+      if (section.headerDetails?.length) {
+        section.headerDetails.forEach((detail) => {
+          const label = `${detail.label}:`;
+          const value = detail.value || '-';
+          const textLines = doc.splitTextToSize(value, bodyWidth - 50);
+
+          drawText(label, margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
+          drawText(textLines, margin + 45, cursorY, { fontSize: 10, maxWidth: bodyWidth - 45 });
+
+          cursorY += 5 + (textLines.length * 5);
+          if (cursorY + 40 > doc.internal.pageSize.getHeight()) {
+            doc.addPage();
+            cursorY = 20;
+          }
+        });
+        cursorY += 4;
+      }
+
+      section.details.forEach((detail) => {
+        const label = `${detail.label}:`;
+        const value = detail.value || '-';
+        const textLines = doc.splitTextToSize(value, bodyWidth - 50);
+
+        drawText(label, margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
+        drawText(textLines, margin + 45, cursorY, { fontSize: 10, maxWidth: bodyWidth - 45 });
+
+        cursorY += 5 + (textLines.length * 5);
+        if (cursorY + 40 > doc.internal.pageSize.getHeight()) {
+          doc.addPage();
+          cursorY = 20;
+        }
+      });
+
+      cursorY += 4;
+      drawText('Remarks:', margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
+      const remarkLines = doc.splitTextToSize(section.remarks || '-', bodyWidth);
+      cursorY += 5;
+      drawText(remarkLines, margin, cursorY, { fontSize: 10, maxWidth: bodyWidth });
+      cursorY += remarkLines.length * 5 + 6;
+
+      if (section.images && section.images.length > 0) {
+        const imageText = section.images.join(', ');
+        drawText('Images:', margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
+        const imageLines = doc.splitTextToSize(imageText, bodyWidth);
+        cursorY += 5;
+        drawText(imageLines, margin, cursorY, { fontSize: 10, maxWidth: bodyWidth });
+        cursorY += imageLines.length * 5 + 6;
+      }
+
+      if (sectionIndex < sections.length - 1) {
+        doc.setDrawColor(220, 220, 220);
+        doc.line(margin, cursorY, pageWidth - margin, cursorY);
+        cursorY += 8;
+      }
     });
 
-    await exportToPDF(
-      [
-        { title: 'Field', dataIndex: 'field' },
-        { title: 'Value', dataIndex: 'value' }
-      ],
-      pdfData,
-      `CM_History_${viewRecord.cmKey || dayjs().format('YYYYMMDD_HHmm')}`,
-      { orientation: 'portrait', format: 'a4' }
-    );
+    doc.save(`CM_History_${viewRecord.cmKey || dayjs().format('YYYYMMDD_HHmm')}.pdf`);
+  };
+
+  const getRgbFromHex = (hex) => {
+    const normalized = hex?.replace('#', '') || '1677ff';
+    const parsed = parseInt(normalized.length === 3
+      ? normalized.split('').map((char) => char + char).join('')
+      : normalized, 16);
+    return {
+      r: (parsed >> 16) & 255,
+      g: (parsed >> 8) & 255,
+      b: parsed & 255,
+    };
   };
 
   const renderHistoryView = () => {
@@ -661,8 +766,28 @@ export default function CorrectiveMaintenance() {
       return <Empty description="No history data available" />;
     }
 
+    const headerSection = sections.find((section) => section.headerDetails?.length > 0);
+
     return (
       <div style={{ display: 'grid', gap: 16 }}>
+        {headerSection && (
+          <Card sx={{ borderRadius: 3, border: '1px solid #f0f0f0', boxShadow: 'none' }}>
+            <CardContent sx={{ padding: '20px' }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
+                {/* {headerSection.title} Summary */}
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2, p: 2, borderRadius: 2, backgroundColor: '#fafafa', border: '1px solid #f0f0f0' }}>
+                {headerSection.headerDetails.map((detail) => (
+                  <Box key={detail.label} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <Typography sx={{ fontSize: 12, color: '#666', textTransform: 'uppercase', fontWeight: 700 }}>{detail.label}</Typography>
+                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{detail.value || '-'}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+
         {sections.map((section) => (
           <Card key={section.key} sx={{ borderRadius: 3, border: '1px solid #f0f0f0', boxShadow: 'none' }}>
             <CardContent sx={{ padding: '20px' }}>
@@ -676,6 +801,17 @@ export default function CorrectiveMaintenance() {
                   </Typography>
                 </Box>
               </Box>
+
+              {!(headerSection && section.key === headerSection.key) && section.headerDetails && section.headerDetails.length > 0 && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2, mb: 3, p: 2, borderRadius: 2, backgroundColor: '#fafafa', border: '1px solid #f0f0f0' }}>
+                  {section.headerDetails.map((detail) => (
+                    <Box key={detail.label} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      <Typography sx={{ fontSize: 12, color: '#666', textTransform: 'uppercase', fontWeight: 700 }}>{detail.label}</Typography>
+                      <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{detail.value || '-'}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              )}
 
               <Box sx={{ display: 'grid', gap: 16, gridTemplateColumns: section.images && section.images.length > 0 ? { xs: '1fr', md: '1.6fr 1.2fr 300px' } : { xs: '1fr', md: '1.8fr 1.2fr' }, alignItems: 'start' }}>
                 <Box>
