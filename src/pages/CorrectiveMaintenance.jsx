@@ -633,24 +633,62 @@ export default function CorrectiveMaintenance() {
   const downloadHistoryPdf = async () => {
     if (!viewRecord) return;
     const sections = getHistorySections();
+    if (!sections.length) return;
 
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 14;
+    const bodyWidth = pageWidth - margin * 2;
     let cursorY = 20;
 
     const drawText = (text, x, y, opts = {}) => {
       const fontStyle = opts.fontStyle || 'normal';
+      const fontSize = opts.fontSize || 10;
       doc.setFont('helvetica', fontStyle);
-      if (opts.fontSize) doc.setFontSize(opts.fontSize);
+      doc.setFontSize(fontSize);
       if (opts.color) doc.setTextColor(opts.color.r, opts.color.g, opts.color.b);
       doc.text(text, x, y, { maxWidth: opts.maxWidth });
       doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
       if (opts.color) doc.setTextColor(33, 37, 41);
     };
 
-    const sectionHeaderHeight = 10;
-    const bodyWidth = pageWidth - margin * 2;
+    const loadImageAsDataUrl = (url) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+        if (img.complete) {
+          img.onload = null;
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        }
+      });
+    };
+
+    const addImageToDoc = async (url, x, y, width, maxHeight) => {
+      const imageData = await loadImageAsDataUrl(url);
+      if (!imageData) return 0;
+      const props = doc.getImageProperties(imageData);
+      const ratio = props.width / props.height;
+      const imageHeight = Math.min(maxHeight, width / ratio);
+      doc.addImage(imageData, 'JPEG', x, y, width, imageHeight);
+      return imageHeight;
+    };
 
     drawText(`CM Details - ${viewRecord.cmKey || ''}`, margin, cursorY, {
       fontSize: 16,
@@ -663,86 +701,173 @@ export default function CorrectiveMaintenance() {
     });
     cursorY += 12;
 
-    sections.forEach((section, sectionIndex) => {
-      if (cursorY + 60 > doc.internal.pageSize.getHeight()) {
+    const headerSection = sections.find((section) => section.headerDetails?.length > 0);
+    if (headerSection) {
+      const summaryTop = cursorY;
+      const summaryPadding = 8;
+      const headerValueLines = headerSection.headerDetails.map((detail) => doc.splitTextToSize(detail.value || '-', (bodyWidth - 16) / 3));
+      const summaryRowHeight = Math.max(...headerValueLines.map((lines) => lines.length)) * 5 + 24;
+      const summaryHeight = summaryRowHeight + summaryPadding * 2;
+
+      if (cursorY + summaryHeight + 12 > pageHeight) {
         doc.addPage();
         cursorY = 20;
       }
 
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(220, 220, 220);
+      doc.roundedRect(margin, cursorY, bodyWidth, summaryHeight, 3, 3, 'FD');
+      doc.setFillColor(245, 245, 245);
+      doc.rect(margin, cursorY, bodyWidth, 14, 'F');
+      drawText('SUMMARY', margin + 3, cursorY + 10, {
+        fontSize: 10,
+        fontStyle: 'bold',
+        color: { r: 51, g: 51, b: 51 }
+      });
+
+      let summaryY = cursorY + 18;
+      const columnWidth = (bodyWidth - 12) / 3;
+      headerSection.headerDetails.forEach((detail, index) => {
+        const x = margin + index * (columnWidth + 6);
+        drawText(detail.label.toUpperCase(), x, summaryY, {
+          fontSize: 9,
+          fontStyle: 'bold',
+          color: { r: 100, g: 100, b: 100 }
+        });
+        drawText(doc.splitTextToSize(detail.value || '-', columnWidth), x, summaryY + 5, {
+          fontSize: 10,
+          maxWidth: columnWidth
+        });
+      });
+
+      cursorY += summaryHeight + 12;
+    }
+
+    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex += 1) {
+      const section = sections[sectionIndex];
+
+      const leftWidth = bodyWidth * 0.4;
+      const middleWidth = bodyWidth * 0.35;
+      const rightWidth = bodyWidth - leftWidth - middleWidth - 8;
+      const topPadding = 12;
+      const columnPadding = 4;
+
+      const detailLines = section.details.map((detail) => {
+        const labelLines = doc.splitTextToSize(`${detail.label}:`, leftWidth - 8);
+        const valueLines = doc.splitTextToSize(detail.value || '-', leftWidth - 12);
+        return Math.max(labelLines.length, valueLines.length);
+      });
+      const detailsHeight = detailLines.reduce((sum, lines) => sum + lines * 5 + 4, 0) + 10;
+
+      const remarksLines = doc.splitTextToSize(section.remarks || '-', middleWidth - 8);
+      const remarksHeight = remarksLines.length * 5 + 18;
+
+      const imageBlockHeight = section.images && section.images.length > 0
+        ? Math.min(section.images.length, 3) * 40 + 18
+        : 0;
+
+      const cardHeight = Math.max(detailsHeight, remarksHeight, imageBlockHeight, 80) + topPadding + 10;
+
+      if (cursorY + cardHeight + 20 > pageHeight) {
+        doc.addPage();
+        cursorY = 20;
+      }
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(220, 220, 220);
+      doc.roundedRect(margin, cursorY, bodyWidth, cardHeight, 3, 3, 'FD');
+
       const badgeColor = getRgbFromHex(section.badgeColor || '#1677ff');
       doc.setFillColor(badgeColor.r, badgeColor.g, badgeColor.b);
-      doc.rect(margin, cursorY, bodyWidth, sectionHeaderHeight, 'F');
-      drawText(section.title.toUpperCase(), margin + 2, cursorY + 7, {
+      doc.rect(margin, cursorY, bodyWidth, 12, 'F');
+      drawText(section.title.toUpperCase(), margin + 3, cursorY + 8, {
         fontSize: 11,
         fontStyle: 'bold',
         color: { r: 255, g: 255, b: 255 }
       });
 
       if (section.statusLabel) {
-        const statusX = pageWidth - margin - doc.getTextWidth(section.statusLabel) - 2;
-        drawText(section.statusLabel, statusX, cursorY + 7, {
-          fontSize: 9,
-          color: { r: 255, g: 255, b: 255 }
+        const statusWidth = doc.getTextWidth(section.statusLabel) + 6;
+        const statusX = pageWidth - margin - statusWidth - 2;
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(statusX - 1, cursorY + 2, statusWidth, 8, 1, 1, 'FD');
+        drawText(section.statusLabel, statusX + 3, cursorY + 7, {
+          fontSize: 8,
+          fontStyle: 'bold',
+          color: { r: badgeColor.r, g: badgeColor.g, b: badgeColor.b }
         });
       }
 
-      cursorY += sectionHeaderHeight + 6;
+      const contentY = cursorY + topPadding;
+      const sectionTop = cursorY;
+      const leftX = margin + 2;
+      const middleX = margin + leftWidth + 4;
+      const rightX = margin + leftWidth + middleWidth + 6;
+      const columnHeaderY = contentY;
+      const contentStartY = contentY + 8;
 
-      if (section.headerDetails?.length) {
-        section.headerDetails.forEach((detail) => {
-          const label = `${detail.label}:`;
-          const value = detail.value || '-';
-          const textLines = doc.splitTextToSize(value, bodyWidth - 50);
-
-          drawText(label, margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
-          drawText(textLines, margin + 45, cursorY, { fontSize: 10, maxWidth: bodyWidth - 45 });
-
-          cursorY += 5 + (textLines.length * 5);
-          if (cursorY + 40 > doc.internal.pageSize.getHeight()) {
-            doc.addPage();
-            cursorY = 20;
-          }
-        });
-        cursorY += 4;
+      drawText('', leftX, columnHeaderY, { fontSize: 10, fontStyle: 'bold' });   
+      drawText('Remarks', middleX, columnHeaderY, { fontSize: 10, fontStyle: 'bold', marginBottom: 10 });
+      if (section.images && section.images.length > 0) {
+        drawText('Images', rightX, columnHeaderY, { fontSize: 10, fontStyle: 'bold' });
       }
 
+      let currentLeftY = contentStartY;
       section.details.forEach((detail) => {
-        const label = `${detail.label}:`;
-        const value = detail.value || '-';
-        const textLines = doc.splitTextToSize(value, bodyWidth - 50);
+        const labelLines = doc.splitTextToSize(`${detail.label}:`, leftWidth - 8);
+        const valueLines = doc.splitTextToSize(detail.value || '-', leftWidth - 12);
+        const lines = Math.max(labelLines.length, valueLines.length);
 
-        drawText(label, margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
-        drawText(textLines, margin + 45, cursorY, { fontSize: 10, maxWidth: bodyWidth - 45 });
+        drawText(labelLines, leftX, currentLeftY, { fontSize: 10, fontStyle: 'bold' });
+        drawText(valueLines, leftX + 38, currentLeftY, { fontSize: 10, maxWidth: leftWidth - 40 });
 
-        cursorY += 5 + (textLines.length * 5);
-        if (cursorY + 40 > doc.internal.pageSize.getHeight()) {
-          doc.addPage();
-          cursorY = 20;
-        }
+        currentLeftY += lines * 5 + 4;
       });
 
-      cursorY += 4;
-      drawText('Remarks:', margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
-      const remarkLines = doc.splitTextToSize(section.remarks || '-', bodyWidth);
-      cursorY += 5;
-      drawText(remarkLines, margin, cursorY, { fontSize: 10, maxWidth: bodyWidth });
-      cursorY += remarkLines.length * 5 + 6;
+      drawText(remarksLines, middleX, contentStartY, { fontSize: 10, maxWidth: middleWidth - 4 });
 
+      let currentRightY = contentY;
       if (section.images && section.images.length > 0) {
-        const imageText = section.images.join(', ');
-        drawText('Images:', margin, cursorY, { fontSize: 10, fontStyle: 'bold' });
-        const imageLines = doc.splitTextToSize(imageText, bodyWidth);
-        cursorY += 5;
-        drawText(imageLines, margin, cursorY, { fontSize: 10, maxWidth: bodyWidth });
-        cursorY += imageLines.length * 5 + 6;
+        drawText('Work Done Image', rightX, currentRightY, { fontSize: 10, fontStyle: 'bold' });
+        currentRightY += 6;
+
+        const imageWidth = rightWidth - 4;
+        const maxImageHeight = 38;
+        let imageCount = 0;
+
+        for (let imageIndex = 0; imageIndex < Math.min(section.images.length, 3); imageIndex += 1) {
+          const imageUrl = section.images[imageIndex];
+          const imageHeight = await addImageToDoc(imageUrl, rightX, currentRightY, imageWidth, maxImageHeight);
+          if (imageHeight > 0) {
+            currentRightY += imageHeight + 4;
+            imageCount += 1;
+          } else {
+            const imagePlaceholder = doc.splitTextToSize('Image unavailable', imageWidth);
+            drawText(imagePlaceholder, rightX, currentRightY, { fontSize: 9, color: { r: 150, g: 150, b: 150 }, maxWidth: imageWidth });
+            currentRightY += imagePlaceholder.length * 5 + 4;
+          }
+        }
+
+        if (section.images.length > 3) {
+          drawText(`+${section.images.length - 3} more`, rightX, currentRightY, { fontSize: 9, color: { r: 120, g: 120, b: 120 } });
+          currentRightY += 6;
+        }
       }
 
       if (sectionIndex < sections.length - 1) {
-        doc.setDrawColor(220, 220, 220);
-        doc.line(margin, cursorY, pageWidth - margin, cursorY);
-        cursorY += 8;
+        const footerY = sectionTop + cardHeight + 4;
+        if (footerY + 20 > pageHeight) {
+          doc.addPage();
+          cursorY = 20;
+        } else {
+          doc.setDrawColor(220, 220, 220);
+          doc.line(margin, sectionTop + cardHeight + 2, pageWidth - margin, sectionTop + cardHeight + 2);
+          cursorY = sectionTop + cardHeight + 8;
+        }
+      } else {
+        cursorY = sectionTop + cardHeight + 8;
       }
-    });
+    }
 
     doc.save(`CM_Details_${viewRecord.cmKey || dayjs().format('YYYYMMDD_HHmm')}.pdf`);
   };
