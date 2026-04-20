@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
 import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Spin } from 'antd'
@@ -9,6 +9,7 @@ import { useGetBMRCLQuantityReportQuery } from '../../../store/api/reports.api'
 import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
 import { exportToExcel, exportToPDF } from '../../../utils/exportUtils'
 import { useAuth } from '../../../context/AuthContext'
+// import { loadConfigFromFile } from 'vite'
 
 export default function QuantityReports() {
 
@@ -24,7 +25,7 @@ export default function QuantityReports() {
   const { data: locationList, isLoading: locationLoading } = useGetLocationByIsStoreQuery({ clientId, pageNumber: 1, pageSize: 1000 })
   const { data: assetCategoryList, isLoading: assetCategoryLoading } = useGetAllCategoryListQuery({ clientId, pageNumber: 1, pageSize: 1000 })
   const { data: quantityReportData, isLoading: quantityReportLoading, isFetching } =
-  useGetBMRCLQuantityReportQuery(
+    useGetBMRCLQuantityReportQuery(
       {
         ...filters
       },
@@ -32,6 +33,8 @@ export default function QuantityReports() {
         skip: !filters.locationId || !filters.InventoryCategoryId
       }
     )
+
+
 
   const handleFilterChange = (values) => {
     console.log('Filter values:', values)
@@ -46,6 +49,16 @@ export default function QuantityReports() {
     form.resetFields()
     setFilters({})
   }
+
+ useEffect(() => {
+  if (locationList?.data?.content?.length) {
+    form.setFieldsValue({
+      location: locationList.data.content[0].id,
+      inventoryCategory: -1,
+      assetCategory: -1
+    });
+  }
+}, [locationList]);
 
   const columns = [
     {

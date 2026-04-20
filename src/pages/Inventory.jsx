@@ -791,7 +791,7 @@ export default function Inventory() {
                   onFinish={handleSearch}
                   style={{ flexWrap: 'wrap', gap: 8 }}
                 >
-                  <Form.Item name="dateRange" label="Date Range">
+                  <Form.Item name="dateRange" label="Date Range" rules={[{ required: true, message: "Please select Date Range" }]}>
                     <RangePicker />
                   </Form.Item>
                   <Form.Item>

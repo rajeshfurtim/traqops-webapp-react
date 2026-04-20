@@ -15,7 +15,6 @@ import jsPDF from 'jspdf'
 const { RangePicker } = DatePicker
 import { SearchOutlined } from '@ant-design/icons';
 import { correctiveApi } from '../store/api/correctivemaintenance.api';
-import { color } from 'framer-motion'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { domainName, apiBaseUrl } from '../config/apiConfig'
 
@@ -73,7 +72,7 @@ export default function CorrectiveMaintenance() {
         enddate: dayjs().endOf('month').format('YYYY-MM-DD'),
         // location: locations.map(x => x.id).join(',')
         location: "-1",
-        locationIds: locations.map(x => x.id).join(',') // ✅ ADD THIS
+        locationIds: locations.map(x => x.id).join(',') 
 
       });
     }
@@ -899,7 +898,7 @@ export default function CorrectiveMaintenance() {
           <Card sx={{ borderRadius: 3, border: '1px solid #f0f0f0', boxShadow: 'none' }}>
             <CardContent sx={{ padding: '20px' }}>
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 700 }}>
-                {/* {headerSection.title} Summary */}
+                 {headerSection.title} Summary 
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2, p: 2, borderRadius: 2, backgroundColor: '#fafafa', border: '1px solid #f0f0f0' }}>
                 {headerSection.headerDetails.map((detail) => (
