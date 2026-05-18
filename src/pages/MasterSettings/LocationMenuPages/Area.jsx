@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Spin } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Skeleton } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetAreaListQuery, useAddAreaMutation, useDeleteAreaMutation, useGetLocationListQuery } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -190,9 +190,9 @@ export default function Area() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {areaListLoading ? (
+                        {areaListLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

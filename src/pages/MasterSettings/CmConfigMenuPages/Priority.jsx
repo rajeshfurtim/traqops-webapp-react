@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, TimePicker, Spin } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, TimePicker, Skeleton } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetAllPriorityListQuery, useAddPriorityMutation, useDeletePriorityMutation } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -197,9 +197,9 @@ export default function Priority() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {priorityLoading ? (
+                        {priorityLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, DatePicker, Switch, Select, Spin, Tooltip } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, DatePicker, Switch, Select, Skeleton, Tooltip } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined, DownloadOutlined } from "@ant-design/icons"
 import { useAddAssetMutation, useDeleteAssetMutation, useGetAssetsLocationWiseQuery, useGetLocationListQuery, useGetAreaByLocationQuery, useGetSubAreaByAreaQuery } from '../../../store/api/masterSettings.api'
 import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
@@ -339,9 +339,9 @@ export default function Asset() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {assetsListLoading ? (
+                        {assetsListLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

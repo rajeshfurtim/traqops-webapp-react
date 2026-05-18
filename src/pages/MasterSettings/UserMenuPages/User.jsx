@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Space, Button as AntButton, Tag, Input, Select, Modal, Form, Row, Col, Switch, TreeSelect, Popconfirm, message, Spin, Tooltip, Upload } from 'antd'
+import { Table, Space, Button as AntButton, Tag, Input, Select, Modal, Form, Row, Col, Switch, TreeSelect, Popconfirm, message, Skeleton, Tooltip, Upload } from 'antd'
 import { PlusOutlined, SearchOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from '@ant-design/icons'
 import { useGetAllRoleListQuery, useGetAllUserListQuery, useGetDepartmentListQuery, useGetSkillListQuery, useGetSkillLevelListQuery, useGetClientListQuery, useGetMobileAuthorizationListQuery, useAddUserMutation, useDeleteUserMutation, useUploadUserInfoMutation } from '../../../store/api/masterSettings.api'
 import { useAuth } from '../../../context/AuthContext'
@@ -482,9 +482,9 @@ export default function User() {
                 </AntButton>
               </Space>
             </Box>
-            {userListLoading ? (
+            {userListLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <Table

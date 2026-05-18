@@ -1,8 +1,11 @@
 import { Helmet } from 'react-helmet-async'
-import { Card, Col, Row, Statistic, Table, Tag, Typography } from 'antd'
+import { Box, Typography, Card, CardContent } from '@mui/material'
+import { Col, Row, Statistic, Table, Tag, Form, DatePicker, Button as AntButton, Space, Select } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
 import { APP_CONFIG, getPageTitle } from '../../../config/constants'
+import dayjs from 'dayjs'
 
-const { Title, Text } = Typography
+const { RangePicker } = DatePicker
 
 const mockChecklistRows = [
   {
@@ -78,8 +81,26 @@ const columns = [
 ]
 
 export default function ChecklistReport() {
+
+  const dummyData = [
+    {id:1, name: 'Test 1'},
+    {id:2, name: 'Test 2'},
+    {id:3, name: 'Test 3'},
+    {id:4, name: 'Test 4'}
+  ]
+
+  const [form] = Form.useForm()
+
   const complete = mockChecklistRows.filter((r) => r.status === 'Complete').length
   const partial = mockChecklistRows.filter((r) => r.status === 'Partial').length
+
+  const handleFilterChange = (values) => {
+    console.log('Filter values:', values)
+  }
+
+  const handleResetFilters = () => {
+    form.resetFields()
+  }
 
   return (
     <>
@@ -94,7 +115,7 @@ export default function ChecklistReport() {
         </Title>
         <Text type="secondary">Mock data preview — replace with API integration when ready.</Text> */}
 
-        <Row gutter={16} style={{ marginTop: 16, marginBottom: 16 }}>
+        {/* <Row gutter={16} style={{ marginTop: 16, marginBottom: 16 }}>
           <Col xs={24} sm={8}>
             <Card>
               <Statistic title="Checklists (mock)" value={mockChecklistRows.length} />
@@ -110,7 +131,126 @@ export default function ChecklistReport() {
               <Statistic title="Partial" value={partial} valueStyle={{ color: '#d48806' }} />
             </Card>
           </Col>
-        </Row>
+        </Row> */}
+
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Form form={form} layout="vertical" onFinish={handleFilterChange}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Date"
+                    name="date"
+                    rules={[{ required: true, message: 'Please select date range!' }]}
+                  >
+                    <RangePicker style={{ width: '100%' }}
+                      format={'DD/MM/YYYY'}
+                      disabledDate={(current) =>
+                        current && current > dayjs().endOf('day')
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Location"
+                    name="location"
+                    rules={[{ required: true, message: 'Please select location!' }]}
+                  >
+                    <Select
+                      placeholder="Select Location"
+                    >
+                      {dummyData?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Frequency"
+                    name="frequency"
+                    rules={[{ required: true, message: 'Please select frequency!' }]}
+                  >
+                    <Select
+                      placeholder="Select Frequency"
+                    >
+                      {dummyData?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Checklist"
+                    name="checklist"
+                    rules={[{ required: true, message: 'Please select checklist!' }]}
+                  >
+                    <Select
+                      placeholder="Select Checklist"
+                    >
+                      {dummyData?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Asset Category"
+                    name="assetCategory"
+                    rules={[{ required: true, message: 'Please select asset category!' }]}
+                  >
+                    <Select
+                      placeholder="Select Asset Category"
+                    >
+                      {dummyData?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item
+                    label="Asset"
+                    name="asset"
+                    rules={[{ required: true, message: 'Please select asset!' }]}
+                  >
+                    <Select
+                      placeholder="Select Asset"
+                    >
+                      {dummyData?.map(l => (
+                        <Select.Option key={l.id} value={l.id}>
+                          {l.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={24} md={24} lg={6}>
+                  <Form.Item label=" ">
+                    <Space>
+                      <AntButton type="primary" htmlType="submit"
+                        icon={<SearchOutlined />}
+                        // loading={toolsLoading || isFetching}
+                      >Search</AntButton>
+                      <AntButton onClick={handleResetFilters}>Reset</AntButton>
+                    </Space>
+                  </Form.Item>
+                </Col>
+              </Row>
+            </Form>
+          </CardContent>
+        </Card>
 
         <Card>
           <Table

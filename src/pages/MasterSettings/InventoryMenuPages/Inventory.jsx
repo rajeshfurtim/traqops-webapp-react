@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent, Typography } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Spin, Select, Upload, Tag, Badge, Tooltip } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Skeleton, Select, Upload, Tag, Badge, Tooltip } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined, UploadOutlined, EditOutlined, DownloadOutlined } from "@ant-design/icons"
 import { useGetBMRCLInventoryListQuery, useGetLocationByIsStoreQuery, useGetAllInventoryCategoryQuery, useAddInventoryMutation, useDeleteInventoryMutation } from '../../../store/api/masterSettings.api'
 import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
@@ -376,9 +376,9 @@ export default function Inventory() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {inventoryLoading ? (
+                        {inventoryLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

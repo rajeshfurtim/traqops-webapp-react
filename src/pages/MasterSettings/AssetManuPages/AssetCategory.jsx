@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, TreeSelect, Spin, Select } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Tag, TreeSelect, Skeleton, Select } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetCheckListByClientQuery, useAddAssetCategoryMutation, useDeleteAssetCategoryMutation } from '../../../store/api/masterSettings.api'
 import { useGetAllCategoryListQuery } from '../../../store/api/maintenance.api'
@@ -255,9 +255,9 @@ export default function AssetCategory() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {assetCategoryListLoading ? (
+                        {assetCategoryListLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

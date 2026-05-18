@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Select, Spin, Button as AntButton } from "antd"
+import { Space, Select, Skeleton, Button as AntButton } from "antd"
 import { FilePdfOutlined } from "@ant-design/icons"
 import { useGetAssetsLocationWiseQuery, useGetLocationListQuery } from '../../../store/api/masterSettings.api'
 import { useAuth } from '../../../context/AuthContext'
@@ -64,9 +64,9 @@ export default function AssetQrCode() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {(assetsListLoading || isFetching) ? (
+                        {assetsListLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <div ref={printRef}>

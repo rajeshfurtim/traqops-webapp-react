@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Spin } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Skeleton } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetAllKPIsTypeQuery, useAddKPIsTypeMutation, useDeleteKPIsTypeMutation } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -180,9 +180,9 @@ export default function KPIsType() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {KPIsTypeLoading ? (
+                        {KPIsTypeLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

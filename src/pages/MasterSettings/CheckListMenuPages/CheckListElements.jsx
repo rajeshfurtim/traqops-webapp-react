@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Box, Card, CardContent, Typography } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Spin, TreeSelect } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, Skeleton, TreeSelect } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons"
 import { useGetElementsCheckListQuery, useAddCheckListElementsMutation, useDeleteCheckListElementsMutation } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -263,9 +263,9 @@ export default function CheckListElements() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {elementCheckListLoading ? (
+                        {elementCheckListLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, message, Spin } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, message, Skeleton } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
@@ -262,9 +262,9 @@ export default function ToolsReport() {
 
               </Space>
             </Box>
-            {toolsLoading ? (
+            {toolsLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <Table

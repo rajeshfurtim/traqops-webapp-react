@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent, Typography } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, DatePicker, Tag, Spin, Tooltip, Upload } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Select, DatePicker, Tag, Skeleton, Tooltip, Upload } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined, DownloadOutlined, UploadOutlined } from "@ant-design/icons"
 import { useGetShiftLocationMappingListQuery, useAddShiftLocationMappingMutation, useDeleteShiftLocationMappingMutation, useGetLocationListQuery, useGetAllUserTypeQuery, useUploadShiftLocationMappingMutation } from '../../../store/api/masterSettings.api'
 import { useGetAllShiftListQuery } from '../../../store/api/maintenance.api'
@@ -320,9 +320,9 @@ export default function ShiftLocationMapping() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {shiftLocationMappingLoading ? (
+                        {shiftLocationMappingLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

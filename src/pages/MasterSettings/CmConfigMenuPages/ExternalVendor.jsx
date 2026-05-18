@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Spin } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Skeleton } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetExternalVendorListQuery, useAddExternalVendorMutation, useDeleteExternalVendorMutation } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -196,9 +196,9 @@ export default function ExternalVendor() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {externalVendorLoading ? (
+                        {externalVendorLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

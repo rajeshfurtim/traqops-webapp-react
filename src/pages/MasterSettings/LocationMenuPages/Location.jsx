@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { Box, Card, CardContent } from "@mui/material"
-import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Typography, Switch, Select, Grid, Spin } from "antd"
+import { Space, Input, Button as AntButton, Table, Row, Col, Form, Modal, Popconfirm, message, Typography, Switch, Select, Grid, Skeleton } from "antd"
 import { SearchOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons"
 import { useGetLocationListQuery, useGetLocationGroupListQuery, useAddLocationMutation, useDeleteLocationMutation } from '../../../store/api/masterSettings.api'
 import { skipToken } from '@reduxjs/toolkit/query'
@@ -295,9 +295,9 @@ export default function Location() {
                                 </AntButton>
                             </Space>
                         </Box>
-                        {locationLoading ? (
+                        {locationLoading || isFetching ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table
