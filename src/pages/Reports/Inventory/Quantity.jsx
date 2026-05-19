@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Spin } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Skeleton } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationByIsStoreQuery, useGetAllInventoryCategoryQuery } from '../../../store/api/masterSettings.api'
@@ -301,9 +301,9 @@ export default function QuantityReports() {
 
               </Space>
             </Box>
-            {quantityReportLoading ? (
+            {quantityReportLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <Table

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, Grid } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Spin, Row, Col, Tooltip, message } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Empty, Input, Tag, Descriptions, Skeleton, Row, Col, Tooltip, message } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
@@ -276,6 +276,11 @@ export default function ScheduledMaintenanceDetailsReports() {
     })
   }
 
+  const handleResetFilters = () => {
+    form.resetFields()
+    setFilters({})
+  }
+
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchText(value);
@@ -371,14 +376,14 @@ export default function ScheduledMaintenanceDetailsReports() {
             >
               <Row gutter={[16, 16]}>
 
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="dateRange" label="Date Range" rules={[{ required: true, message: 'Please select date range!' }]}
 >
                     <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" disabledDate={(current) => current && current > dayjs().endOf('day')} />
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Please select location!' }]}>
                     <Select allowClear loading={locationsLoading}>
                       <Select.Option value={-1}>All Location</Select.Option>
@@ -391,7 +396,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="statusId" label="Status" rules={[{ required: true, message: 'Please select status!' }]}>
                     <Select allowClear>
                       {/* <Select.Option value={-1}>All Status</Select.Option> */}
@@ -402,7 +407,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="frequencyId" label="Frequency" rules={[{ required: true, message: 'Please select frequency!' }]}>
                     <Select allowClear loading={frequencyLoading}>
                       <Select.Option value={-1}>All Frequency</Select.Option>
@@ -415,7 +420,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="system" label="System" rules={[{ required: true, message: 'Please select system!' }]}>
                     <Select
                       onChange={(value) => {
@@ -429,7 +434,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="categoryId" label="Category" rules={[{ required: true, message: 'Please select category!' }]}>
                     <Select loading={categoryLoading} allowClear>
                       <Select.Option value={-1}>All</Select.Option>
@@ -442,16 +447,22 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col span={4} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-                  <AntButton
-                    type="primary"
-                    htmlType="submit"
-                    loading={queryLoading}
-                    icon={<SearchOutlined />}
-                    block
-                  >
-                    Search
-                  </AntButton>
+                <Col xs={24} sm={12} md={8} lg={6}>
+                  <Form.Item label=" ">
+                    <Space>
+                      <AntButton
+                        type="primary"
+                        htmlType="submit"
+                        loading={queryLoading}
+                        icon={<SearchOutlined />}
+                      >
+                        Search
+                      </AntButton>
+                      <AntButton onClick={handleResetFilters}>
+                        Reset
+                      </AntButton>
+                    </Space>
+                  </Form.Item>
                 </Col>
 
               </Row>
@@ -494,7 +505,7 @@ export default function ScheduledMaintenanceDetailsReports() {
             ) :
               queryLoading ? (
                 <Box display="flex" justifyContent="center" p={4}>
-                  <Spin />
+                  <Skeleton />
                 </Box>
               ) : (
                 <>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, DatePicker, Row, Col, Spin, Tabs, message } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, DatePicker, Row, Col, Skeleton, Tabs, message } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined, AuditOutlined, BarsOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
 import { useGetAuditReportQuery, useGetKpiReportQuery } from '../../store/api/reports.api'
@@ -389,9 +389,9 @@ export default function AuditReport() {
 
         <Card>
           <CardContent>
-            {reportLoading ? (
+            {reportLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <Tabs

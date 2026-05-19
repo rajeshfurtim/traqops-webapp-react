@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Spin, DatePicker, Modal } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Skeleton, DatePicker, Modal } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery, useGetAllKPIsTypeQuery, useGetPenaltyCategoryByKpiIdQuery, useGetPenaltyByCategoryIdQuery } from '../../../store/api/masterSettings.api'
@@ -432,9 +432,9 @@ export default function PenaltyDetails() {
 
               </Space>
             </Box>
-            {penaltysLoading ? (
+            {penaltysLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <Table

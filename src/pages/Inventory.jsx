@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { Box } from '@mui/material'
 import {
   Table,
   Tag,
   Progress,
-  Spin,
+  Skeleton,
   Row,
   Col,
   Card,
@@ -67,7 +68,7 @@ export default function Inventory() {
 
   const clientId = localStorage.getItem('clientId') || '1090'
 
-  const [triggerGetIndentFilter, { data: indentFilterData, isLoading: indentFilterLoading }] =
+  const [triggerGetIndentFilter, { data: indentFilterData, isLoading: indentFilterLoading, isFetching: indentFilterFetching }] =
     useLazyGetIndentFilterQuery()
 
   const [triggerGetInventoryByCategory, { data: inventoryByCategoryData }] =
@@ -772,7 +773,7 @@ export default function Inventory() {
 
         {loading || !inventoryData ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-            <Spin size="large" />
+            <Skeleton />
           </div>
         ) : (
           <Card>
@@ -845,6 +846,11 @@ export default function Inventory() {
             </Row>
 
             <div style={{ width: '100%', overflowX: 'auto' }}>
+            {indentFilterLoading || indentFilterFetching ? (
+              <Box display="flex" justifyContent="center" p={4}>
+                <Skeleton />
+              </Box>
+            ) : (
               <Table
                 dataSource={tableData}
                 columns={columns}
@@ -860,6 +866,7 @@ export default function Inventory() {
                 loading={indentFilterLoading}
                 onChange={handleTableChange}
               />
+            )}
             </div>
           </Card>
         )}

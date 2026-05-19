@@ -12,7 +12,9 @@ import {
   Select,
   DatePicker,
   Space,
+  Skeleton,
 } from 'antd'
+import { Box } from '@mui/material'
 import { DeleteOutlined, SearchOutlined, EditOutlined,FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import * as XLSX from 'xlsx'
@@ -39,7 +41,7 @@ export default function InventoryCyclicCheck() {
   const { setBadgeCount } = useSidebarNotifications()
   const { clientId } = useClient()
 
-  const { data: cyclicCheckData, isLoading } =
+  const { data: cyclicCheckData, isLoading, isFetching } =
     useGetCyclicCheckQuery(clientId, { skip: !clientId })
 
   const { locations } = useGetLocationList()
@@ -274,6 +276,11 @@ export default function InventoryCyclicCheck() {
           </Space>
         </div>
 
+        {isLoading || isFetching ? (
+          <Box display="flex" justifyContent="center" p={4}>
+            <Skeleton />
+          </Box>
+        ) : (
         <Table
           rowKey="id"
           columns={columns}
@@ -282,6 +289,7 @@ export default function InventoryCyclicCheck() {
           pagination={pagination}
           onChange={(pag) => setPagination(pag)}
         />
+        )}
       </Card>
 
       <Modal

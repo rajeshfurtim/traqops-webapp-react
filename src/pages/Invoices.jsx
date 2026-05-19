@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Spin, Tag } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, Row, Col, message, Skeleton, Tag } from 'antd'
 import { SearchOutlined, EditOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../config/constants'
 import { useGetAllKPIsTypeQuery } from '../store/api/masterSettings.api'
@@ -211,9 +211,9 @@ export default function Invoices() {
                 />
               </Space>
             </Box>
-            {invoiceLoading ? (
+            {invoiceLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <Table

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent, CardHeader, Grid } from '@mui/material'
-import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, message, Spin, TreeSelect } from 'antd'
+import { Table, Form, Select, Space, Button as AntButton, Input, DatePicker, Row, Col, message, Skeleton, TreeSelect } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../config/constants'
@@ -287,6 +287,7 @@ export default function CyclicCheckReport() {
                                             showSearch
                                             treeNodeFilterProp="title"
                                             maxTagCount={1}
+                                            maxTagTextLength={24}
                                             maxTagPlaceholder={(omittedValues) => `+ ${omittedValues.length} more`}
                                             onChange={(newValue) => {
                                                 if (newValue?.includes("all")) {
@@ -324,7 +325,7 @@ export default function CyclicCheckReport() {
 
                             <CardContent sx={{ flex: 1 }}>
                                 {IsLoading ? (
-                                    <Spin />
+                                    <Skeleton />
                                 ) : (
                                     <ResponsiveContainer width="100%" height={300}>
                                         <PieChart>
@@ -371,6 +372,11 @@ export default function CyclicCheckReport() {
                         <Card style={{ marginBottom: 20, height: "100%" }} sx={{ display: "flex", flexDirection: "column" }}>
                             <CardHeader title="Cyclic Check Report" />
                             <CardContent sx={{ flex: 1, overflow: "auto" }}>
+                            {IsLoading ? (
+                            <Box display="flex" justifyContent="center" p={4}>
+                                <Skeleton />
+                            </Box>
+                        ) : (
                                 <Table
                                     dataSource={reportList?.data}
                                     columns={cyclicColumns}
@@ -393,6 +399,7 @@ export default function CyclicCheckReport() {
                                         className: "custom-pagination"
                                     }}
                                 />
+                                )}
                             </CardContent>
                         </Card>
                     </Grid>
@@ -431,7 +438,7 @@ export default function CyclicCheckReport() {
                         </Box>
                         {IsLoading ? (
                             <Box display="flex" justifyContent="center" p={4}>
-                                <Spin />
+                                <Skeleton />
                             </Box>
                         ) : (
                             <Table

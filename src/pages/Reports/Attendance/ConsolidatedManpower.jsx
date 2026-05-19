@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Spin, Empty, Col, Row } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Input, message, Skeleton, Empty, Col, Row } from 'antd'
 import { FileExcelOutlined, FilePdfOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
@@ -267,7 +267,7 @@ export default function ConsolidatedManpowerReport() {
           ) :
             queryLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Card, CardContent, Typography } from '@mui/material'
-import { Form, Select, Space, Button as AntButton, Row, Col, Spin, DatePicker, Table, Empty } from 'antd'
+import { Form, Select, Space, Button as AntButton, Row, Col, Skeleton, DatePicker, Table, Empty } from 'antd'
 import { SearchOutlined } from '@ant-design/icons'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationListQuery } from '../../../store/api/masterSettings.api'
@@ -362,9 +362,9 @@ export default function TaskReportExtended() {
               onFinish={handleFilterChange}
               layout="vertical"
             >
-              <Row gutter={[16, 16]} align="middle">
+              <Row gutter={[16, 16]}>
                 {/* Date */}
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item
                     label="Date"
                     name="date"
@@ -381,7 +381,7 @@ export default function TaskReportExtended() {
                 </Col>
 
                 {/* Location */}
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item
                     label="Location"
                     name="location"
@@ -398,7 +398,7 @@ export default function TaskReportExtended() {
                 </Col>
 
                 {/* System */}
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item
                     label="System"
                     name="system"
@@ -415,7 +415,7 @@ export default function TaskReportExtended() {
                 </Col>
 
                 {/* Category */}
-                <Col span={4}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item
                     label="Category"
                     name="category"
@@ -433,7 +433,7 @@ export default function TaskReportExtended() {
                 </Col>
 
                 {/* Buttons */}
-                <Col span={8}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item label=" ">
                     <Space>
                       <AntButton
@@ -456,9 +456,9 @@ export default function TaskReportExtended() {
         </Card>
         <Card>
           <CardContent>
-            {reportLoading ? (
+            {reportLoading || isFetching ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <>

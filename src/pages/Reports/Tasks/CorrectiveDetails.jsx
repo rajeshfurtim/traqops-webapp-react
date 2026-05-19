@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Box, Typography, Card, CardContent } from '@mui/material'
-import { Table, Form, Select, DatePicker, Space, Button as AntButton, Spin, Row, Col, Input, message } from 'antd'
+import { Table, Form, Select, DatePicker, Space, Button as AntButton, Skeleton, Row, Col, Input, message } from 'antd'
 import dayjs from 'dayjs'
 import { getPageTitle, APP_CONFIG } from '../../../config/constants'
 import { useGetLocationList } from '../../../hooks/useGetLocationList'
@@ -409,18 +409,8 @@ export default function ScheduledMaintenanceDetailsReports() {
               layout="vertical"
               onFinish={handleApplyFilters}
             >
-              <Row
-                gutter={[12, 12]}
-                wrap={false}
-                style={{
-                  display: 'flex',
-                  flexWrap: 'nowrap',
-                  overflowX: 'auto',
-                  overflowY: 'hidden',
-                  WebkitOverflowScrolling: 'touch',
-                }}
-              >
-                <Col style={{ flex: '1 0 240px', minWidth: 220, maxWidth: 320 }}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item
                     name="dateRange"
                     label="Date Range"
@@ -436,7 +426,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col style={{ flex: '1 1 150px', minWidth: 140 }}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="location" label="Location" rules={[{ required: true, message: 'Please select Location!' }]}>
                     <Select style={{ width: '100%' }} loading={locationsLoading}>
                       <Select.Option value={-1}>All Location</Select.Option>
@@ -449,7 +439,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col style={{ flex: '0 1 120px', minWidth: 110 }}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="system" label="System" rules={[{ required: true, message: 'Please select System!' }]}>
                     <Select style={{ width: '100%' }} onChange={handleSystemChange}>
                       <Select.Option value="TVS">TVS</Select.Option>
@@ -458,7 +448,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col style={{ flex: '1 1 150px', minWidth: 140 }}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="category" label="Category" rules={[{ required: true, message: 'Please select Category!' }]}>
                     <Select style={{ width: '100%' }} loading={categoryLoading}>
                       <Select.Option value="All">All</Select.Option>
@@ -471,7 +461,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col style={{ flex: '1 1 150px', minWidth: 140 }}>
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item name="statusId" label="Status" rules={[{ required: true, message: 'Please select Status!' }]}>
                     <Select style={{ width: '100%' }}>
                       <Select.Option value={-1}>All</Select.Option>
@@ -484,13 +474,7 @@ export default function ScheduledMaintenanceDetailsReports() {
                   </Form.Item>
                 </Col>
 
-                <Col
-                  style={{
-                    flex: '0 0 auto',
-                    display: 'flex',
-                    alignItems: 'start',
-                  }}
-                >
+                <Col xs={24} sm={12} md={8} lg={6}>
                   <Form.Item label=" " style={{ marginBottom: 0 }}>
                     <Space>
                       <AntButton
@@ -627,7 +611,7 @@ export default function ScheduledMaintenanceDetailsReports() {
             </Box>
             {queryLoading ? (
               <Box display="flex" justifyContent="center" p={4}>
-                <Spin />
+                <Skeleton />
               </Box>
             ) : (
               <Table
